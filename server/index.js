@@ -44,11 +44,11 @@ async function start() {
     io.of(`/${channel}`).on('connection', (socket) => {
       consola.info('socket.io client connected to', channel)
       const svc = require(`./channels/${channel}`).Svc()
-      Object.keys(svc).forEach((evt) => {
-        if (typeof svc[evt] === 'function') {
+      Object.entries(svc).forEach(([evt, fn]) => {
+        if (typeof fn === 'function') {
           socket.on(evt, (msg, cb) => {
             const { notifyEvt = 'progress' } = msg
-            svc[evt]({
+            fn({
               notify: (data) => {
                 socket.emit(notifyEvt, data)
               },

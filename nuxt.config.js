@@ -23,7 +23,7 @@ module.exports = {
   /*
    ** Global CSS
    */
-  css: [],
+  css: ['~/assets/main.css'],
   /*
    ** Plugins to load before mounting the App
    */
@@ -50,9 +50,9 @@ module.exports = {
      ** You can extend webpack config here
      */
     extend(config, ctx) {},
-    parallel: true,
-    cache: true,
-    hardSource: true
+    parallel: false,
+    cache: false,
+    hardSource: false
   },
   /*
    ** ENV vars
