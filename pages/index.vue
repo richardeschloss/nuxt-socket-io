@@ -21,6 +21,17 @@
         </a>
       </div>
     </div>
+    <div>
+      <label>If you can see text appear in the box, it worked!</label>
+      <button @click="getMessage()">Get Message</button>
+      <b-form-textarea
+        v-model="messageRxd"
+        placeholder="Waiting for you to click the 'Get Message' button..."
+        rows="3"
+        max-rows="6"
+      ></b-form-textarea>
+      <nuxt-link to="examples">Thirsty for more examples?</nuxt-link>
+    </div>
   </div>
 </template>
 
@@ -30,6 +41,21 @@ import Logo from '~/components/Logo.vue'
 export default {
   components: {
     Logo
+  },
+  data() {
+    return {
+      messageRxd: ''
+    }
+  },
+  mounted() {
+    this.socket = this.$ioChannel('/index', {})
+  },
+  methods: {
+    getMessage() {
+      this.socket.emit('getMessage', { id: 'abc123' }, (resp) => {
+        this.messageRxd = resp
+      })
+    }
   }
 }
 </script>
@@ -64,5 +90,10 @@ export default {
 
 .links {
   padding-top: 15px;
+}
+
+.message-rxd-textbox {
+  width: 500px;
+  height: 500px;
 }
 </style>
