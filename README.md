@@ -9,7 +9,9 @@
 $ npm run install
 
 # serve with hot reload at localhost:3000
-$ npm run dev
+$ npm run dev:server
+
+Note: `npm run dev` will just run nuxt (you'd have to implement the io server separately and remember to allow the client's origin. Explanation coming)
 
 # build for production and launch server
 $ npm run build
