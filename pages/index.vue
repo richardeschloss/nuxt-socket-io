@@ -49,7 +49,7 @@ export default {
   },
   mounted() {
     this.socket = this.$nuxtSocket({
-      channel: '/index2',
+      channel: '/index',
       reconnection: false
     })
   },

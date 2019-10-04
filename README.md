@@ -2,11 +2,16 @@
 
 > Nuxt with basic socket.io examples
 
+Current status: works on machine, patience please as I get this to be more "npm-friendly"
+
+Automated tests would be nice...if anyone wants to help with that :)
+
 ## Installation
+
 > npm i --save nuxt-socket-io
 
-
 ## Configuration
+
 Then in your `nuxt.config.js` file, specify your sockets:
 
 ```
@@ -26,6 +31,7 @@ modules: [
 ```
 
 ## Usage in your components or pages: (EASY!)
+
 ```
 mounted() {
   this.socket1 = this.$nuxtSocket({
@@ -34,7 +40,7 @@ mounted() {
     reconnection: false
   })
   this.socket2 = this.$nuxtSocket({
-    name: 'work', 
+    name: 'work',
     channel: '/meetingRoom',
     reconnection: false
   })
@@ -54,10 +60,9 @@ methods: {
   }
 ```
 
-
 ## Build Setup
 
-``` bash
+```bash
 # install dependencies
 $ npm run install
 
