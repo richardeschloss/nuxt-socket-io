@@ -27,7 +27,7 @@ module.exports = {
   /*
    ** Plugins to load before mounting the App
    */
-  plugins: [], // '~/plugins/io'],
+  plugins: [],
   /*
    ** Nuxt.js dev-modules
    */
@@ -41,7 +41,7 @@ module.exports = {
   modules: [
     // Doc: https://bootstrap-vue.js.org
     'bootstrap-vue/nuxt',
-    '~/modules/io'
+    '~/io/module'
   ],
   io: {
     sockets: [

@@ -14,7 +14,6 @@ function nuxtSocket(ioOpts) {
     }
   }
 
-  useSocket.url = useSocket.url || process.env.wsURL
   if( !useSocket.url ){
     throw new Error('URL must be defined for nuxtSocket')
   }

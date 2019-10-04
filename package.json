@@ -21,7 +21,6 @@
     "cross-env": "^5.2.0",
     "express": "^4.16.4",
     "nuxt": "^2.0.0",
-    "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0"
   },
   "devDependencies": {
@@ -40,6 +39,7 @@
     "browser-env": "^3.2.5",
     "require-extension-hooks": "^0.3.3",
     "require-extension-hooks-babel": "^1.0.0",
-    "require-extension-hooks-vue": "^2.0.0"
+    "require-extension-hooks-vue": "^2.0.0",
+    "socket.io": "^2.3.0"
   }
 }

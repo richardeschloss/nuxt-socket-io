@@ -5,10 +5,10 @@ module.exports = function nuxtSocketIO(moduleOptions) {
 
   this.addPlugin({
     ssr: false,
-    src: resolve('plugins/io.js'),
+    src: resolve(__dirname, 'plugin.js'),
     fileName: 'nuxt-socket-io.js',
     options
   })
 }
 
-// module.exports.meta = require('../package.json')
+module.exports.meta = require('../package.json')
