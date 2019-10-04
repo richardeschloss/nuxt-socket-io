@@ -27,7 +27,7 @@ module.exports = {
   /*
    ** Plugins to load before mounting the App
    */
-  plugins: ['~/plugins/io'],
+  plugins: [], // '~/plugins/io'],
   /*
    ** Nuxt.js dev-modules
    */
@@ -40,8 +40,17 @@ module.exports = {
    */
   modules: [
     // Doc: https://bootstrap-vue.js.org
-    'bootstrap-vue/nuxt'
+    'bootstrap-vue/nuxt',
+    '~/modules/io'
   ],
+  io: {
+    sockets: [
+      { name: 'home', url: 'http://localhost:3000', default: true },
+      { name: 'work', url: 'http://somedomain1:3000' },
+      { name: 'car', url: 'http://somedomain2:3000' },
+      { name: 'tv', url: 'http://somedomain3:3000' }
+    ]
+  },
   /*
    ** Build configuration
    */
@@ -53,11 +62,5 @@ module.exports = {
     parallel: false,
     cache: false,
     hardSource: false
-  },
-  /*
-   ** ENV vars
-   */
-  env: {
-    WS_URL: process.env.WS_URL || 'http://localhost:3000'
   }
 }

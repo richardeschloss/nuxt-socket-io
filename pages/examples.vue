@@ -43,7 +43,9 @@ export default {
     }
   },
   mounted() {
-    this.socket = this.$ioChannel('/examples', {})
+    this.socket = this.$nuxtSocket({
+      channel: '/examples'
+    })
   },
   methods: {
     getProgress() {

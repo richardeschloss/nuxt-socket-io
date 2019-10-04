@@ -48,7 +48,10 @@ export default {
     }
   },
   mounted() {
-    this.socket = this.$ioChannel('/index', {})
+    this.socket = this.$nuxtSocket({
+      channel: '/index',
+      reconnection: false
+    })
   },
   methods: {
     getMessage() {
