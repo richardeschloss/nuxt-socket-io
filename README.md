@@ -65,7 +65,7 @@ $ npm run install
 # serve with hot reload at localhost:3000
 $ npm run dev:server
 
-Note: `npm run dev` will just run nuxt, it will be much more helpful to run the server too. You may be interested in the design pattern being used on the ioServer. As long as you have `.js` files in your `server/channels` directory and make sure to export a function named `Svc`, the `server.js` will automatically register it. This is somewhat analagous to the automatic routing of pages that you place in your `pages` folder.
+Note: `npm run dev` will just run nuxt (client), it will be much more helpful to run both client and server. You may be interested in the design pattern being used on the socket.io server. As long as you have `.js` files in your `server/channels` directory and make sure to export a function named `Svc`, the `server.js` will automatically register it. This is somewhat analagous to the automatic routing of pages that you place in your `pages` folder.
 
 # build for production and launch server
 $ npm run build
