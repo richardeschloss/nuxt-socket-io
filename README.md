@@ -1,10 +1,6 @@
 # nuxt-socket-io
 
-> Nuxt with basic socket.io examples
-
-Current status: works on machine, patience please as I get this to be more "npm-friendly"
-
-Automated tests would be nice...if anyone wants to help with that :)
+> Nuxt Socket.io module (wrapper) -- easily configure and use your socket.io clients!
 
 ## Installation
 
@@ -69,7 +65,7 @@ $ npm run install
 # serve with hot reload at localhost:3000
 $ npm run dev:server
 
-Note: `npm run dev` will just run nuxt (you'd have to implement the io server separately and remember to allow the client's origin. Explanation coming)
+Note: `npm run dev` will just run nuxt, it will be much more helpful to run the server too. You may be interested in the design pattern being used on the ioServer. As long as you have `.js` files in your `server/channels` directory and make sure to export a function named `Svc`, the `server.js` will automatically register it. This is somewhat analagous to the automatic routing of pages that you place in your `pages` folder.
 
 # build for production and launch server
 $ npm run build
@@ -78,5 +74,10 @@ $ npm run start
 # generate static project
 $ npm run generate
 ```
+
+## Todo Items and Notes
+* The module will use either the "io" options or the module options. I chose the name `io` because it's concise, but this may conflict with naming used by other modules. The module merges the two options, which may or may not cause headaches. We'll see... if it does, I'm open to changing the name to perhaps `nuxtSocket`.
+* Automated tests are needed for this module. Any help is appreciated.
+* Users of the module, just like any users of socket.io-client, just need to remember that they are still responsible for handling listeners (and removing them). This module only gives the app developer the socket reference(s).
 
 For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
