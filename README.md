@@ -78,8 +78,8 @@ $ npm run generate
 ## Todo Items and Notes
 * The module will use either the "io" options or the module options. I chose the name `io` because it's concise, but this may conflict with naming used by other modules. The module merges the two options, which may or may not cause headaches. We'll see... if it does, I'm open to changing the name to perhaps `nuxtSocket`.
 * Automated tests: 
-** End-to-end tests pass, but can perhaps be made more reliable. Sometimes `nuxt.renderAndGetWindow()` times out in 2 seconds and I'm not entirely sure why. Sometimes it passes no problem. 
-** CI will be nice
+  * End-to-end tests pass, but can perhaps be made more reliable. Sometimes `nuxt.renderAndGetWindow()` times out in 2 seconds and I'm not entirely sure why. Sometimes it passes no problem. 
+  * CI will be nice
 * Manual tests: pass to a reasonable degree
 * Users of the module, just like any users of socket.io-client, just need to remember that they are still responsible for handling listeners (and removing them). This module only gives the app developer the socket reference(s).
 
