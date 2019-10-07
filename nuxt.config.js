@@ -45,7 +45,7 @@ module.exports = {
   ],
   io: {
     sockets: [
-      { name: 'home', url: 'http://localhost:3000', default: true },
+      { name: 'home', url: 'http://localhost:4000', default: true },
       { name: 'work', url: 'http://somedomain1:3000' },
       { name: 'car', url: 'http://somedomain2:3000' },
       { name: 'tv', url: 'http://somedomain3:3000' }

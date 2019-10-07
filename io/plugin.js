@@ -5,7 +5,7 @@ function nuxtSocket(ioOpts) {
   const { name, channel = '', ...connectOpts } = ioOpts
   const { sockets } = <%= JSON.stringify(options) %>
 
-  if( !sockets || sockets.length == 0 ){
+  if (!sockets || sockets.length == 0) {
     throw new Error("Please configure sockets if planning to use nuxt-socket-io: \r\n [{name: '', url: ''}]")
     return;
   }
@@ -22,7 +22,7 @@ function nuxtSocket(ioOpts) {
     useSocket = sockets[0]
   }
 
-  if( !useSocket.url ){
+  if (!useSocket.url) {
     throw new Error('URL must be defined for nuxtSocket')
     return;
   }
@@ -38,5 +38,6 @@ function nuxtSocket(ioOpts) {
 }
 
 export default function(context, inject) {
+  // context.app.nuxtSocket = nuxtSocket
   inject('nuxtSocket', nuxtSocket)
 }
