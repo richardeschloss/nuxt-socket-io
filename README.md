@@ -1,3 +1,5 @@
+<a href="https://gitlab.com/richardeschloss/nuxt-socket-io" target="_blank" rel="noopener noreferrer" style=""><img src="https://gitlab.com/richardeschloss/nuxt-socket-io/badges/master/pipeline.svg" aria-hidden="true" class="project-badge"></a>
+
 # nuxt-socket-io
 
 > Nuxt Socket.io module (wrapper) -- easily configure and use your socket.io clients!
