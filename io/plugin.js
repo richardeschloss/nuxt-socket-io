@@ -38,6 +38,5 @@ function nuxtSocket(ioOpts) {
 }
 
 export default function(context, inject) {
-  // context.app.nuxtSocket = nuxtSocket
   inject('nuxtSocket', nuxtSocket)
 }

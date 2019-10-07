@@ -1,10 +1,9 @@
-// const http = require('http') // Prod should use https
+const http = require('http') // Prod should use https
 const fs = require('fs')
 const consola = require('consola')
-// const express = require('express')
 const socketIO = require('socket.io')
 
-function IOServer(server) {
+function IOServer({ host, port, server = http.createServer() }) {
   function registerIO(io) {
     const ioChannels = fs
       .readdirSync('./server/channels')
@@ -31,10 +30,21 @@ function IOServer(server) {
     })
   }
 
-  function start() {
-    consola.log('starting IO server at', server) // .host, server.port)
+  function listen() {
+    return new Promise((resolve) => {
+      server.listen(port, host, resolve)
+    })
+  }
+
+  async function start() {
+    consola.info('starting IO server...', host, port, server.listening)
+    if (!server.listening) {
+      consola.info('IO server not listening...will fix that...')
+      await listen()
+    }
     const io = socketIO(server)
     registerIO(io)
+    return io
   }
 
   return Object.freeze({

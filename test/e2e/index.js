@@ -1,29 +1,48 @@
-import { resolve } from 'path'
+/* eslint-disable no-console */
 import test from 'ava'
-import { Nuxt, Builder } from 'nuxt'
+import ioClient from 'socket.io-client'
+import { ioServerInit, nuxtInit, nuxtClose } from '../utils'
 
-// We keep the nuxt and server instance
-// So we can close them at the end of the test
-let nuxt = null
+test.before(ioServerInit)
 
-// Init Nuxt.js and create a server listening on localhost:4000
-test.before(async () => {
-  const config = {
-    dev: false,
-    rootDir: resolve(__dirname, '../../')
-  }
-  nuxt = new Nuxt(config)
-  await new Builder(nuxt).build()
-  await nuxt.server.listen(4000, 'localhost')
-}, 30000)
+test.before(nuxtInit)
 
-// Example of testing only generated html
-test('Route / exits and render HTML', async (t) => {
-  const { html } = await nuxt.renderRoute('/', {})
-  t.true(html.includes('Documentation'))
+test('Socket io client can connect', (t) => {
+  t.timeout(60000)
+  return new Promise((resolve) => {
+    console.log('attempting to connect')
+    const socket = ioClient('http://localhost:4000')
+    socket.on('connect', () => {
+      console.log('client connected!!', socket.id)
+      t.pass()
+      resolve()
+    })
+  })
 })
 
-// Close server and ask nuxt to stop listening to file changes
-test.after('Closing server and nuxt.js', (t) => {
-  nuxt.close()
+test('$nuxtServer injected ok', async (t) => {
+  t.timeout(60000)
+  const { nuxt } = t.context
+  const window = await nuxt.renderAndGetWindow('http://localhost:3000')
+  t.truthy(window.$nuxt.$nuxtSocket)
 })
+
+test('test client use nuxtSocket ok', async (t) => {
+  t.timeout(60000)
+  const { nuxt } = t.context
+  const window = await nuxt.renderAndGetWindow('http://localhost:3000')
+  const testSocket = window.$nuxt.$nuxtSocket({
+    name: 'test',
+    channel: '/index'
+  })
+  const testJSON = { msg: 'it worked!' }
+  const expected = 'It worked! Received msg: ' + JSON.stringify(testJSON)
+  return new Promise((resolve) => {
+    testSocket.emit('getMessage', testJSON, (actual) => {
+      t.is(expected, actual)
+      resolve()
+    })
+  })
+})
+
+test.after('Closing server and nuxt.js', nuxtClose)
