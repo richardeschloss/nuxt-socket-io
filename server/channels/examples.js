@@ -6,9 +6,9 @@ function Svc() {
         const timer = setInterval(() => {
           notify({ evt: 'progress', data: progress })
           progress += 10
-          if (progress > 100) {
+          if (progress === 100) {
             clearInterval(timer)
-            resolve()
+            resolve(progress)
           }
         }, period)
       })
