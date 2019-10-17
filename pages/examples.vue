@@ -12,6 +12,7 @@
     <div>
       <label>Event 'progress' listened locally in this script</label>
       <b-progress
+        v-show="showProgress"
         class="examples-progress-bar"
         height="inherit"
         :value="progress"
@@ -23,6 +24,7 @@
     <div>
       <label>Consume progress from Vuex 'progress' state:</label>
       <b-progress
+        v-show="showProgress"
         class="examples-progress-bar"
         height="inherit"
         :value="progressVuex"
@@ -48,7 +50,8 @@ export default {
     return {
       progress: 0,
       refreshPeriod: 500,
-      congratulate: false
+      congratulate: false,
+      showProgress: false
     }
   },
   computed: mapState({
@@ -61,11 +64,16 @@ export default {
   },
   methods: {
     getProgress() {
+      this.showProgress = true
+      this.progress = 0
+      this.$store.commit('examples/SET_PROGRESS', this.progress)
       this.socket
         .emit('getProgress', { period: this.refreshPeriod }, (resp) => {
+          this.showProgress = false
           this.congratulate = true
           this.progress = resp
-          this.socket.removeListener('progress')
+          this.$store.commit('examples/SET_PROGRESS', this.progress)
+          // this.socket.removeListener('progress')
         })
         .on('progress', (data) => {
           this.progress = data
