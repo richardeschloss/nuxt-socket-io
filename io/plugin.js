@@ -1,10 +1,9 @@
 import io from 'socket.io-client'
 import consola from 'consola'
 
-const pluginOptions = <%= JSON.stringify(options) %>
-
-function nuxtSocket( ioOpts ) {
+function nuxtSocket(ioOpts) {
   const { name, channel = '', ...connectOpts } = ioOpts
+  const pluginOptions = <%= JSON.stringify(options) %>
   const { sockets } = pluginOptions
   const { $store: store } = this
 
@@ -46,13 +45,14 @@ function nuxtSocket( ioOpts ) {
       const groupOpts = vuexOpts[group]
       if (groupOpts.length && groupOpts.length > 0) {
         groupOpts.forEach((item) => {
-          let evt, mappedItem = null
-          if (typeof item === 'string'){
+          let evt = null
+          let mappedItem = null
+          if (typeof item === 'string') {
             evt = mappedItem = item
           } else {
-            [ [evt, mappedItem] ] = Object.entries(item)
+            [[evt, mappedItem]] = Object.entries(item)
           }
-          
+
           socket.on(evt, (data) => {
             store[fn](mappedItem, data)
           })
