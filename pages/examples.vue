@@ -64,6 +64,7 @@ export default {
       this.socket
         .emit('getProgress', { period: this.refreshPeriod }, (resp) => {
           this.congratulate = true
+          this.progress = resp
           this.socket.removeListener('progress')
         })
         .on('progress', (data) => {
