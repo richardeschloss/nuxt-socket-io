@@ -55,12 +55,8 @@ export default {
     progressVuex: (state) => state.examples.progress
   }),
   mounted(ctx) {
-    const { $store: store } = this
     this.socket = this.$nuxtSocket({
-      ioOpts: {
-        channel: '/examples'
-      },
-      store
+      channel: '/examples'
     })
   },
   methods: {

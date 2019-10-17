@@ -3,9 +3,10 @@ import consola from 'consola'
 
 const pluginOptions = <%= JSON.stringify(options) %>
 
-function nuxtSocket({ ioOpts, store }) {
+function nuxtSocket( ioOpts ) {
   const { name, channel = '', ...connectOpts } = ioOpts
   const { sockets } = pluginOptions
+  const { $store: store } = this
 
   if (!sockets || sockets.length === 0) {
     throw new Error(
@@ -36,7 +37,7 @@ function nuxtSocket({ ioOpts, store }) {
   const socket = io(useSocket.url, connectOpts)
   consola.info('connect', useSocket.name, useSocket.url)
 
-  if (vuexOpts && store) {
+  if (vuexOpts) {
     const storeFns = {
       mutations: 'commit',
       actions: 'dispatch'
