@@ -19,11 +19,28 @@ modules: [
   ],
   io: {
     sockets: [
-      { name: 'home', url: 'http://localhost:3000', default: true },
+      {
+        name: 'home',
+        url: 'http://localhost:3000',
+        default: true,
+        vuex: {
+          mutations: [{ progress: 'examples/SET_PROGRESS' }], // pass in the evt --> mutation map OR array of actions 
+          actions: [{ chatMessage: 'FORMAT_MESSAGE' }, 'SOMETHING_ELSE' ] // pass in the evt --> action map OR array of actions or mixed!
+        }
+      },
       { name: 'work', url: 'http://somedomain1:3000' },
       { name: 'car', url: 'http://somedomain2:3000' },
-      { name: 'tv', url: 'http://somedomain3:3000' }
+      { name: 'tv', url: 'http://somedomain3:3000' },
+      {
+        name: 'test',
+        url: 'http://localhost:4000',
+        vuex: {
+          mutations: ['examples/SET_PROGRESS'],
+          actions: ['FORMAT_MESSAGE']
+        }
+      }
     ]
+  },
 },
 ...
 ```
@@ -32,18 +49,23 @@ modules: [
 
 ```
 mounted() {
-  this.socket1 = this.$nuxtSocket({
+  this.socket1 = this.$nuxtSocket({ // In our example above, since vuex opts are set for 'home', they will be used. (see computed props)
     name: 'home', // If left blank, module will search for the socket you specified as the default
     channel: '/index',
     reconnection: false
   })
-  this.socket2 = this.$nuxtSocket({
+  this.socket2 = this.$nuxtSocket({ // In our example above, since vuex opts are NOT set for 'work', there will be no mapping to vuex.
     name: 'work',
     channel: '/meetingRoom',
     reconnection: false
   })
 },
-methods: {
+computed: mapState({
+  chatMessages: (state) => state.chatMessages,// In our example above, 'FORMAT_MESSAGE' action is dispatched when the event 'chatMessage' is received. Here, it's assumed that the FORMAT_MESSAGE action will format the chat message and add update the 'chatMessages' state. 
+  
+  progress: (state) => state.examples.progress // Remember, the "nuxt way" of organizing state. If progress in defined in store/examples.js, this is how to access it. In our example above, 'SET_PROGRESS' mutation will be committed when ever the 'progress' event is received. 
+}), 
+methods: {     
     getMessage() {
       this.socket1.emit('getMessage', { id: 'abc123' }, (resp) => {
         this.messageRxd = resp
