@@ -5,30 +5,44 @@
     <h3>Simulate a progress notification</h3>
     <br />
 
-    <b-input-group prepend="Refresh Period" class="w-50 mt-3">
+    <b-input-group prepend="Refresh Period" class="w-50 mt-3 example-input">
       <b-form-input v-model="refreshPeriod" type="text"></b-form-input>
-    </b-input-group>
-    <b-input-group class="mt-3">
       <b-button @click="getProgress()">Get Progress</b-button>
+    </b-input-group>
+    <div>
+      <label>Event 'progress' listened locally in this script</label>
       <b-progress
-        v-show="showProgress"
-        class="w-25 examples-progress-bar"
+        class="examples-progress-bar"
         height="inherit"
         :value="progress"
         show-progress
         animated
       >
       </b-progress>
+    </div>
+    <div>
+      <label>Consume progress from Vuex 'progress' state:</label>
+      <b-progress
+        class="examples-progress-bar"
+        height="inherit"
+        :value="progressVuex"
+        show-progress
+        animated
+      >
+      </b-progress>
+    </div>
+    <div>
       <span v-show="congratulate" class="example-congratulations"
         >All done! Way to go champ!</span
       >
-    </b-input-group>
-
+    </div>
     <nuxt-link to="/">Go Home</nuxt-link>
   </div>
 </template>
 
 <script>
+import { mapState } from 'vuex'
+
 export default {
   data() {
     return {
@@ -37,12 +51,10 @@ export default {
       congratulate: false
     }
   },
-  computed: {
-    showProgress() {
-      return this.progress > 0 && this.progress < 100
-    }
-  },
-  mounted() {
+  computed: mapState({
+    progressVuex: (state) => state.examples.progress
+  }),
+  mounted(ctx) {
     this.socket = this.$nuxtSocket({
       channel: '/examples'
     })
@@ -52,7 +64,7 @@ export default {
       this.socket
         .emit('getProgress', { period: this.refreshPeriod }, (resp) => {
           this.congratulate = true
-          this.progress = 100
+          this.progress = resp
           this.socket.removeListener('progress')
         })
         .on('progress', (data) => {
@@ -70,6 +82,9 @@ export default {
   align-items: center;
   text-align: center;
   width: 50%;
+}
+.example-input {
+  margin-bottom: 10px;
 }
 .examples-progress-bar,
 .example-congratulations {
