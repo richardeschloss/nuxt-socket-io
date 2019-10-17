@@ -57,11 +57,8 @@ export default {
   computed: mapState(['chatMessages']),
   mounted() {
     this.socket = this.$nuxtSocket({
-      ioOpts: {
-        channel: '/index',
-        reconnection: false
-      },
-      store: this.$store
+      channel: '/index',
+      reconnection: false
     })
   },
   methods: {
