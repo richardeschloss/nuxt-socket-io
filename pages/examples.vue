@@ -57,7 +57,7 @@ export default {
   computed: mapState({
     progressVuex: (state) => state.examples.progress
   }),
-  mounted(ctx) {
+  mounted() {
     this.socket = this.$nuxtSocket({
       channel: '/examples'
     })
