@@ -78,5 +78,8 @@ module.exports = {
     parallel: true,
     cache: true,
     hardSource: true
+  },
+  globals: {
+    loadingTimeout: 5000
   }
 }
