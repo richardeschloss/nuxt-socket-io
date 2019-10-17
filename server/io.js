@@ -16,9 +16,8 @@ function IOServer({ host, port, server = http.createServer() }) {
         Object.entries(svc).forEach(([evt, fn]) => {
           if (typeof fn === 'function') {
             socket.on(evt, (msg, cb) => {
-              const { notifyEvt = 'progress' } = msg
               fn({
-                notify: (data) => {
+                notify: ({ evt: notifyEvt, data }) => {
                   socket.emit(notifyEvt, data)
                 },
                 ...msg

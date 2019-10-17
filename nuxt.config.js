@@ -45,11 +45,26 @@ module.exports = {
   ],
   io: {
     sockets: [
-      { name: 'home', url: 'http://localhost:3000', default: true },
+      {
+        name: 'home',
+        url: 'http://localhost:3000',
+        default: true,
+        vuex: {
+          mutations: [{ progress: 'examples/SET_PROGRESS' }],
+          actions: [{ chatMessage: 'FORMAT_MESSAGE' }]
+        }
+      },
       { name: 'work', url: 'http://somedomain1:3000' },
       { name: 'car', url: 'http://somedomain2:3000' },
       { name: 'tv', url: 'http://somedomain3:3000' },
-      { name: 'test', url: 'http://localhost:4000' }
+      {
+        name: 'test',
+        url: 'http://localhost:4000',
+        vuex: {
+          mutations: [{ progress: 'examples/SET_PROGRESS' }],
+          actions: [{ chatMessage: 'FORMAT_MESSAGE' }]
+        }
+      }
     ]
   },
   /*

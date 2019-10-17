@@ -30,12 +30,19 @@
         rows="3"
         max-rows="6"
       ></b-form-textarea>
+      <b-form-textarea
+        v-model="chatMessages"
+        placeholder="Formatted messages will appear here"
+        rows="3"
+        max-rows="6"
+      ></b-form-textarea>
       <nuxt-link to="examples">Thirsty for more examples?</nuxt-link>
     </div>
   </div>
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import Logo from '~/components/Logo.vue'
 
 export default {
@@ -47,6 +54,7 @@ export default {
       messageRxd: ''
     }
   },
+  computed: mapState(['chatMessages']),
   mounted() {
     this.socket = this.$nuxtSocket({
       channel: '/index',
