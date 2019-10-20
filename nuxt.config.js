@@ -51,7 +51,8 @@ module.exports = {
         default: true,
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
-          actions: [{ chatMessage: 'FORMAT_MESSAGE' }]
+          actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
+          emitBacks: ['examples/sample', { 'examples/sample2': 'sample2' }]
         }
       },
       { name: 'work', url: 'http://somedomain1:3000' },

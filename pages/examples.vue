@@ -38,6 +38,21 @@
         >All done! Way to go champ!</span
       >
     </div>
+    <br />
+    <h3>Emit registered Vuex changes back to IO Server</h3>
+    <br />
+    <div>
+      <label
+        >Sample Number (will send "examples/sample" event back on change)</label
+      >
+      <b-form-input v-model="sample" type="number"></b-form-input>
+    </div>
+    <div>
+      <label
+        >Sample Number2 (will send mapped "sample2" event back on change)</label
+      >
+      <b-form-input v-model="sample2" type="number"></b-form-input>
+    </div>
     <nuxt-link to="/">Go Home</nuxt-link>
   </div>
 </template>
@@ -54,9 +69,27 @@ export default {
       showProgress: false
     }
   },
-  computed: mapState({
-    progressVuex: (state) => state.examples.progress
-  }),
+  computed: {
+    sample: {
+      get() {
+        return this.$store.state.examples.sample
+      },
+      set(newVal) {
+        this.$store.commit('examples/SET_SAMPLE', newVal)
+      }
+    },
+    sample2: {
+      get() {
+        return this.$store.state.examples.sample2
+      },
+      set(newVal) {
+        this.$store.commit('examples/SET_SAMPLE2', newVal)
+      }
+    },
+    ...mapState({
+      progressVuex: (state) => state.examples.progress
+    })
+  },
   mounted() {
     this.socket = this.$nuxtSocket({
       channel: '/examples'

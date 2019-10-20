@@ -59,6 +59,37 @@ function nuxtSocket(ioOpts) {
         })
       }
     })
+
+    const { emitBacks } = vuexOpts
+    if (emitBacks && emitBacks.length) {
+      emitBacks.forEach((emitBack) => {
+        let evt = null
+        let stateProps = null
+        if (typeof emitBack === 'string') {
+          evt = stateProps = emitBack
+        } else {
+          [[stateProps, evt]] = Object.entries(emitBack)
+        }
+        stateProps = stateProps.split('/')
+        this.$store.watch((state) => {
+          const out = Object.assign({}, state)
+          const watchProp = stateProps.reduce((outProp, prop) => {
+            outProp = outProp[prop]
+            return outProp
+          }, out)
+
+          if (typeof watchProp === 'object'
+            && Object.prototype.hasOwnProperty.call(watchProp, '__ob__')) {
+              const errMsg = `${emitBack} is an observable. You probably want to watch its properties`
+              throw Error(errMsg)
+            }
+          return watchProp
+        }, (data) => {
+          console.log('val changed', data, evt)
+          socket.emit(evt, { data })
+        })
+      })
+    }
   }
 
   socket.on('disconnect', () => {
