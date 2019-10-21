@@ -23,9 +23,10 @@ modules: [
         name: 'home',
         url: 'http://localhost:3000',
         default: true,
-        vuex: {
-          mutations: [{ progress: 'examples/SET_PROGRESS' }], // pass in the evt --> mutation map OR array of actions 
-          actions: [{ chatMessage: 'FORMAT_MESSAGE' }, 'SOMETHING_ELSE' ] // pass in the evt --> action map OR array of actions or mixed!
+        vuex: { // optional
+          mutations: [{ progress: 'examples/SET_PROGRESS' }], // pass in the evt --> mutation map OR array of actions
+          actions: [{ chatMessage: 'FORMAT_MESSAGE' }, 'SOMETHING_ELSE' ] // pass in the evt --> action map OR array of actions or mixed!,
+          emitBacks: ['examples/sample', { 'examples/sample2': 'sample2' }] // pass in the state props you want to listen for changes on. When those props thance, they'll fire these "emitBack" events. If the emitBack is a string, it will send the string, otherwise, if it's an object, it will send the mapped string. (see the updated examples in the page/examples.vue, where I also use a "mapState2Way" function in the component).
         }
       },
       { name: 'work', url: 'http://somedomain1:3000' },
@@ -61,11 +62,11 @@ mounted() {
   })
 },
 computed: mapState({
-  chatMessages: (state) => state.chatMessages,// In our example above, 'FORMAT_MESSAGE' action is dispatched when the event 'chatMessage' is received. Here, it's assumed that the FORMAT_MESSAGE action will format the chat message and add update the 'chatMessages' state. 
-  
-  progress: (state) => state.examples.progress // Remember, the "nuxt way" of organizing state. If progress in defined in store/examples.js, this is how to access it. In our example above, 'SET_PROGRESS' mutation will be committed when ever the 'progress' event is received. 
-}), 
-methods: {     
+  chatMessages: (state) => state.chatMessages,// In our example above, 'FORMAT_MESSAGE' action is dispatched when the event 'chatMessage' is received. Here, it's assumed that the FORMAT_MESSAGE action will format the chat message and add update the 'chatMessages' state.
+
+  progress: (state) => state.examples.progress // Remember, the "nuxt way" of organizing state. If progress in defined in store/examples.js, this is how to access it. In our example above, 'SET_PROGRESS' mutation will be committed when ever the 'progress' event is received.
+}),
+methods: {
     getMessage() {
       this.socket1.emit('getMessage', { id: 'abc123' }, (resp) => {
         this.messageRxd = resp
@@ -100,11 +101,14 @@ $ npm run generate
 ```
 
 ## Todo Items and Notes
-* The module will use either the "io" options or the module options. I chose the name `io` because it's concise, but this may conflict with naming used by other modules. The module merges the two options, which may or may not cause headaches. We'll see... if it does, I'm open to changing the name to perhaps `nuxtSocket`.
-* Automated tests: 
-  * End-to-end tests pass. Had to increase the global loadingTimeout to 5000 ms to help prevent `nuxt.renderAndGetWindow` from timing out (in 2 sec). Also updated the nuxt config to cache the build.
-  * CI will be nice
-* Manual tests: pass to a reasonable degree
-* Users of the module, just like any users of socket.io-client, just need to remember that they are still responsible for handling listeners (and removing them). This module only gives the app developer the socket reference(s).
+
+- 10/21/2019: Added emitBacks feature. Now what changes in Vuex can be emitted back to whoever is listening. So, reactivity extends beyond the client to wherever you need it. Better documentation is planned to explain how to use this feature.
+
+- The module will use either the "io" options or the module options. I chose the name `io` because it's concise, but this may conflict with naming used by other modules. The module merges the two options, which may or may not cause headaches. We'll see... if it does, I'm open to changing the name to perhaps `nuxtSocket`.
+- Automated tests:
+  - End-to-end tests pass. Had to increase the global loadingTimeout to 5000 ms to help prevent `nuxt.renderAndGetWindow` from timing out (in 2 sec). Also updated the nuxt config to cache the build.
+  - CI will be nice
+- Manual tests: pass to a reasonable degree
+- Users of the module, just like any users of socket.io-client, just need to remember that they are still responsible for handling listeners (and removing them). This module only gives the app developer the socket reference(s).
 
 For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
