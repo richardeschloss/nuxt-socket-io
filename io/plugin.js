@@ -98,11 +98,6 @@ function nuxtSocket(ioOpts) {
   return socket
 }
 
-function tbd(){
-  console.log('tbd!!!')
-}
-
 export default function(context, inject) {
   inject('nuxtSocket', nuxtSocket)
-  inject('tbd', tbd)
 }

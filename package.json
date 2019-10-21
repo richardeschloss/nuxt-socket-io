@@ -1,6 +1,6 @@
 {
   "name": "nuxt-socket-io",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Socket.io module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "main": "io/module.js",
@@ -25,7 +25,8 @@
     "test:e2e": "cross-env TEST=e2e ava --config e2e.config.js"
   },
   "files": [
-    "io"
+    "io",
+    "utils"
   ],
   "dependencies": {
     "socket.io-client": "^2.3.0"
