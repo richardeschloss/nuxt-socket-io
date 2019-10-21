@@ -80,7 +80,7 @@ function nuxtSocket(ioOpts) {
 
           if (typeof watchProp === 'object'
             && Object.prototype.hasOwnProperty.call(watchProp, '__ob__')) {
-              const errMsg = `${emitBack} is an observable. You probably want to watch its properties`
+              const errMsg = `${emitBack} is a vuex module. You probably want to watch its properties`
               throw Error(errMsg)
             }
           return watchProp
@@ -98,6 +98,11 @@ function nuxtSocket(ioOpts) {
   return socket
 }
 
+function tbd(){
+  console.log('tbd!!!')
+}
+
 export default function(context, inject) {
   inject('nuxtSocket', nuxtSocket)
+  inject('tbd', tbd)
 }
