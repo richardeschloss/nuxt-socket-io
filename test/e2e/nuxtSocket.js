@@ -77,7 +77,7 @@ test('nuxtSocket sends and receives messages, vuex state mutates', async (t) => 
   })
 })
 
-test.only('ioServer receives registered messages on vuex state changes', async (t) => {
+test('ioServer receives registered messages on vuex state changes', async (t) => {
   const { nuxt } = t.context
   const window = await nuxt.renderAndGetWindow('http://localhost:3000')
   const testSocket = window.$nuxt.$nuxtSocket({
