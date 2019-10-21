@@ -26,7 +26,7 @@ modules: [
         vuex: { // optional
           mutations: [{ progress: 'examples/SET_PROGRESS' }], // pass in the evt --> mutation map OR array of actions
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }, 'SOMETHING_ELSE' ] // pass in the evt --> action map OR array of actions or mixed!,
-          emitBacks: ['examples/sample', { 'examples/sample2': 'sample2' }] // pass in the state props you want to listen for changes on. When those props thance, they'll fire these "emitBack" events. If the emitBack is a string, it will send the string, otherwise, if it's an object, it will send the mapped string. (see the updated examples in the page/examples.vue, where I also use a "mapState2Way" function in the component)
+          emitBacks: ['examples/sample', { 'examples/sample2': 'sample2' }] // pass in the state props you want to listen for changes on. When those props thance, they'll fire these "emitBack" events. If the emitBack is a string, it will send the string, otherwise, if it's an object, it will send the mapped string. (see the updated examples in the page/examples.vue, where I also use a "mapState2Way" function in the component).
         }
       },
       { name: 'work', url: 'http://somedomain1:3000' },
@@ -101,6 +101,8 @@ $ npm run generate
 ```
 
 ## Todo Items and Notes
+
+- 10/21/2019: Added emitBacks feature. Now what changes in Vuex can be emitted back to whoever is listening. So, reactivity extends beyond the client to wherever you need it. Better documentation is planned to explain how to use this feature.
 
 - The module will use either the "io" options or the module options. I chose the name `io` because it's concise, but this may conflict with naming used by other modules. The module merges the two options, which may or may not cause headaches. We'll see... if it does, I'm open to changing the name to perhaps `nuxtSocket`.
 - Automated tests:
