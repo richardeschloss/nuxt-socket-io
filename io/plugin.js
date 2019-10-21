@@ -50,7 +50,7 @@ function nuxtSocket(ioOpts) {
           if (typeof item === 'string') {
             evt = mappedItem = item
           } else {
-            [[evt, mappedItem]] = Object.entries(item)
+            ;[[evt, mappedItem]] = Object.entries(item)
           }
 
           socket.on(evt, (data) => {
@@ -68,26 +68,30 @@ function nuxtSocket(ioOpts) {
         if (typeof emitBack === 'string') {
           evt = stateProps = emitBack
         } else {
-          [[stateProps, evt]] = Object.entries(emitBack)
+          ;[[stateProps, evt]] = Object.entries(emitBack)
         }
         stateProps = stateProps.split('/')
-        this.$store.watch((state) => {
-          const out = Object.assign({}, state)
-          const watchProp = stateProps.reduce((outProp, prop) => {
-            outProp = outProp[prop]
-            return outProp
-          }, out)
+        this.$store.watch(
+          (state) => {
+            const out = Object.assign({}, state)
+            const watchProp = stateProps.reduce((outProp, prop) => {
+              outProp = outProp[prop]
+              return outProp
+            }, out)
 
-          if (typeof watchProp === 'object'
-            && Object.prototype.hasOwnProperty.call(watchProp, '__ob__')) {
+            if (
+              typeof watchProp === 'object' &&
+              Object.prototype.hasOwnProperty.call(watchProp, '__ob__')
+            ) {
               const errMsg = `${emitBack} is a vuex module. You probably want to watch its properties`
-              throw Error(errMsg)
+              throw new Error(errMsg)
             }
-          return watchProp
-        }, (data) => {
-          console.log('val changed', data, evt)
-          socket.emit(evt, { data })
-        })
+            return watchProp
+          },
+          (data) => {
+            socket.emit(evt, { data })
+          }
+        )
       })
     }
   }
