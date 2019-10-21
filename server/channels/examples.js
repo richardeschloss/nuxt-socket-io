@@ -13,21 +13,29 @@ function Svc() {
         }, period)
       })
     },
-    resetSample({ notify }) {
-      notify({
-        evt: 'sample',
-        data: 0
+    'examples/sample': ({ data: sample, notify }) => {
+      return new Promise((resolve) => {
+        notify({
+          evt: 'sampleDataRxd',
+          data: {
+            msg: 'Sample data rxd on state change',
+            sample
+          }
+        })
+        resolve()
       })
     },
-    'examples/sample': ({ data }) => {
-      // eslint-disable-next-line no-console
-      console.log('sample data rxd from client!', data)
-      return Promise.resolve()
-    },
-    sample2({ data }) {
-      // eslint-disable-next-line no-console
-      console.log('sample2 data rxd from client!', data)
-      return Promise.resolve()
+    sample2({ data: sample, notify }) {
+      return new Promise((resolve) => {
+        notify({
+          evt: 'sample2DataRxd',
+          data: {
+            msg: 'Sample2 data rxd on state change',
+            sample
+          }
+        })
+        resolve()
+      })
     }
   })
 }

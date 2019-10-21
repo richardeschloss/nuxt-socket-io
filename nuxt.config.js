@@ -63,7 +63,8 @@ module.exports = {
         url: 'http://localhost:4000',
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
-          actions: [{ chatMessage: 'FORMAT_MESSAGE' }]
+          actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
+          emitBacks: ['examples/sample', { 'examples/sample2': 'sample2' }]
         }
       }
     ]
