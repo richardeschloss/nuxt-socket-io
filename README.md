@@ -1,6 +1,6 @@
 ![npm](https://img.shields.io/npm/v/nuxt-socket-io) 
-![npm](https://img.shields.io/npm/dt/nuxt-socket-io) 
-[![](https://gitlab.com/richardeschloss/nuxt-socket-io/badges/master/pipeline.svg)](https://gitlab.com/richardeschloss/nuxt-socket-io)
+![npm](https://img.shields.io/npm/dt/nuxt-socket-io)
+![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/richardeschloss/nuxt-socket-io)
 ![NPM](https://img.shields.io/npm/l/nuxt-socket-io)
 
 # nuxt-socket-io
