@@ -1,6 +1,6 @@
 {
   "name": "nuxt-socket-io",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Socket.io module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "main": "io/module.js",
@@ -9,6 +9,14 @@
     {
       "name": "Richard Schloss"
     }
+  ],
+  "keywords": [
+    "nuxt",
+    "socket.io",
+    "socket.io-client",
+    "vue",
+    "vuejs",
+    "easy"
   ],
   "publishConfig": {
     "access": "public"
