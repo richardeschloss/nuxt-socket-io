@@ -1,3 +1,7 @@
+/*
+ * Copyright 2019 Richard Schloss (https://github.com/richardeschloss/nuxt-socket-io)
+ */
+
 const { resolve } = require('path')
 
 module.exports = function nuxtSocketIO(moduleOptions) {
