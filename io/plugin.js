@@ -1,3 +1,7 @@
+/*
+ * Copyright 2019 Richard Schloss (https://github.com/richardeschloss/nuxt-socket-io)
+ */
+
 import io from 'socket.io-client'
 import consola from 'consola'
 
