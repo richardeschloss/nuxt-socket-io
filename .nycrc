@@ -1,0 +1,6 @@
+{
+  "all": false,
+  "exclude": ["node_modules"],
+  "include": ["io"],
+  "extension": [".js"]
+}
