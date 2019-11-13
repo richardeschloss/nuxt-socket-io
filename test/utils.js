@@ -6,10 +6,14 @@ import { IOServer } from '@/server/io'
 const oneSecond = 1000
 const oneMinute = 60 * oneSecond
 
-export function getModuleOptions(moduleName) {
+export function getModuleOptions(moduleName, optsContainer) {
   const opts = {}
-  const containers = ['buildModules', 'modules']
+  const containers = ['buildModules', 'modules', optsContainer]
   containers.some((container) => {
+    if (container === optsContainer) {
+      Object.assign(opts, { [optsContainer]: config[container] })
+      return true
+    }
     const arr = config[container]
     const mod = arr.find((item) => {
       if (typeof item === 'string') {
