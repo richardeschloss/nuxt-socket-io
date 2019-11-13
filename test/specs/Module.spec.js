@@ -12,12 +12,11 @@ test('Module adds plugin correctly', (t) => {
   return new Promise((resolve) => {
     const simpleNuxt = {
       addPlugin({ src, fileName, options }) {
-        consola.log('options', options)
         t.is(src, path.resolve(srcDir, 'io/plugin.js'))
         t.is(fileName, 'nuxt-socket-io.js')
-        t.truthy(options.io)
-        t.true(options.io.sockets.length > 0)
-        options.io.sockets.forEach((s, idx) => {
+        t.truthy(options.sockets)
+        t.true(options.sockets.length > 0)
+        options.sockets.forEach((s, idx) => {
           Object.entries(s).forEach(([key, entry]) => {
             t.is(entry, modOptions.io.sockets[idx][key])
           })
@@ -30,6 +29,6 @@ test('Module adds plugin correctly', (t) => {
       },
       registerMod: NuxtSocketMod
     }
-    simpleNuxt.registerMod(modOptions)
+    simpleNuxt.registerMod(modOptions.io)
   })
 })
