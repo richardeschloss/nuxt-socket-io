@@ -1,10 +1,33 @@
 /* eslint-disable no-console */
+import fs from 'fs'
+import template from 'lodash/template'
 import { Nuxt, Builder } from 'nuxt'
 import config from '@/nuxt.config'
 import { IOServer } from '@/server/io'
 
 const oneSecond = 1000
 const oneMinute = 60 * oneSecond
+
+export async function compilePlugin({ src, tmpFile, options }) {
+  const content = fs.readFileSync(src, 'utf-8')
+  let Plugin
+  try {
+    const compiled = template(content)
+    const pluginJs = compiled({ options })
+    fs.writeFileSync(tmpFile, pluginJs)
+    const { default: compiledPlugin } = await import(tmpFile).catch((err) => {
+      throw new Error('Err importing plugin: ' + err)
+    })
+    Plugin = compiledPlugin
+  } catch (e) {
+    throw new Error('Could not compile plugin :(' + e)
+  }
+  return Plugin
+}
+
+export function removeCompiledPlugin(tmpFile) {
+  fs.unlinkSync(tmpFile)
+}
 
 export function getModuleOptions(moduleName, optsContainer) {
   const opts = {}
