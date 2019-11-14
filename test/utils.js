@@ -1,10 +1,59 @@
 /* eslint-disable no-console */
+import fs from 'fs'
+import template from 'lodash/template'
 import { Nuxt, Builder } from 'nuxt'
 import config from '@/nuxt.config'
 import { IOServer } from '@/server/io'
 
 const oneSecond = 1000
 const oneMinute = 60 * oneSecond
+
+export async function compilePlugin({ src, tmpFile, options }) {
+  const content = fs.readFileSync(src, 'utf-8')
+  let Plugin
+  try {
+    const compiled = template(content)
+    const pluginJs = compiled({ options })
+    fs.writeFileSync(tmpFile, pluginJs)
+    const { default: compiledPlugin } = await import(tmpFile).catch((err) => {
+      throw new Error('Err importing plugin: ' + err)
+    })
+    Plugin = compiledPlugin
+  } catch (e) {
+    throw new Error('Could not compile plugin :(' + e)
+  }
+  return Plugin
+}
+
+export function removeCompiledPlugin(tmpFile) {
+  fs.unlinkSync(tmpFile)
+}
+
+export function getModuleOptions(moduleName, optsContainer) {
+  const opts = {}
+  const containers = ['buildModules', 'modules', optsContainer]
+  containers.some((container) => {
+    if (container === optsContainer) {
+      Object.assign(opts, { [optsContainer]: config[container] })
+      return true
+    }
+    const arr = config[container]
+    const mod = arr.find((item) => {
+      if (typeof item === 'string') {
+        return item === moduleName
+      } else if (item.length) {
+        return item[0] === moduleName
+      }
+    })
+    if (mod) {
+      if (mod.length) {
+        Object.assign(opts, mod[1])
+      }
+      return true
+    }
+  })
+  return opts
+}
 
 export async function ioServerInit(t) {
   console.time('ioServerInit')

@@ -17,17 +17,13 @@ cache:
   paths:
     - node_modules/
 
+test_unit:
+  script:
+    - npm install
+    - npm run test:unit:cov
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+
 test_e2e:
   script:
     - npm install
     - npm run test:e2e
-
-#test_async:
-#  script:
-#    - npm install
-#    - node ./specs/start.js ./specs/async.spec.js
-
-#test_db:
-#  script:
-#    - npm install
-#    - node ./specs/start.js ./specs/db-postgres.spec.js
