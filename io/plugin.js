@@ -5,25 +5,44 @@
 import io from 'socket.io-client'
 import consola from 'consola'
 
+function PluginOptions() {
+  let _pluginOptions
+  return Object.freeze({
+    get() {
+      if (!process.env.TEST) {
+        return <%= JSON.stringify(options) %>
+      }
+      return _pluginOptions
+    },
+    set(opts) {
+      _pluginOptions = opts
+    }
+  })
+}
+
+export const pOptions = PluginOptions()
+
 function nuxtSocket(ioOpts) {
   const { name, channel = '', ...connectOpts } = ioOpts
-  const pluginOptions = <%= JSON.stringify(options) %>
+  const pluginOptions = pOptions.get()
   const { sockets } = pluginOptions
   const { $store: store } = this
 
-  if (!sockets || sockets.length === 0) {
+  if (
+    !sockets ||
+    sockets.constructor.name !== 'Array' ||
+    sockets.length === 0
+  ) {
     throw new Error(
       "Please configure sockets if planning to use nuxt-socket-io: \r\n [{name: '', url: ''}]"
     )
   }
 
   let useSocket = null
-  if (sockets && sockets.length && sockets.length > 0) {
-    if (!name) {
-      useSocket = sockets.find((s) => s.default === true)
-    } else {
-      useSocket = sockets.find((s) => s.name === name)
-    }
+  if (!name) {
+    useSocket = sockets.find((s) => s.default === true)
+  } else {
+    useSocket = sockets.find((s) => s.name === name)
   }
 
   if (!useSocket) {
@@ -54,7 +73,7 @@ function nuxtSocket(ioOpts) {
           if (typeof item === 'string') {
             evt = mappedItem = item
           } else {
-            [[evt, mappedItem]] = Object.entries(item)
+            ;[[evt, mappedItem]] = Object.entries(item)
           }
 
           socket.on(evt, (data) => {
@@ -72,26 +91,32 @@ function nuxtSocket(ioOpts) {
         if (typeof emitBack === 'string') {
           evt = stateProps = emitBack
         } else {
-          [[stateProps, evt]] = Object.entries(emitBack)
+          ;[[stateProps, evt]] = Object.entries(emitBack)
         }
         stateProps = stateProps.split('/')
-        this.$store.watch((state) => {
-          const out = Object.assign({}, state)
-          const watchProp = stateProps.reduce((outProp, prop) => {
-            outProp = outProp[prop]
-            return outProp
-          }, out)
+        this.$store.watch(
+          (state) => {
+            const out = Object.assign({}, state)
+            const watchProp = stateProps.reduce((outProp, prop) => {
+              outProp = outProp[prop]
+              return outProp
+            }, out)
 
-          if (typeof watchProp === 'object'
-            && Object.prototype.hasOwnProperty.call(watchProp, '__ob__')) {
-              const errMsg = emitBack + 'is a vuex module. You probably want to watch its properties'
-              throw Error(errMsg)
+            if (
+              typeof watchProp === 'object' &&
+              Object.prototype.hasOwnProperty.call(watchProp, '__ob__')
+            ) {
+              const errMsg =
+                emitBack +
+                ' is a vuex module. You probably want to watch its properties'
+              throw new Error(errMsg)
             }
-          return watchProp
-        }, (data) => {
-          console.log('val changed', data, evt)
-          socket.emit(evt, { data })
-        })
+            return watchProp
+          },
+          (data) => {
+            socket.emit(evt, { data })
+          }
+        )
       })
     }
   }

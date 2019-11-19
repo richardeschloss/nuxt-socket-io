@@ -1,5 +1,6 @@
 {
   "all": false,
+  "reporter": ["html", "text"],
   "exclude": ["node_modules"],
   "include": ["io"],
   "extension": [".js"]
