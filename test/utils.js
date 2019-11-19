@@ -10,19 +10,17 @@ const oneMinute = 60 * oneSecond
 
 export async function compilePlugin({ src, tmpFile, options }) {
   const content = fs.readFileSync(src, 'utf-8')
-  let Plugin
   try {
     const compiled = template(content)
     const pluginJs = compiled({ options })
     fs.writeFileSync(tmpFile, pluginJs)
-    const { default: compiledPlugin } = await import(tmpFile).catch((err) => {
+    const { default: Plugin, pOptions } = await import(tmpFile).catch((err) => {
       throw new Error('Err importing plugin: ' + err)
     })
-    Plugin = compiledPlugin
+    return { Plugin, pOptions }
   } catch (e) {
     throw new Error('Could not compile plugin :(' + e)
   }
-  return Plugin
 }
 
 export function removeCompiledPlugin(tmpFile) {
@@ -63,6 +61,7 @@ export async function ioServerInit(t) {
     port: 4000
   })
   await ioServer.start()
+  t.context.ioServer = ioServer
   console.timeEnd('ioServerInit')
 }
 
