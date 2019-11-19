@@ -4,6 +4,7 @@ const consola = require('consola')
 const socketIO = require('socket.io')
 
 function IOServer({ host, port, server = http.createServer() }) {
+  let _io
   function registerIO(io) {
     const ioChannels = fs
       .readdirSync('./server/channels')
@@ -41,14 +42,19 @@ function IOServer({ host, port, server = http.createServer() }) {
       consola.info('IO server not listening...will fix that...')
       await listen()
     }
-    const io = socketIO(server)
-    registerIO(io)
-    return io
+    _io = socketIO(server)
+    registerIO(_io)
+    return _io
+  }
+
+  function stop() {
+    return new Promise((resolve) => _io.close(resolve))
   }
 
   return Object.freeze({
     registerIO,
-    start
+    start,
+    stop
   })
 }
 
