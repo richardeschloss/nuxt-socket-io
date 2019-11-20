@@ -7,24 +7,21 @@ import consola from 'consola'
 
 function PluginOptions() {
   let _pluginOptions
-  return Object.freeze({
-    get() {
-      if (!process.env.TEST) {
-        return <%= JSON.stringify(options) %>
-      }
-      return _pluginOptions
-    },
-    set(opts) {
-      _pluginOptions = opts
-    }
-  })
+  const svc = {}
+  if (process.env.TEST) {
+    svc.get = () => (_pluginOptions)
+    svc.set = (opts) => _pluginOptions = opts
+  } else {
+    svc.get = () => (<%= JSON.stringify(options) %>)
+  }
+  return Object.freeze(svc)
 }
 
-export const pOptions = PluginOptions()
+const _pOptions = PluginOptions()
 
 function nuxtSocket(ioOpts) {
   const { name, channel = '', ...connectOpts } = ioOpts
-  const pluginOptions = pOptions.get()
+  const pluginOptions = _pOptions.get()
   const { sockets } = pluginOptions
   const { $store: store } = this
 
@@ -129,4 +126,10 @@ function nuxtSocket(ioOpts) {
 
 export default function(context, inject) {
   inject('nuxtSocket', nuxtSocket)
+}
+
+export let pOptions
+if (process.env.TEST) {
+  pOptions = {}
+  Object.assign(pOptions, _pOptions)
 }

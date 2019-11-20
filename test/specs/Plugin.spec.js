@@ -1,4 +1,3 @@
-import fs from 'fs'
 import path from 'path'
 import consola from 'consola'
 import { serial as test, before, after } from 'ava'
@@ -13,6 +12,18 @@ state.examples = examplesState()
 state.examples.__ob__ = ''
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
+
+async function compile(t) {
+  const compiled = await compilePlugin({ src, tmpFile, options: io }).catch(
+    (err) => {
+      consola.error(err)
+      t.fail()
+    }
+  )
+  Plugin = compiled.Plugin
+  pOptions = compiled.pOptions
+  t.pass()
+}
 
 function loadPlugin(t, ioOpts = {}) {
   return new Promise((resolve, reject) => {
@@ -50,17 +61,7 @@ function loadPlugin(t, ioOpts = {}) {
 
 let Plugin, pOptions
 
-before('Compile Plugin', async (t) => {
-  const compiled = await compilePlugin({ src, tmpFile, options: io }).catch(
-    (err) => {
-      consola.error(err)
-      t.fail()
-    }
-  )
-  Plugin = compiled.Plugin
-  pOptions = compiled.pOptions
-  t.pass()
-})
+before('Compile Plugin', compile)
 
 before('Init IO Server', ioServerInit)
 
@@ -172,7 +173,9 @@ test('Socket plugin (malformed emitBacks)', async (t) => {
 })
 
 test('Socket plugin (from nuxt.config)', async (t) => {
+  delete require.cache[tmpFile]
   delete process.env.TEST
+  await compile(t)
   const { ioServer } = t.context
   const testSocket = await loadPlugin(t, {
     name: 'test',
