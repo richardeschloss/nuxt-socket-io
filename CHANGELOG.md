@@ -35,4 +35,4 @@ All notable changes to this project will be documented in this file.
 
 ## See Also:
 
-[Releases](https://github.com/richardeschloss/nuxt-stories/releases) 
+[Releases](https://github.com/richardeschloss/nuxt-socket-io/releases) 
