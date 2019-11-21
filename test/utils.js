@@ -2,6 +2,7 @@
 import fs from 'fs'
 import template from 'lodash/template'
 import { Nuxt, Builder } from 'nuxt'
+import serialize from 'serialize-javascript'
 import config from '@/nuxt.config'
 import { IOServer } from '@/server/io'
 
@@ -11,8 +12,8 @@ const oneMinute = 60 * oneSecond
 export async function compilePlugin({ src, tmpFile, options }) {
   const content = fs.readFileSync(src, 'utf-8')
   try {
-    const compiled = template(content)
-    const pluginJs = compiled({ options })
+    const compiled = template(content, { interpolate: /<%=([\s\S]+?)%>/g })
+    const pluginJs = compiled({ options, serialize })
     fs.writeFileSync(tmpFile, pluginJs)
     const { default: Plugin, pOptions } = await import(tmpFile).catch((err) => {
       throw new Error('Err importing plugin: ' + err)
