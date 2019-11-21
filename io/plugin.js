@@ -104,8 +104,7 @@ function nuxtSocket(ioOpts) {
               Object.prototype.hasOwnProperty.call(watchProp, '__ob__')
             ) {
               const errMsg =
-                emitBack +
-                ' is a vuex module. You probably want to watch its properties'
+                `${emitBack} is a vuex module. You probably want to watch its properties`
               throw new Error(errMsg)
             }
             return watchProp
