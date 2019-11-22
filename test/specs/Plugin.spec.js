@@ -29,24 +29,22 @@ function loadPlugin(t, ioOpts = {}) {
   return new Promise((resolve, reject) => {
     const context = {}
     Plugin(context, (label, NuxtSocket) => {
-      const testObj = {
-        $store: {
-          commit: (msg) => {
-            consola.log('commit', msg)
-          },
-          dispatch: (msg) => {
-            consola.log('dispatch', msg)
-          },
-          watch: (stateCb, dataCb) => {
-            stateCb(state)
-            dataCb({ sample: 123 })
-          }
+      context.$store = {
+        commit: (msg) => {
+          consola.log('commit', msg)
         },
-        testSocket: NuxtSocket
+        dispatch: (msg) => {
+          consola.log('dispatch', msg)
+        },
+        watch: (stateCb, dataCb) => {
+          stateCb(state)
+          dataCb({ sample: 123 })
+        }
       }
+      context[label] = NuxtSocket
 
       try {
-        const socket = testObj.testSocket(ioOpts)
+        const socket = context[label](ioOpts)
         t.is(label, 'nuxtSocket')
         t.is(typeof NuxtSocket, 'function')
         t.is(NuxtSocket.name, 'nuxtSocket')
