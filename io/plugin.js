@@ -63,7 +63,7 @@ function nuxtSocket(ioOpts) {
     }
     Object.entries(storeFns).forEach(([group, fn]) => {
       const groupOpts = vuexOpts[group]
-      if (groupOpts.length && groupOpts.length > 0) {
+      if (groupOpts && groupOpts.constructor.name === 'Array' && groupOpts.length > 0) {
         groupOpts.forEach((item) => {
           let evt = null
           let mappedItem = null
