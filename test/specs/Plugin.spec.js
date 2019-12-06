@@ -129,6 +129,38 @@ test('Socket plugin (malformed vuex options)', async (t) => {
   await loadPlugin(t)
 })
 
+test('Socket plugin (vuex options missing mutations)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        default: true,
+        url: 'http://localhost:3000',
+        vuex: {
+          actions: []
+        }
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  await loadPlugin(t)
+})
+
+test('Socket plugin (vuex options missing actions)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        default: true,
+        url: 'http://localhost:3000',
+        vuex: {
+          mutations: []
+        }
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  await loadPlugin(t)
+})
+
 test('Socket plugin (vuex opts as strings)', async (t) => {
   const testCfg = {
     sockets: [
