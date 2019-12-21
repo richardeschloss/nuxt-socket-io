@@ -203,7 +203,7 @@ test('Socket plugin (malformed emitBacks)', async (t) => {
 })
 
 test('Emitback is not defined in vuex store', async (t) => {
-  const emitBack = 'something/undefined'
+  const errEmitBack = 'something/undefined'
   const testCfg = {
     sockets: [
       {
@@ -212,7 +212,7 @@ test('Emitback is not defined in vuex store', async (t) => {
         vuex: {
           actions: [],
           mutations: [],
-          emitBacks: [emitBack]
+          emitBacks: [errEmitBack]
         }
       }
     ]
@@ -222,7 +222,37 @@ test('Emitback is not defined in vuex store', async (t) => {
     t.is(
       e.message,
       [
-        `Vuex state undefined: ${emitBack}.`,
+        `[nuxt-socket-io]: Trying to register emitback ${errEmitBack} failed`,
+        `because it is not defined in Vuex.`,
+        'Is state set up correctly in your stores folder?'
+      ].join('\n')
+    )
+  })
+})
+
+test('Emitback is not defined in vuex store (variant 2)', async (t) => {
+  const errEmitBack = { 'something/undefined': 'someData' }
+  const [errEmitBackLabel] = Object.keys(errEmitBack)
+  const testCfg = {
+    sockets: [
+      {
+        default: true,
+        url: 'http://localhost:3000',
+        vuex: {
+          actions: [],
+          mutations: [],
+          emitBacks: [errEmitBack]
+        }
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  await loadPlugin(t).catch((e) => {
+    t.is(
+      e.message,
+      [
+        `[nuxt-socket-io]: Trying to register emitback ${errEmitBackLabel} failed`,
+        `because it is not defined in Vuex.`,
         'Is state set up correctly in your stores folder?'
       ].join('\n')
     )

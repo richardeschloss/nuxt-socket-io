@@ -108,13 +108,13 @@ function nuxtSocket(ioOpts) {
               return outProp
             }, out)
             if (missingProps.length > 0) {
+              const errEmitBack = missingProps.join('/')
               throw new Error([
-                `Vuex state undefined: ${missingProps.join('/')}.`,
+                `[nuxt-socket-io]: Trying to register emitback ${errEmitBack} failed`,
+                `because it is not defined in Vuex.`,
                 'Is state set up correctly in your stores folder?'
               ].join('\n'))
             }
-
-            console.log('watchProp!!', watchProp)
 
             if (
               typeof watchProp === 'object' &&
