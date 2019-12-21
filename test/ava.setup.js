@@ -1,18 +1,21 @@
-const hooks = require('require-extension-hooks')
+import hooks from 'require-extension-hooks'
+import Vue from 'vue'
+import { ioServerInit } from './utils'
+
 const { TEST } = process.env
 
 if (TEST === 'unit') {
+  ioServerInit({ port: 4000 })
+  ioServerInit({ port: 3000 })
   require('jsdom-global')()
   require('browser-env')()
-  const Vue = require('vue')
-  Vue.config.productionTip = false
 
   // https://github.com/nuxt/create-nuxt-app/issues/180#issuecomment-463069941
   window.Date = global.Date = Date
 } else if (TEST === 'e2e') {
-  const Vue = require('vue')
-  Vue.config.productionTip = false
 }
+
+Vue.config.productionTip = false
 
 hooks('vue')
   .plugin('vue')

@@ -4,7 +4,7 @@ import { serial as test, before, after } from 'ava'
 import config from '@/nuxt.config'
 import { state as indexState } from '@/store/index'
 import { state as examplesState } from '@/store/examples'
-import { compilePlugin, ioServerInit, removeCompiledPlugin } from '@/test/utils'
+import { compileAndImportPlugin, removeCompiledPlugin } from '@/test/utils'
 
 const { io } = config
 const state = indexState()
@@ -13,16 +13,22 @@ state.examples.__ob__ = ''
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
 
-async function compile(t) {
-  const compiled = await compilePlugin({ src, tmpFile, options: io }).catch(
-    (err) => {
-      consola.error(err)
-      t.fail()
-    }
-  )
-  Plugin = compiled.Plugin
-  pOptions = compiled.pOptions
-  t.pass()
+let Plugin
+let pOptions
+
+async function compileAndImport(t, compileOpts = {}) {
+  const { overwrite } = compileOpts
+  const imported = await compileAndImportPlugin({
+    src,
+    tmpFile,
+    options: io,
+    overwrite
+  }).catch((err) => {
+    console.error('Compile and Import err', err.message)
+    t.fail()
+  })
+  Plugin = imported.Plugin
+  pOptions = imported.pOptions
 }
 
 function loadPlugin(t, ioOpts = {}, callCnt = { storeWatch: 0 }) {
@@ -58,13 +64,7 @@ function loadPlugin(t, ioOpts = {}, callCnt = { storeWatch: 0 }) {
   })
 }
 
-let Plugin, pOptions
-
-before('Compile Plugin', compile)
-
-before('Init IO Server', async (t) => {
-  await ioServerInit(t, {})
-})
+before('Compile and Import Plugin', compileAndImport)
 
 after('Remove compiled plugin', () => {
   removeCompiledPlugin(tmpFile)
@@ -295,8 +295,7 @@ test('Duplicate Watchers are not registered', async (t) => {
 test('Socket plugin (from nuxt.config)', async (t) => {
   delete require.cache[tmpFile]
   delete process.env.TEST
-  await compile(t)
-  const { ioServer } = t.context
+  await compileAndImport(t, { overwrite: true })
   const testSocket = await loadPlugin(t, {
     name: 'test',
     channel: '/index'
@@ -304,13 +303,10 @@ test('Socket plugin (from nuxt.config)', async (t) => {
   const testJSON = { msg: 'it worked!' }
   const expected = 'It worked! Received msg: ' + JSON.stringify(testJSON)
   return new Promise((resolve) => {
-    testSocket
-      .emit('getMessage', testJSON, async (actual) => {
-        t.is(expected, actual)
-        await ioServer.stop()
-      })
-      .on('disconnect', () => {
-        resolve()
-      })
+    testSocket.emit('getMessage', testJSON, (actual) => {
+      t.is(expected, actual)
+      testSocket.close()
+      resolve()
+    })
   })
 })
