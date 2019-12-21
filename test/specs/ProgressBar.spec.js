@@ -8,14 +8,19 @@ import config from '@/nuxt.config'
 import { compilePlugin, ioServerInit, removeCompiledPlugin } from '@/test/utils'
 import ProgressBar from '@/components/ProgressBar.vue'
 import { state as indexState, mutations, actions } from '@/store/index'
-import { state as examplesState } from '@/store/examples'
+import {
+  state as examplesState,
+  mutations as examplesMutations
+} from '@/store/examples'
 
 const { io } = config
 const state = indexState()
-state.examples = examplesState()
-
-mutations[`examples/SET_PROGRESS`] = function(state, progress) {
-  state.examples.progress = progress
+const vuexModules = {
+  examples: {
+    namespaced: true,
+    state: examplesState(),
+    mutations: examplesMutations
+  }
 }
 
 const src = pResolve('./io/plugin.js')
@@ -60,7 +65,8 @@ beforeEach(() => {
   store = new Vuex.Store({
     state,
     mutations,
-    actions
+    actions,
+    modules: vuexModules
   })
 })
 
@@ -104,7 +110,17 @@ test('Get Progress', async (t) => {
     wrapper.vm.socket.on('progress', (data) => {
       // The component will set this.progress. Wait for it...
       wrapper.vm.$nextTick(() => {
-        t.is(wrapper.vm.progress, wrapper.vm.progressVuex)
+        const {
+          showProgress,
+          congratulate,
+          progress,
+          progressVuex
+        } = wrapper.vm
+        t.is(progressVuex, progress)
+        if (progress < 100) {
+          t.true(showProgress)
+          t.false(congratulate)
+        }
       })
     })
     wrapper.vm.getProgress().then(() => {
