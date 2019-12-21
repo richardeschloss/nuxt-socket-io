@@ -63,7 +63,11 @@ function nuxtSocket(ioOpts) {
     }
     Object.entries(storeFns).forEach(([group, fn]) => {
       const groupOpts = vuexOpts[group]
-      if (groupOpts && groupOpts.constructor.name === 'Array' && groupOpts.length > 0) {
+      if (
+        groupOpts &&
+        groupOpts.constructor.name === 'Array' &&
+        groupOpts.length > 0
+      ) {
         groupOpts.forEach((item) => {
           let evt = null
           let mappedItem = null
@@ -94,10 +98,23 @@ function nuxtSocket(ioOpts) {
         this.$store.watch(
           (state) => {
             const out = Object.assign({}, state)
+            const missingProps = []
             const watchProp = stateProps.reduce((outProp, prop) => {
+              if (!outProp || !outProp[prop]) {
+                missingProps.push(prop)
+                return 
+              }
               outProp = outProp[prop]
               return outProp
             }, out)
+            if (missingProps.length > 0) {
+              throw new Error([
+                `Vuex state undefined: ${missingProps.join('/')}.`,
+                'Is state set up correctly in your stores folder?'
+              ].join('\n'))
+            }
+
+            console.log('watchProp!!', watchProp)
 
             if (
               typeof watchProp === 'object' &&

@@ -202,6 +202,33 @@ test('Socket plugin (malformed emitBacks)', async (t) => {
   })
 })
 
+test('Emitback is not defined in vuex store', async (t) => {
+  const emitBack = 'something/undefined'
+  const testCfg = {
+    sockets: [
+      {
+        default: true,
+        url: 'http://localhost:3000',
+        vuex: {
+          actions: [],
+          mutations: [],
+          emitBacks: [emitBack]
+        }
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  await loadPlugin(t).catch((e) => {
+    t.is(
+      e.message,
+      [
+        `Vuex state undefined: ${emitBack}.`,
+        'Is state set up correctly in your stores folder?'
+      ].join('\n')
+    )
+  })
+})
+
 test('Socket plugin (from nuxt.config)', async (t) => {
   delete require.cache[tmpFile]
   delete process.env.TEST
