@@ -50,6 +50,10 @@ function nuxtSocket(ioOpts) {
     throw new Error('URL must be defined for nuxtSocket')
   }
 
+  if (!useSocket.registeredWatchers) {
+    useSocket.registeredWatchers = []
+  }
+
   const { vuex: vuexOpts } = useSocket
   useSocket.url += channel
 
@@ -88,13 +92,18 @@ function nuxtSocket(ioOpts) {
     if (emitBacks && emitBacks.length) {
       emitBacks.forEach((emitBack) => {
         let evt = null
-        let stateProps = null
+        let statePropsPath = null
         if (typeof emitBack === 'string') {
-          evt = stateProps = emitBack
+          evt = statePropsPath = emitBack
         } else {
-          ;[[stateProps, evt]] = Object.entries(emitBack)
+          ;[[statePropsPath, evt]] = Object.entries(emitBack)
         }
-        stateProps = stateProps.split('/')
+
+        if (useSocket.registeredWatchers.includes(statePropsPath)) {
+          return
+        }
+        
+        const stateProps = statePropsPath.split('/')
         this.$store.watch(
           (state) => {
             const out = Object.assign({}, state)
@@ -124,6 +133,7 @@ function nuxtSocket(ioOpts) {
                 `${emitBack} is a vuex module. You probably want to watch its properties`
               throw new Error(errMsg)
             }
+            useSocket.registeredWatchers.push(statePropsPath)
             return watchProp
           },
           (data) => {

@@ -25,7 +25,7 @@ async function compile(t) {
   t.pass()
 }
 
-function loadPlugin(t, ioOpts = {}) {
+function loadPlugin(t, ioOpts = {}, callCnt = { storeWatch: 0 }) {
   return new Promise((resolve, reject) => {
     const context = {}
     Plugin(context, (label, NuxtSocket) => {
@@ -37,6 +37,7 @@ function loadPlugin(t, ioOpts = {}) {
           consola.log('dispatch', msg)
         },
         watch: (stateCb, dataCb) => {
+          callCnt.storeWatch++
           stateCb(state)
           dataCb({ sample: 123 })
         }
@@ -257,6 +258,36 @@ test('Emitback is not defined in vuex store (variant 2)', async (t) => {
       ].join('\n')
     )
   })
+})
+
+test('Duplicate Watchers are not registered', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        default: true,
+        name: 'test',
+        url: 'http://localhost:3000',
+        vuex: {
+          emitBacks: ['examples/sample', { 'examples/sample2': 'sample2' }]
+        }
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  const callCnt = { storeWatch: 0 }
+  const loadCnt = 2
+  for (let i = 0; i < loadCnt; i++) {
+    await loadPlugin(
+      t,
+      {
+        name: 'test',
+        channel: '/index'
+      },
+      callCnt
+    )
+  }
+
+  t.is(callCnt.storeWatch, 2)
 })
 
 test('Socket plugin (from nuxt.config)', async (t) => {
