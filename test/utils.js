@@ -54,12 +54,15 @@ export function getModuleOptions(moduleName, optsContainer) {
   return opts
 }
 
-export async function ioServerInit(t) {
+export async function ioServerInit(
+  t,
+  { proto = 'http', host = 'localhost', port = 4000 }
+) {
   console.time('ioServerInit')
   const ioServer = IOServer({
-    proto: 'http',
-    host: 'localhost',
-    port: 4000
+    proto,
+    host,
+    port
   })
   await ioServer.start()
   t.context.ioServer = ioServer
