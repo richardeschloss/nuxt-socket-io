@@ -24,7 +24,7 @@ const vuexModules = {
 }
 
 const src = pResolve('./io/plugin.js')
-const tmpFile = pResolve('/tmp/plugin.compiled.js')
+const tmpFile = pResolve('./io/tmp.compiled.js')
 
 let Plugin, pOptions
 
@@ -72,6 +72,10 @@ beforeEach(() => {
 
 after('Remove compiled plugin', () => {
   removeCompiledPlugin(tmpFile)
+})
+
+after('Stop IO Server', (t) => {
+  t.context.ioServer.stop()
 })
 
 test('ProgressBar is a Vue component', (t) => {

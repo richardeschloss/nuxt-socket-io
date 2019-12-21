@@ -12,10 +12,15 @@ import { state as examplesState } from '@/store/examples'
 
 const { io } = config
 const state = indexState()
-state.examples = examplesState()
-state.examples.__ob__ = ''
+const vuexModules = {
+  examples: {
+    namespaced: true,
+    state: examplesState()
+  }
+}
+
 const src = pResolve('./io/plugin.js')
-const tmpFile = pResolve('./io/plugin.compiled.js')
+const tmpFile = pResolve('./io/tmp.compiled.js')
 
 let Plugin, pOptions
 
@@ -56,12 +61,17 @@ beforeEach(() => {
   store = new Vuex.Store({
     state,
     mutations,
-    actions
+    actions,
+    modules: vuexModules
   })
 })
 
 after('Remove compiled plugin', () => {
   removeCompiledPlugin(tmpFile)
+})
+
+after('Stop IO Server', (t) => {
+  t.context.ioServer.stop()
 })
 
 test('Messages is a Vue component', (t) => {

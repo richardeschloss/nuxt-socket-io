@@ -62,7 +62,9 @@ let Plugin, pOptions
 
 before('Compile Plugin', compile)
 
-before('Init IO Server', ioServerInit)
+before('Init IO Server', async (t) => {
+  await ioServerInit(t, {})
+})
 
 after('Remove compiled plugin', () => {
   removeCompiledPlugin(tmpFile)
