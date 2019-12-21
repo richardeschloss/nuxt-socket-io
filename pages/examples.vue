@@ -6,45 +6,19 @@
     <progress-bar></progress-bar>
     <h3>Emit registered Vuex changes back to IO Server</h3>
     <br />
-    <div>
-      <label
-        >Sample Number (will send "examples/sample" event back on change)</label
-      >
-      <b-form-input v-model="sample" type="number"></b-form-input>
-    </div>
-    <div>
-      <label
-        >Sample Number2 (will send mapped "sample2" event back on change)</label
-      >
-      <b-form-input v-model="sample2" type="number"></b-form-input>
-    </div>
+    <samples></samples>
     <nuxt-link to="/">Go Home</nuxt-link>
   </div>
 </template>
 
 <script>
-import { mapState2Way } from '@/utils/esm'
 import ProgressBar from '@/components/ProgressBar.vue'
+import Samples from '@/components/Samples.vue'
 
 export default {
   components: {
-    ProgressBar
-  },
-  computed: {
-    sample: mapState2Way({ 'examples/sample': 'examples/SET_SAMPLE' }),
-    sample2: {
-      get() {
-        return this.$store.state.examples.sample2
-      },
-      set(newVal) {
-        this.$store.commit('examples/SET_SAMPLE2', newVal)
-      }
-    }
-  },
-  mounted() {
-    this.socket = this.$nuxtSocket({
-      channel: '/examples'
-    })
+    ProgressBar,
+    Samples
   }
 }
 </script>
@@ -56,8 +30,5 @@ export default {
   align-items: center;
   text-align: center;
   width: 50%;
-}
-.example-input {
-  margin-bottom: 10px;
 }
 </style>
