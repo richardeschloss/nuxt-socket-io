@@ -3,7 +3,7 @@
  */
 
 import io from 'socket.io-client'
-import consola from 'consola'
+// import consola from 'consola'
 
 function PluginOptions() {
   let _pluginOptions
@@ -36,6 +36,7 @@ function nuxtSocket(ioOpts) {
   }
 
   let useSocket = null
+  
   if (!name) {
     useSocket = sockets.find((s) => s.default === true)
   } else {
@@ -54,11 +55,13 @@ function nuxtSocket(ioOpts) {
     useSocket.registeredWatchers = []
   }
 
+  let { url: connectUrl } = useSocket
+  connectUrl += channel
+  
   const { vuex: vuexOpts } = useSocket
-  useSocket.url += channel
 
-  const socket = io(useSocket.url, connectOpts)
-  consola.info('connect', useSocket.name, useSocket.url)
+  const socket = io(connectUrl, connectOpts)
+  console.info('connect', useSocket.name, connectUrl)
 
   if (vuexOpts) {
     const storeFns = {
