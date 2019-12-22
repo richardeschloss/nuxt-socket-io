@@ -7,18 +7,17 @@ const { TEST } = process.env
 const { io } = config
 
 if (TEST === 'unit') {
-  // compilePlugin({
-  //   src: pResolve('./io/plugin.js'),
-  //   tmpFile: pResolve('./io/tmp.compiled.js'),
-  //   options: io
-  // })
   compilePlugin({
     src: pResolve('./io/plugin.js'),
     tmpFile: pResolve('./io/plugin.compiled.js'),
     options: io
   })
-  ioServerInit({ port: 4000 })
-  ioServerInit({ port: 3000 })
+  ioServerInit({ port: 4000 }).catch((err) => {
+    console.error(err.message)
+  })
+  ioServerInit({ port: 3000 }).catch((err) => {
+    console.error(err.message)
+  })
   require('jsdom-global')()
   require('browser-env')()
   const Vue = require('vue')

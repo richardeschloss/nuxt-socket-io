@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { serial as test, beforeEach } from 'ava'
+import test, { beforeEach } from 'ava'
 import { createLocalVue, shallowMount } from '@vue/test-utils'
 import Vuex from 'vuex'
 import { BootstrapVue } from 'bootstrap-vue'
