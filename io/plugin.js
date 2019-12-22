@@ -3,7 +3,7 @@
  */
 
 import io from 'socket.io-client'
-// import consola from 'consola'
+import consola from 'consola'
 
 function PluginOptions() {
   let _pluginOptions
@@ -61,7 +61,7 @@ function nuxtSocket(ioOpts) {
   const { vuex: vuexOpts } = useSocket
 
   const socket = io(connectUrl, connectOpts)
-  console.info('connect', useSocket.name, connectUrl)
+  consola.info('connect', useSocket.name, connectUrl)
 
   if (vuexOpts) {
     const storeFns = {
