@@ -14,7 +14,7 @@ export function compilePlugin({ src, tmpFile, options, overwrite = false }) {
     console.info(`compiled plugin ${tmpFile} already exists`)
     return
   } else {
-    console.log(`overwriting existing compiled plugin ${tmpFile}`)
+    console.log(`saving compiled plugin to: ${tmpFile}`)
   }
   const content = fs.readFileSync(src, 'utf-8')
   try {
@@ -57,13 +57,22 @@ export async function compileAndImportPlugin({
   console.timeEnd('compilePlugin')
 
   console.time('importPlugin')
-  const imported = await importPlugin({ tmpFile })
+  const imported = await importPlugin({ tmpFile, options, setOptions })
   console.timeEnd('importPlugin')
   return imported
 }
 
 export function removeCompiledPlugin(tmpFile) {
   fs.unlinkSync(tmpFile)
+}
+
+export function injectPlugin(context = {}, Plugin) {
+  return new Promise((resolve) => {
+    Plugin(context, (label, nuxtSocket) => {
+      context[`$${label}`] = nuxtSocket
+      resolve(nuxtSocket)
+    })
+  })
 }
 
 export function getModuleOptions(moduleName, optsContainer) {
@@ -97,14 +106,12 @@ export async function ioServerInit({
   host = 'localhost',
   port = 4000
 }) {
-  console.time('ioServerInit')
   const ioServer = IOServer({
     proto,
     host,
     port
   })
   await ioServer.start()
-  console.timeEnd('ioServerInit')
   return ioServer
 }
 

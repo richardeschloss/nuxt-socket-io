@@ -1,10 +1,12 @@
 import path from 'path'
 import consola from 'consola'
-import { serial as test, before, after } from 'ava'
+import { serial as test } from 'ava'
 import config from '@/nuxt.config'
 import { state as indexState } from '@/store/index'
 import { state as examplesState } from '@/store/examples'
 import { compileAndImportPlugin, removeCompiledPlugin } from '@/test/utils'
+
+import Plugin, { pOptions } from '@/io/plugin.compiled'
 
 const { io } = config
 const state = indexState()
@@ -13,28 +15,15 @@ state.examples.__ob__ = ''
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
 
-let Plugin
-let pOptions
-
-async function compileAndImport(t, compileOpts = {}) {
-  const { overwrite } = compileOpts
-  const imported = await compileAndImportPlugin({
-    src,
-    tmpFile,
-    options: io,
-    overwrite
-  }).catch((err) => {
-    console.error('Compile and Import err', err.message)
-    t.fail()
-  })
-  Plugin = imported.Plugin
-  pOptions = imported.pOptions
-}
-
-function loadPlugin(t, ioOpts = {}, callCnt = { storeWatch: 0 }) {
+function loadPlugin({
+  t,
+  ioOpts = {},
+  plugin = Plugin,
+  callCnt = { storeWatch: 0 }
+}) {
   return new Promise((resolve, reject) => {
     const context = {}
-    Plugin(context, (label, NuxtSocket) => {
+    plugin(context, (label, NuxtSocket) => {
       context.$store = {
         commit: (msg) => {
           consola.log('commit', msg)
@@ -64,16 +53,10 @@ function loadPlugin(t, ioOpts = {}, callCnt = { storeWatch: 0 }) {
   })
 }
 
-before('Compile and Import Plugin', compileAndImport)
-
-after('Remove compiled plugin', () => {
-  removeCompiledPlugin(tmpFile)
-})
-
 test('Socket plugin (empty options)', async (t) => {
   const testCfg = { sockets: [] }
   pOptions.set(testCfg)
-  await loadPlugin(t).catch((e) => {
+  await loadPlugin({ t }).catch((e) => {
     t.is(
       e.message,
       "Please configure sockets if planning to use nuxt-socket-io: \r\n [{name: '', url: ''}]"
@@ -84,7 +67,7 @@ test('Socket plugin (empty options)', async (t) => {
 test('Socket plugin (malformed sockets)', async (t) => {
   const testCfg = { sockets: {} }
   pOptions.set(testCfg)
-  await loadPlugin(t).catch((e) => {
+  await loadPlugin({ t }).catch((e) => {
     t.is(
       e.message,
       "Please configure sockets if planning to use nuxt-socket-io: \r\n [{name: '', url: ''}]"
@@ -95,7 +78,7 @@ test('Socket plugin (malformed sockets)', async (t) => {
 test('Socket plugin (options missing info)', async (t) => {
   const testCfg = { sockets: [{}] }
   pOptions.set(testCfg)
-  await loadPlugin(t).catch((e) => {
+  await loadPlugin({ t }).catch((e) => {
     t.is(e.message, 'URL must be defined for nuxtSocket')
   })
 })
@@ -111,7 +94,7 @@ test('Socket plugin (no vuex options)', async (t) => {
     ]
   }
   pOptions.set(testCfg)
-  await loadPlugin(t, { name: 'home' })
+  await loadPlugin({ t, ioOpts: { name: 'home' } })
 })
 
 test('Socket plugin (malformed vuex options)', async (t) => {
@@ -129,7 +112,7 @@ test('Socket plugin (malformed vuex options)', async (t) => {
     ]
   }
   pOptions.set(testCfg)
-  await loadPlugin(t)
+  await loadPlugin({ t })
 })
 
 test('Socket plugin (vuex options missing mutations)', async (t) => {
@@ -145,7 +128,7 @@ test('Socket plugin (vuex options missing mutations)', async (t) => {
     ]
   }
   pOptions.set(testCfg)
-  await loadPlugin(t)
+  await loadPlugin({ t })
 })
 
 test('Socket plugin (vuex options missing actions)', async (t) => {
@@ -161,7 +144,7 @@ test('Socket plugin (vuex options missing actions)', async (t) => {
     ]
   }
   pOptions.set(testCfg)
-  await loadPlugin(t)
+  await loadPlugin({ t })
 })
 
 test('Socket plugin (vuex opts as strings)', async (t) => {
@@ -178,7 +161,7 @@ test('Socket plugin (vuex opts as strings)', async (t) => {
     ]
   }
   pOptions.set(testCfg)
-  await loadPlugin(t)
+  await loadPlugin({ t })
 })
 
 test('Socket plugin (malformed emitBacks)', async (t) => {
@@ -197,7 +180,7 @@ test('Socket plugin (malformed emitBacks)', async (t) => {
     ]
   }
   pOptions.set(testCfg)
-  await loadPlugin(t).catch((e) => {
+  await loadPlugin({ t }).catch((e) => {
     t.is(
       e.message,
       emitBack + ' is a vuex module. You probably want to watch its properties'
@@ -221,7 +204,7 @@ test('Emitback is not defined in vuex store', async (t) => {
     ]
   }
   pOptions.set(testCfg)
-  await loadPlugin(t).catch((e) => {
+  await loadPlugin({ t }).catch((e) => {
     t.is(
       e.message,
       [
@@ -250,7 +233,7 @@ test('Emitback is not defined in vuex store (variant 2)', async (t) => {
     ]
   }
   pOptions.set(testCfg)
-  await loadPlugin(t).catch((e) => {
+  await loadPlugin({ t }).catch((e) => {
     t.is(
       e.message,
       [
@@ -279,14 +262,14 @@ test('Duplicate Watchers are not registered', async (t) => {
   const callCnt = { storeWatch: 0 }
   const loadCnt = 2
   for (let i = 0; i < loadCnt; i++) {
-    await loadPlugin(
+    await loadPlugin({
       t,
-      {
+      ioOpts: {
         name: 'test',
         channel: '/index'
       },
       callCnt
-    )
+    })
   }
 
   t.is(callCnt.storeWatch, 2)
@@ -295,13 +278,27 @@ test('Duplicate Watchers are not registered', async (t) => {
 test('Socket plugin (from nuxt.config)', async (t) => {
   delete require.cache[tmpFile]
   delete process.env.TEST
-  await compileAndImport(t, { overwrite: true })
-  const testSocket = await loadPlugin(t, {
-    name: 'test',
-    channel: '/index'
+  const imported = await compileAndImportPlugin({
+    src,
+    tmpFile,
+    options: io,
+    overwrite: true
+  }).catch((err) => {
+    console.error('Compile and Import err', err.message)
+    t.fail()
+  })
+
+  const testSocket = await loadPlugin({
+    t,
+    ioOpts: {
+      name: 'test',
+      channel: '/index'
+    },
+    plugin: imported.Plugin
   })
   const testJSON = { msg: 'it worked!' }
   const expected = 'It worked! Received msg: ' + JSON.stringify(testJSON)
+
   return new Promise((resolve) => {
     testSocket.emit('getMessage', testJSON, (actual) => {
       t.is(expected, actual)
