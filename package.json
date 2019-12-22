@@ -1,6 +1,6 @@
 {
   "name": "nuxt-socket-io",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Socket.io module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "main": "io/module.js",
@@ -44,6 +44,10 @@
     "socket.io-client": "^2.3.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/node": "^7.6.3",
+    "@babel/preset-env": "^7.7.7",
     "@nuxtjs/eslint-config": "^1.0.1",
     "@nuxtjs/eslint-module": "^1.0.0",
     "@vue/test-utils": "^1.0.0-beta.27",
@@ -59,6 +63,7 @@
     "eslint-plugin-nuxt": ">=0.4.2",
     "eslint-plugin-prettier": "^3.0.1",
     "express": "^4.16.4",
+    "jsdom-global": "^3.0.2",
     "nodemon": "^1.18.9",
     "nuxt": "^2.0.0",
     "nyc": "^14.1.1",

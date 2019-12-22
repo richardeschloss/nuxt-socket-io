@@ -25,8 +25,3 @@ test_unit:
   artifacts:
     paths:
       - coverage
-
-test_e2e:
-  script:
-    - npm install
-    - npm run test:e2e

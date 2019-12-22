@@ -2,5 +2,6 @@ import baseConfig from './ava.config.js'
 
 export default {
   ...baseConfig,
-  files: ['test/specs/**/*']
+  // serial: true,
+  files: ['test/specs/**/*', 'test/components/**/*']
 }

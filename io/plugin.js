@@ -36,6 +36,7 @@ function nuxtSocket(ioOpts) {
   }
 
   let useSocket = null
+  
   if (!name) {
     useSocket = sockets.find((s) => s.default === true)
   } else {
@@ -50,11 +51,17 @@ function nuxtSocket(ioOpts) {
     throw new Error('URL must be defined for nuxtSocket')
   }
 
-  const { vuex: vuexOpts } = useSocket
-  useSocket.url += channel
+  if (!useSocket.registeredWatchers) {
+    useSocket.registeredWatchers = []
+  }
 
-  const socket = io(useSocket.url, connectOpts)
-  consola.info('connect', useSocket.name, useSocket.url)
+  let { url: connectUrl } = useSocket
+  connectUrl += channel
+  
+  const { vuex: vuexOpts } = useSocket
+
+  const socket = io(connectUrl, connectOpts)
+  consola.info('connect', useSocket.name, connectUrl)
 
   if (vuexOpts) {
     const storeFns = {
@@ -63,7 +70,11 @@ function nuxtSocket(ioOpts) {
     }
     Object.entries(storeFns).forEach(([group, fn]) => {
       const groupOpts = vuexOpts[group]
-      if (groupOpts && groupOpts.constructor.name === 'Array' && groupOpts.length > 0) {
+      if (
+        groupOpts &&
+        groupOpts.constructor.name === 'Array' &&
+        groupOpts.length > 0
+      ) {
         groupOpts.forEach((item) => {
           let evt = null
           let mappedItem = null
@@ -84,20 +95,38 @@ function nuxtSocket(ioOpts) {
     if (emitBacks && emitBacks.length) {
       emitBacks.forEach((emitBack) => {
         let evt = null
-        let stateProps = null
+        let statePropsPath = null
         if (typeof emitBack === 'string') {
-          evt = stateProps = emitBack
+          evt = statePropsPath = emitBack
         } else {
-          ;[[stateProps, evt]] = Object.entries(emitBack)
+          ;[[statePropsPath, evt]] = Object.entries(emitBack)
         }
-        stateProps = stateProps.split('/')
+
+        if (useSocket.registeredWatchers.includes(statePropsPath)) {
+          return
+        }
+        
+        const stateProps = statePropsPath.split('/')
         this.$store.watch(
           (state) => {
             const out = Object.assign({}, state)
+            const missingProps = []
             const watchProp = stateProps.reduce((outProp, prop) => {
+              if (!outProp || !outProp[prop]) {
+                missingProps.push(prop)
+                return 
+              }
               outProp = outProp[prop]
               return outProp
             }, out)
+            if (missingProps.length > 0) {
+              const errEmitBack = missingProps.join('/')
+              throw new Error([
+                `[nuxt-socket-io]: Trying to register emitback ${errEmitBack} failed`,
+                `because it is not defined in Vuex.`,
+                'Is state set up correctly in your stores folder?'
+              ].join('\n'))
+            }
 
             if (
               typeof watchProp === 'object' &&
@@ -107,6 +136,7 @@ function nuxtSocket(ioOpts) {
                 `${emitBack} is a vuex module. You probably want to watch its properties`
               throw new Error(errMsg)
             }
+            useSocket.registeredWatchers.push(statePropsPath)
             return watchProp
           },
           (data) => {
