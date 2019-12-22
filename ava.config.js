@@ -1,5 +1,5 @@
 export default {
-  require: ['./test/ava.setup.js'],
+  require: ['@babel/register', './test/ava.setup.js'],
   sources: ['**/*.{js,vue}'],
   babel: {
     testOptions: {
@@ -17,6 +17,6 @@ export default {
       ]
     }
   },
-  tap: true,
+  tap: false, // true,
   verbose: true
 }

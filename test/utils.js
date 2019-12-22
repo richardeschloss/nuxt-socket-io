@@ -9,23 +9,70 @@ import { IOServer } from '@/server/io'
 const oneSecond = 1000
 const oneMinute = 60 * oneSecond
 
-export async function compilePlugin({ src, tmpFile, options }) {
+export function compilePlugin({ src, tmpFile, options, overwrite = false }) {
+  if (!overwrite && fs.existsSync(tmpFile)) {
+    console.info(`compiled plugin ${tmpFile} already exists`)
+    return
+  } else {
+    console.log(`saving compiled plugin to: ${tmpFile}`)
+  }
   const content = fs.readFileSync(src, 'utf-8')
   try {
     const compiled = template(content, { interpolate: /<%=([\s\S]+?)%>/g })
     const pluginJs = compiled({ options, serialize })
     fs.writeFileSync(tmpFile, pluginJs)
-    const { default: Plugin, pOptions } = await import(tmpFile).catch((err) => {
-      throw new Error('Err importing plugin: ' + err)
-    })
-    return { Plugin, pOptions }
-  } catch (e) {
-    throw new Error('Could not compile plugin :(' + e)
+  } catch (err) {
+    throw new Error('Could not compile plugin :(' + err)
   }
+}
+
+export async function importPlugin({
+  tmpFile,
+  setOptions = false,
+  options = {}
+}) {
+  const imported = await import(tmpFile).catch((err) => {
+    throw new Error('Err importing plugin: ' + err)
+  })
+  const { default: Plugin, pOptions } = imported
+  if (setOptions) {
+    pOptions.set(options)
+  }
+
+  return {
+    Plugin,
+    pOptions
+  }
+}
+
+export async function compileAndImportPlugin({
+  src,
+  tmpFile,
+  options,
+  setOptions,
+  overwrite
+}) {
+  console.time('compilePlugin')
+  compilePlugin({ src, tmpFile, options, overwrite })
+  console.timeEnd('compilePlugin')
+
+  console.time('importPlugin')
+  const imported = await importPlugin({ tmpFile, options, setOptions })
+  console.timeEnd('importPlugin')
+  return imported
 }
 
 export function removeCompiledPlugin(tmpFile) {
   fs.unlinkSync(tmpFile)
+}
+
+export function injectPlugin(context = {}, Plugin) {
+  return new Promise((resolve) => {
+    Plugin(context, (label, nuxtSocket) => {
+      context[`$${label}`] = nuxtSocket
+      resolve(nuxtSocket)
+    })
+  })
 }
 
 export function getModuleOptions(moduleName, optsContainer) {
@@ -54,16 +101,18 @@ export function getModuleOptions(moduleName, optsContainer) {
   return opts
 }
 
-export async function ioServerInit(t) {
-  console.time('ioServerInit')
+export async function ioServerInit({
+  proto = 'http',
+  host = 'localhost',
+  port = 4000
+}) {
   const ioServer = IOServer({
-    proto: 'http',
-    host: 'localhost',
-    port: 4000
+    proto,
+    host,
+    port
   })
   await ioServer.start()
-  t.context.ioServer = ioServer
-  console.timeEnd('ioServerInit')
+  return ioServer
 }
 
 export async function nuxtInit(t) {

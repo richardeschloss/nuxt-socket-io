@@ -31,8 +31,11 @@ function IOServer({ host, port, server = http.createServer() }) {
   }
 
   function listen() {
-    return new Promise((resolve) => {
-      server.listen(port, host, resolve)
+    return new Promise((resolve, reject) => {
+      server
+        .listen(port, host)
+        .on('error', reject)
+        .on('listening', resolve)
     })
   }
 

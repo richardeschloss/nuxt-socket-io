@@ -2,6 +2,20 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2019-12-21
+
+### Added
+- Check to see if specified emitbacks exist in Vuex store. If they don't, provide friendly error message
+
+### Changed
+- Moved examples to components. Added tests. Eliminated need for the old and slow e2e tests
+- Updated plugin tests.
+
+### Fixed
+
+- Potential duplicate emitback registrations now prevented
+- [Dev server] ioServer.listen resolves correctly now
+
 ## [1.0.5] - 2019-12-06
 
 ### Added

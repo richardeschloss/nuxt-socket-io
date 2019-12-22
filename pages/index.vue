@@ -22,51 +22,20 @@
       </div>
     </div>
     <div>
-      <label>If you can see text appear in the box, it worked!</label>
-      <button @click="getMessage()">Get Message</button>
-      <b-form-textarea
-        v-model="messageRxd"
-        placeholder="Waiting for you to click the 'Get Message' button..."
-        rows="3"
-        max-rows="6"
-      ></b-form-textarea>
-      <b-form-textarea
-        v-model="chatMessages"
-        placeholder="Formatted messages will appear here"
-        rows="3"
-        max-rows="6"
-      ></b-form-textarea>
+      <messages></messages>
       <nuxt-link to="examples">Thirsty for more examples?</nuxt-link>
     </div>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex'
-import Logo from '~/components/Logo.vue'
+import Logo from '@/components/Logo.vue'
+import Messages from '@/components/Messages.vue'
 
 export default {
   components: {
-    Logo
-  },
-  data() {
-    return {
-      messageRxd: ''
-    }
-  },
-  computed: mapState(['chatMessages']),
-  mounted() {
-    this.socket = this.$nuxtSocket({
-      channel: '/index',
-      reconnection: false
-    })
-  },
-  methods: {
-    getMessage() {
-      this.socket.emit('getMessage', { id: 'abc123' }, (resp) => {
-        this.messageRxd = resp
-      })
-    }
+    Logo,
+    Messages
   }
 }
 </script>
@@ -101,10 +70,5 @@ export default {
 
 .links {
   padding-top: 15px;
-}
-
-.message-rxd-textbox {
-  width: 500px;
-  height: 500px;
 }
 </style>
