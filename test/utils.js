@@ -62,10 +62,6 @@ export async function compileAndImportPlugin({
   return imported
 }
 
-export function removeCompiledPlugin(tmpFile) {
-  fs.unlinkSync(tmpFile)
-}
-
 export function injectPlugin(context = {}, Plugin) {
   return new Promise((resolve) => {
     Plugin(context, (label, nuxtSocket) => {

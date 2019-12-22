@@ -13,6 +13,10 @@ function Svc() {
         }, period)
       })
     },
+    echoBack({ notify, evt, data }) {
+      notify({ evt, data })
+      return Promise.resolve()
+    },
     'examples/sample': ({ data: sample, notify }) => {
       return new Promise((resolve) => {
         notify({
@@ -35,6 +39,52 @@ function Svc() {
           }
         })
         resolve()
+      })
+    },
+    sample2b({ data: sample, notify }) {
+      return new Promise((resolve) => {
+        notify({
+          evt: 'sample2bDataRxd',
+          data: {
+            msg: 'Sample2b data rxd on state change',
+            sample
+          }
+        })
+        resolve()
+      })
+    },
+    sample3(msg) {
+      const sample = msg.data || 'undef'
+      return Promise.resolve({
+        msg: 'rxd sample ' + sample
+      })
+    },
+    sample4({ data: sample }) {
+      return Promise.resolve({
+        msg: 'rxd sample ' + sample
+      })
+    },
+    sample5({ data: sample }) {
+      return Promise.resolve({
+        msg: 'rxd sample ' + sample
+      })
+    },
+    receiveArray(msg) {
+      return Promise.resolve({
+        resp: 'Received array',
+        length: msg.length
+      })
+    },
+    receiveArray2(msg) {
+      return Promise.resolve({
+        resp: 'Received array2',
+        length: msg.length
+      })
+    },
+    receiveString(msg) {
+      return Promise.resolve({
+        resp: 'Received string',
+        length: msg.length
       })
     }
   })

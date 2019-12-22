@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
-import { serial as test, beforeEach, after } from 'ava'
+import test, { beforeEach } from 'ava'
 import { createLocalVue, shallowMount } from '@vue/test-utils'
 import Vuex from 'vuex'
 import { BootstrapVue } from 'bootstrap-vue'
 import config from '@/nuxt.config'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
-import { injectPlugin, removeCompiledPlugin } from '@/test/utils'
+import { injectPlugin } from '@/test/utils'
 import Samples from '@/components/Samples.vue'
 import { state as indexState, mutations, actions } from '@/store/index'
 import {

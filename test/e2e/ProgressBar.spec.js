@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
-import test, { beforeEach, after } from 'ava'
+import test, { beforeEach } from 'ava'
 import { createLocalVue, shallowMount } from '@vue/test-utils'
 import Vuex from 'vuex'
 import { BootstrapVue } from 'bootstrap-vue'
 import config from '@/nuxt.config'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
-import { injectPlugin, removeCompiledPlugin } from '@/test/utils'
+import { injectPlugin } from '@/test/utils'
 import ProgressBar from '@/components/ProgressBar.vue'
 import { state as indexState, mutations, actions } from '@/store/index'
 import {
@@ -39,10 +39,6 @@ beforeEach(() => {
   })
 })
 
-// after('Remove compiled plugin', () => {
-//   removeCompiledPlugin(tmpFile)
-// })
-
 test('ProgressBar is a Vue component', (t) => {
   const wrapper = shallowMount(ProgressBar, {
     store,
@@ -63,8 +59,8 @@ test('Get Progress', async (t) => {
       $nuxtSocket: await injectPlugin({}, Plugin)
     }
   })
-  const refreshPeriod = 50
-  wrapper.setData({ refreshPeriod })
+  const refreshInfo = { period: 50 }
+  wrapper.setData({ refreshInfo })
   return new Promise((resolve) => {
     wrapper.vm.socket.on('progress', (data) => {
       // The component will set this.progress. Wait for it...

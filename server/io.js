@@ -26,6 +26,9 @@ function IOServer({ host, port, server = http.createServer() }) {
             })
           }
         })
+        socket.on('disconnect', () => {
+          consola.info('client disconnected from', channel)
+        })
       })
     })
   }
