@@ -11,6 +11,9 @@
         >Sample Number2 (will send mapped "sample2" event back on change)</label
       >
       <b-form-input v-model="sample2" type="number"></b-form-input>
+      <b-form-input v-model="sample3" type="number"></b-form-input>
+      <b-form-input v-model="myObj.sample4"></b-form-input>
+      <b-form-input v-model="myObj.sample5"></b-form-input>
     </div>
   </div>
 </template>
@@ -19,6 +22,15 @@
 import { mapState2Way } from '@/utils/esm'
 
 export default {
+  data() {
+    return {
+      sample3: 123,
+      myObj: {
+        sample4: 'watch me (I should be emitted back)',
+        sample5: 'not me'
+      }
+    }
+  },
   computed: {
     sample: mapState2Way({ 'examples/sample': 'examples/SET_SAMPLE' }),
     sample2: {
@@ -34,6 +46,11 @@ export default {
     this.socket = this.$nuxtSocket({
       channel: '/examples'
     })
+  },
+  methods: {
+    handleAck(ack) {
+      console.log('ack received', ack)
+    }
   }
 }
 </script>

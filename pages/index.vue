@@ -22,7 +22,7 @@
       </div>
     </div>
     <div>
-      <messages></messages>
+      <messages style="height: 500px; overflow-y: scroll;"></messages>
       <nuxt-link to="examples">Thirsty for more examples?</nuxt-link>
     </div>
   </div>
