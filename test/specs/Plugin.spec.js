@@ -53,21 +53,7 @@ function loadPlugin({
   })
 }
 
-function parseNspEntry(entry) {
-  let pre, body, post
-  let subItems = []
-  const items = entry.trim().split(/\s*\]\s*/)
-  if (items.length > 1) {
-    pre = items[0]
-    subItems = items[1].split(/\s*\[\s*/)
-  } else {
-    subItems = items[0].split(/\s*\[\s*/)
-  }
-  ;[body, post] = subItems
-  return [pre, body, post]
-}
-
-function parseVuexEntry(entry, emitBack) {
+function parseEntry(entry, emitBack) {
   let evt, mapTo, pre, body, post
   if (typeof entry === 'string') {
     let subItems = []
@@ -91,7 +77,6 @@ function parseVuexEntry(entry, emitBack) {
   } else {
     ;[[evt, mapTo]] = Object.entries(entry)
   }
-
   return { pre, post, evt, mapTo }
 }
 
@@ -131,14 +116,12 @@ async function testNamespace({
   const { emitters = [], listeners = [] } = namespace
   if (listeners.constructor.name === 'Array') {
     listeners.forEach((entry) => {
-      const [pre, listenerGroup, post] = parseNspEntry(entry)
-      const [listener, mapTo] = listenerGroup.trim().split(/\s*-->\s*/)
-      const mapToProp = mapTo || listener
+      const { pre, post, evt, mapTo } = parseEntry(entry)
       if (pre) console.log(`testing pre ${pre} too`)
       if (post) console.log(`testing post ${post} too`)
-      socket.on(listener, (msgRxd) => {
+      socket.on(evt, (msgRxd) => {
         setImmediate(() => {
-          if (context[mapToProp]) t.is(context[mapToProp], msgRxd)
+          if (context[mapTo]) t.is(context[mapTo], msgRxd)
         })
       })
     })
@@ -149,17 +132,9 @@ async function testNamespace({
       resolve()
     }
     let doneCnt = 0
-    emitters.forEach((emitterInfo) => {
-      let subItems = []
-      const items = emitterInfo.trim().split(/\s*\]\s*/)
-      if (items.length > 1) {
-        subItems = items[1].split(/\s*\[\s*/)
-      } else {
-        subItems = items[0].split(/\s*\[\s*/)
-      }
-      const [emitter] = subItems
-      const [comps, mapTo] = emitter.split(/\s*-->\s*/)
-      const [emitEvt] = comps.split(/\s*\+\s*/)
+    emitters.forEach((entry) => {
+      const { evt, mapTo } = parseEntry(entry)
+      const [emitEvt] = evt.split(/\s*\+\s*/)
       context[emitEvt]().then((resp) => {
         if (context[mapTo] !== undefined) {
           if (typeof resp === 'object') {
@@ -204,7 +179,7 @@ async function testVuexOpts({
   Object.entries(vuexOpts).forEach(([opt, groupOpts]) => {
     if (groupOpts.constructor.name === 'Array') {
       groupOpts.forEach((entry) => {
-        const { evt } = parseVuexEntry(entry)
+        const { evt } = parseEntry(entry)
         socket.emit('echoBack', { evt, data: 'abc123' })
       })
     }
@@ -403,7 +378,8 @@ test('Namespace config (wrong types)', async (t) => {
 test('Namespace config (listeners)', async (t) => {
   const context = {
     chatMessage2: '',
-    chatMessage4: ''
+    chatMessage4: '',
+    message5Rxd: ''
   }
   const callItems = ['preEmit', 'handleAck']
   const called = {}
@@ -416,7 +392,8 @@ test('Namespace config (listeners)', async (t) => {
     listeners: [
       'preEmit] chatMessage2 [handleAck',
       'undef1] chatMessage3 --> message3Rxd [undef2',
-      'chatMessage4'
+      'chatMessage4',
+      { chatMessage5: 'message5Rxd' }
     ]
   }
   await testNamespace({ t, context, namespace })

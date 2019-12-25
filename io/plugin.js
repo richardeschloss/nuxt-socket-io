@@ -19,33 +19,18 @@ function PluginOptions() {
 
 const _pOptions = PluginOptions()
 
-function propExists({ ctx, path }) {
-  const exists = path.split('.').reduce((obj, prop) => {
-    if (obj && obj[prop]) {
-      return obj[prop]
+function propExists(obj, path) {
+  const exists = path.split('.').reduce((out, prop) => {
+    if (out && out[prop]) {
+      return out[prop]
     } else {
       return false
     }
-  }, ctx)
+  }, obj)
   return !!exists
 }
 
-function parseNspEntry(entry) {
-  // TBD: if entry is string vs object
-  let pre, body, post
-  let subItems = []
-  const items = entry.trim().split(/\s*\]\s*/)
-  if (items.length > 1) {
-    pre = items[0]
-    subItems = items[1].split(/\s*\[\s*/)
-  } else {
-    subItems = items[0].split(/\s*\[\s*/)
-  }
-  ;[body, post] = subItems
-  return [pre, body, post]
-}
-
-function parseVuexEntry(entry, emitBack) {
+function parseEntry(entry, emitBack) {
   let evt, mapTo, pre, body, post
   if (typeof entry === 'string') {
     let subItems = []
@@ -72,176 +57,86 @@ function parseVuexEntry(entry, emitBack) {
   return { pre, post, evt, mapTo }
 }
 
-function registerNamespace({ ctx, namespaceCfg, socket }) {
-  const { emitters = [], listeners = [], emitBacks = [] } = namespaceCfg
-  if (listeners.constructor.name === 'Array') {
-    listeners.forEach((entry) => {
-      const [pre, listenerGroup, post] = parseNspEntry(entry)
-      const [listener, mapTo] = listenerGroup.split(/\s*-->\s*/)
-      const mapToProp = mapTo || listener
-      socket.on(listener, async (resp) => {
-        if (pre !== undefined) {
-          if (ctx[pre]) await ctx[pre]()
-          else console.warn(`method ${pre} not defined`)
-        }
-
-        if (ctx[mapToProp] !== undefined) {
-          ctx[mapToProp] = resp
-        } else {
-          console.warn(`${mapToProp} not defined on instance`)
-        }
-
-        if (post !== undefined) {
-          if (ctx[post] !== undefined) ctx[post](resp)
-          else console.warn(`method ${post} not defined`)
-        }
-      })
-    })
-  } else {
-    console.warn('[nuxt-socket-io]: listeners needs to be an array in namespace config')
-  }
-
-  if (emitters.constructor.name === 'Array') {
-    emitters.forEach((entry) => {
-      const [pre, emitter, post] = parseNspEntry(entry)
-      const [comps, mapTo] = emitter.split(/\s*-->\s*/)
-      const [emitEvt, msgLabel] = comps.split(/\s*\+\s*/)
-
-      ctx[emitEvt] = async function() {
-        let msg
-        if (msgLabel !== undefined) {
-          if (ctx[msgLabel] !== undefined) {
-            if (typeof ctx[msgLabel] === 'object') {
-              msg = ctx[msgLabel].constructor.name === 'Array' ? [] : {}
-              Object.assign(msg, ctx[msgLabel])
-            } else {
-              msg = ctx[msgLabel]
-            }
-          } else {
-            console.warn(`prop or data item "${msgLabel}" not defined`)
-          }
-        }
-        if (pre !== undefined) {
-          if (ctx[pre]) await ctx[pre]()
-          else console.warn(`method ${pre} not defined`)
-        }
-        return new Promise((resolve, reject) => {
-          socket.emit(emitEvt, msg, (resp) => {
-            if (mapTo !== undefined) {
-              if (ctx[mapTo] !== undefined) ctx[mapTo] = resp
-              else console.warn(`${mapTo} not defined on instance`)
-            }
-            if (post !== undefined) {
-              if (ctx[post] !== undefined) ctx[post](resp)
-              else console.warn(`method ${post} not defined`)
-            }
-            resolve(resp)
-          })
-        })
+function assignMsg(ctx, prop) {
+  let msg
+  if (prop !== undefined) {
+    if (ctx[prop] !== undefined) {
+      if (typeof ctx[prop] === 'object') {
+        msg = ctx[prop].constructor.name === 'Array' ? [] : {}
+        Object.assign(msg, ctx[prop])
+      } else {
+        msg = ctx[prop]
       }
-    })
-  } else {
-    console.warn('[nuxt-socket-io]: emitters needs to be an array in namespace config')
+    } else {
+      console.warn(`prop or data item "${prop}" not defined`)
+    }
   }
+  return msg
+}
 
-  if (emitBacks.constructor.name === 'Array') {
-    emitBacks.forEach((entry) => {
-      const [pre, emitBackGroup, post] = parseNspEntry(entry)
-      let [mapTo, emitBack] = emitBackGroup.trim().split(/\s*<--\s*/)
-      if (emitBack === undefined) {
-        emitBack = mapTo
-      }
+function assignResp(ctx, prop, resp) {
+  if (ctx[prop] !== undefined) {
+    ctx[prop] = resp
+  } else {
+    console.warn(`${prop} not defined on instance`)
+  }
+}
 
-      if (propExists({ ctx, path: emitBack })) {
-        ctx.$watch(emitBack, async function(data) {
-          if (pre !== undefined) {
-            if (ctx[pre]) await ctx[pre]()
-            else console.warn(`method ${pre} not defined`)
-          }
+async function runHook(ctx, prop, data) {
+  if (prop !== undefined) {
+    if (ctx[prop]) await ctx[prop](data)
+    else console.warn(`method ${prop} not defined`)
+  }
+}
+
+function propByPath(obj, path) {
+  return path.split(/[\/\.]/).reduce((out, prop) => {
+    if (out && out[prop]) {
+      return out[prop]
+    }
+  }, obj)
+}
+
+const register = {
+  emitBacks({ ctx, socket, entries }) {
+    entries.forEach((entry) => {
+      const { pre, post, evt, mapTo } = parseEntry(entry)
+      if (propExists(ctx, mapTo)) {
+        ctx.$watch(mapTo, async function(data) {
+          await runHook(ctx, pre)
           return new Promise((resolve) => {
-            socket.emit(mapTo, { data }, (resp) => {
-              if (post !== undefined) {
-                if (ctx[post] !== undefined){
-                  ctx[post](resp)
-                } else {
-                  console.warn(`method ${post} not defined`)
-                }
-                resolve()
-              }
+            socket.emit(evt, { data }, (resp) => {
+              runHook(ctx, post, resp)
+              if (post !== undefined) resolve(resp)
             })
             if (post === undefined) resolve()
           })
         })
       } else {
-        console.warn(`Specified emitback ${emitBack} is not defined in component`)
+        console.warn(`Specified emitback ${mapTo} is not defined in component`)
       }
     })
-  } else {
-    console.warn('[nuxt-socket-io]: emitBacks needs to be an array in namespace config')
-  }
-}
-
-function registerVuexOpts({ ctx, vuexOpts, useSocket, socket, store }) {
-  const storeFns = {
-    mutations: 'commit',
-    actions: 'dispatch'
-  }
-  Object.entries(storeFns).forEach(([group, fn]) => {
-    const groupOpts = vuexOpts[group] || []
-    if (groupOpts.constructor.name === 'Array') {
-      groupOpts.forEach((entry) => {
-        const { pre, post, evt, mapTo } = parseVuexEntry(entry)
-        socket.on(evt, async (data) => {
-          if (pre !== undefined) {
-            if (ctx[pre]) await ctx[pre]()
-            else console.warn(`method ${pre} not defined`)
-          } 
-          store[fn](mapTo, data)
-          if (post !== undefined) {
-            if (ctx[post]) ctx[post]()
-            else console.warn(`method ${post} not defined`)
-          } 
-        })
-      })
-    } else {
-      console.warn(`[nuxt-socket-io]: vuexOption ${group} needs to be an array`)
-    }
-  })
-
-  const { emitBacks = [] } = vuexOpts
-  if (emitBacks.constructor.name === 'Array') {
-    emitBacks.forEach((entry) => {
-      const { pre, post, evt, mapTo } = parseVuexEntry(entry, true)
+  },
+  emitBacksVuex({ ctx, store, useSocket, socket, entries }) {
+    entries.forEach((entry) => {
+      const { pre, post, evt, mapTo } = parseEntry(entry, true)
 
       if (useSocket.registeredWatchers.includes(mapTo)) {
         return
       }
 
-      const stateProps = mapTo.split('/')
       store.watch(
         (state) => {
-          const out = Object.assign({}, state)
-          const missingProps = []
-          const watchProp = stateProps.reduce((outProp, prop) => {
-            if (!outProp || !outProp[prop]) {
-              missingProps.push(prop)
-              return
-            }
-            outProp = outProp[prop]
-            return outProp
-          }, out)
-          if (missingProps.length > 0) {
-            const errEmitBack = missingProps.join('/')
+          const watchProp = propByPath(state, mapTo)
+          if (watchProp === undefined) {
             throw new Error(
               [
-                `[nuxt-socket-io]: Trying to register emitback ${errEmitBack} failed`,
+                `[nuxt-socket-io]: Trying to register emitback ${mapTo} failed`,
                 `because it is not defined in Vuex.`,
                 'Is state set up correctly in your stores folder?'
               ].join('\n')
             )
-          }
-
-          if (
+          } else if (
             typeof watchProp === 'object' &&
             Object.prototype.hasOwnProperty.call(watchProp, '__ob__')
           ) {
@@ -252,22 +147,92 @@ function registerVuexOpts({ ctx, vuexOpts, useSocket, socket, store }) {
           return watchProp
         },
         async (data) => {
-          if (pre !== undefined) {
-            if (ctx[pre]) await ctx[pre]()
-            else console.warn(`method ${pre} not defined`)
-          } 
-          
+          await runHook(ctx, pre)
           socket.emit(evt, { data }, (resp) => {
-            if (post !== undefined) {
-              if (ctx[post]) ctx[post](resp)
-              else console.warn(`method ${post} not defined`)
-            } 
+            runHook(ctx, post, resp)
           })
         }
       )
     })
-  } else {
-    console.warn(`[nuxt-socket-io]: emitBacks in vuexOpts config needs to be an array`)
+  },
+  emitters({ ctx, socket, entries }) {
+    entries.forEach((entry) => {
+      const { pre, post, evt, mapTo } = parseEntry(entry)
+      const [emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
+      ctx[emitEvt] = async function() {
+        const msg = assignMsg(ctx, msgLabel)
+        await runHook(ctx, pre)
+        return new Promise((resolve, reject) => {
+          socket.emit(emitEvt, msg, (resp) => {
+            assignResp(ctx, mapTo, resp)
+            runHook(ctx, post, resp)
+            resolve(resp)
+          })
+        })
+      }
+    })
+  },
+  listeners({ ctx, socket, entries }) {
+    entries.forEach((entry) => {
+      const { pre, post, evt, mapTo } = parseEntry(entry)
+      socket.on(evt, async (resp) => {
+        await runHook(ctx, pre)
+        assignResp(ctx, mapTo, resp)
+        runHook(ctx, post, resp)
+      })
+    })
+  },
+  listenersVuex({ ctx, socket, entries, storeFn }) {
+    entries.forEach((entry) => {
+      const { pre, post, evt, mapTo } = parseEntry(entry)
+      socket.on(evt, async (resp) => {
+        await runHook(ctx, pre)
+        storeFn(mapTo, resp)
+        runHook(ctx, post, resp)
+      })
+    })
+  },
+  namespace({ ctx, namespaceCfg, socket }) {
+    const { emitters = [], listeners = [], emitBacks = [] } = namespaceCfg
+    const sets = { emitters, listeners, emitBacks }
+    Object.entries(sets).forEach(([setName, entries]) => {
+      if (entries.constructor.name === 'Array') {
+        register[setName]({ ctx, socket, entries })
+      } else {
+        console.warn(
+          `[nuxt-socket-io]: ${setName} needs to be an array in namespace config`
+        )
+      }
+    })
+  },
+  vuexOpts({ ctx, vuexOpts, useSocket, socket, store }) {
+    const { mutations = [], actions = [], emitBacks = [] } = vuexOpts
+    const sets = { mutations, actions, emitBacks }
+    const storeFns = {
+      mutations: 'commit',
+      actions: 'dispatch'
+    }
+    Object.entries(sets).forEach(([setName, entries]) => {
+      if (entries.constructor.name === 'Array') {
+        const fnName = storeFns[setName]
+        if (fnName) {
+          console.log('register L', setName, entries)
+          register.listenersVuex({
+            ctx,
+            socket,
+            entries,
+            storeFn: store[fnName]
+          })
+        } else {
+          console.log('register E', setName, entries)
+          register.emitBacksVuex({ ctx, store, useSocket, socket, entries })
+        }
+      } else {
+        console.warn(
+          `[nuxt-socket-io]: vuexOption ${setName} needs to be an array`
+        )
+      }
+    })
   }
 }
 
@@ -318,7 +283,7 @@ function nuxtSocket(ioOpts) {
   if (namespaces) {
     const namespaceCfg = namespaces[channel]
     if (namespaceCfg) {
-      registerNamespace({
+      register.namespace({
         ctx: this,
         namespaceCfg,
         socket
@@ -327,7 +292,7 @@ function nuxtSocket(ioOpts) {
   }
 
   if (vuexOpts) {
-    registerVuexOpts({
+    register.vuexOpts({
       ctx: this,
       vuexOpts,
       useSocket,

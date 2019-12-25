@@ -24,6 +24,7 @@ function Svc() {
         ]
         let msgIdx = 0
         notify({ evt: 'chatMessage4', data: 'Hi again' })
+        notify({ evt: 'chatMessage5', data: 'Hi again from 5' })
         const timer = setInterval(() => {
           notify({ evt: 'chatMessage2', data: msgs[msgIdx] })
           notify({ evt: 'chatMessage3', data: 'sending chat message3...' })
