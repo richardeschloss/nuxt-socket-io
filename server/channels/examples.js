@@ -86,6 +86,12 @@ function Svc() {
         resp: 'Received string',
         length: msg.length
       })
+    },
+    receiveString2(msg) {
+      return Promise.resolve({
+        resp: 'Received string again',
+        length: msg.length
+      })
     }
   })
 }

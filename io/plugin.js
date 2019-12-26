@@ -30,7 +30,7 @@ function propExists(obj, path) {
   return !!exists
 }
 
-function parseEntry(entry, emitBack) { // TBD: re-test
+function parseEntry(entry, emitBack) {
   let evt, mapTo, pre, body, post, emitEvt, msgLabel
   if (typeof entry === 'string') {
     let subItems = []
@@ -49,7 +49,7 @@ function parseEntry(entry, emitBack) { // TBD: re-test
     } else if (body.includes('+')) {
       evt = body
     } else {
-      evt = mapTo = body // TBD
+      evt = mapTo = body
     }
     ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
   } else if (emitBack) {
@@ -163,7 +163,6 @@ const register = {
   emitters({ ctx, socket, entries }) {
     entries.forEach((entry) => {
       const { pre, post, evt, mapTo, emitEvt, msgLabel } = parseEntry(entry)
-      // const [emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
       ctx[emitEvt] = async function() {
         const msg = assignMsg(ctx, msgLabel)
         await runHook(ctx, pre)

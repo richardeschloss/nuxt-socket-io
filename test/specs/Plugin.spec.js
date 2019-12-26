@@ -413,6 +413,7 @@ test('Namespace config (emitters)', async (t) => {
       period: 50
     },
     someString: 'Hello world',
+    someString2: 'Hello world2',
     myArray: [],
     someArray: [3, 1, 2],
     myObj: {}
@@ -427,7 +428,8 @@ test('Namespace config (emitters)', async (t) => {
       'sample3',
       'receiveString + someString --> myArray',
       'receiveArray + someArray --> myObj',
-      'noMethod] receiveArray2 + undefProp --> undefProp2 [noMethod2'
+      'noMethod] receiveArray2 + undefProp --> undefProp2 [noMethod2',
+      'receiveString2 + someString2'
     ],
     listeners: ['preProgress] progress [postProgress']
   }
@@ -552,7 +554,7 @@ test('Join Room (and check joinedRoom event)', (t) => {
   })
 })
 
-test.only('Join channel and send message', (t) => {
+test('Join channel and send message', (t) => {
   t.timeout(5000)
   const users = ['userABC', 'userXYZ']
   const namespace = {
