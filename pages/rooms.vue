@@ -30,7 +30,9 @@ export default {
     return {
       rooms: [],
       selectedRoom: '',
-      user: 'abc' // `user_${Date.now().toString().slice(7)}`,
+      user: `user_${Date.now()
+        .toString()
+        .slice(7)}`
     }
   },
   computed: {

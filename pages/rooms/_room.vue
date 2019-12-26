@@ -4,7 +4,9 @@
       Welcome to room {{ room }}, {{ user }}!
     </h3>
     <h3 v-else>Joining room...{{ room }}</h3>
-    <h4>Users in room: {{ roomUsers }}</h4>
+    <p>
+      Users in room: <b> {{ roomUsers }} </b>
+    </p>
     <div class="room">
       <nav class="channel-select">
         <div class="sidebar-sticky">
@@ -14,15 +16,13 @@
               :key="channel"
               class="nav-item channel-container"
             >
-              <nuxt-link class="nav-link" :to="channelRoute(channel)">
+              <nuxt-link
+                class="nav-link"
+                :class="channelActive(channel)"
+                :to="channelRoute(channel)"
+              >
                 {{ channel }}
               </nuxt-link>
-              <!-- <a
-                class="nav-link"
-                :class="channel.active"
-                @click="joinChannel(channel)"
-                >{{ channel }}
-              </a> -->
             </li>
           </ul>
         </div>
@@ -49,12 +49,17 @@ export default {
     }
   },
   computed: {
+    channelActive() {
+      return (channel) =>
+        channel === this.$route.params.channel ? 'active' : ''
+    },
+
     channelRoute() {
       return (channel) => `/rooms/${this.room}/${channel}`
     },
 
     channels() {
-      return this.roomInfo.room ? this.roomInfo.room.channels : []
+      return this.roomInfo.channels ? this.roomInfo.channels : []
     },
 
     joinMsg() {
@@ -63,7 +68,7 @@ export default {
     },
 
     roomUsers() {
-      return this.roomInfo.room ? this.roomInfo.room.users : []
+      return this.roomInfo.users ? this.roomInfo.users.join(', ') : []
     },
 
     showChannel() {
@@ -83,8 +88,11 @@ export default {
     if (this.joinMsg.room) this.joinRoom()
   },
   methods: {
-    toastNotify(resp) {
-      console.log('another user joined...')
+    updateUsers(resp) {
+      console.log('another user join / leave evt...', resp)
+      console.log('users before', this.roomInfo.users.length)
+      this.roomInfo.users = resp.users
+      console.log('users after', this.roomInfo.users.length)
     }
   }
 }

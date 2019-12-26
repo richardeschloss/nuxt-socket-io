@@ -71,7 +71,7 @@ module.exports = {
           },
           '/room': {
             emitters: ['joinRoom + joinMsg --> roomInfo'],
-            listeners: ['joinedRoom [toastNotify']
+            listeners: ['joinedRoom [updateUsers', 'leftRoom [updateUsers']
           },
           '/channel': {
             emitters: [
@@ -80,6 +80,7 @@ module.exports = {
             ],
             listeners: [
               'joinedChannel [toastNotify',
+              'leftChannel [updateUsers',
               'chatMessage [updateChats'
             ]
           }
