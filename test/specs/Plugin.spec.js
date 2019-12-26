@@ -85,7 +85,8 @@ async function testNamespace({
   context,
   namespace,
   url = 'http://localhost:3000',
-  channel = '/index'
+  channel = '/index',
+  teardown = true
 }) {
   const testCfg = {
     sockets: [
@@ -150,8 +151,8 @@ async function testNamespace({
           }
         }
         if (++doneCnt === emitters.length) {
-          socket.close()
-          resolve()
+          if (teardown) socket.close()
+          resolve(socket)
         }
       })
     })
@@ -486,6 +487,73 @@ test('Namespace config (emitbacks)', async (t) => {
   })
 })
 
+test('Rooms', async (t) => {
+  const namespace = {
+    emitters: ['getRooms --> rooms']
+  }
+
+  const expected = ['vueJS', 'nuxtJS']
+  const context = {
+    rooms: []
+  }
+  await testNamespace({ t, context, namespace, channel: '/rooms' })
+  expected.forEach((room, idx) => {
+    t.is(room, context.rooms[idx])
+  })
+})
+
+test.only('Room', (t) => {
+  t.timeout(5000)
+  const users = ['userABC', 'userXYZ']
+  const namespace = {
+    emitters: ['joinRoom + joinMsg --> roomInfo'],
+    listeners: ['joinedRoom [toastNotify']
+  }
+  let doneCnt = 0
+  const sockets = []
+
+  return new Promise((resolve) => {
+    users.forEach(async (user, idx) => {
+      const called = { toastNotify: false }
+      const context = {
+        joinMsg: {
+          room: 'vueJS',
+          user
+        },
+        joinedRoom: {
+          user,
+          namespace
+        },
+        roomInfo: {},
+        toastNotify(resp) {
+          called.toastNotify = true
+        }
+      }
+      const socket = await testNamespace({
+        t,
+        context,
+        namespace,
+        channel: '/room',
+        teardown: false
+      })
+      sockets.push(socket)
+      setTimeout(() => {
+        if (idx === 0) {
+          t.true(called.toastNotify)
+          t.is(context.joinedRoom.user, users[1])
+        }
+        const { room, user: userResp, namespace } = context.roomInfo
+        t.is(namespace, `rooms/${context.joinMsg.room}`)
+        t.is(userResp, user)
+        t.true(room.users.includes(user))
+        if (++doneCnt === users.length) {
+          resolve()
+        }
+      }, 100)
+    })
+  })
+})
+
 test('Teardown (enabled)', async (t) => {
   let componentDestroyCnt = 0
   const context = {
@@ -566,8 +634,4 @@ test('Socket plugin (from nuxt.config)', async (t) => {
       resolve()
     })
   })
-})
-
-test('Rooms placeholder', async (t) => {
-  t.pass()
 })

@@ -30,8 +30,8 @@ function propExists(obj, path) {
   return !!exists
 }
 
-function parseEntry(entry, emitBack) {
-  let evt, mapTo, pre, body, post
+function parseEntry(entry, emitBack) { // TBD: re-test
+  let evt, mapTo, pre, body, post, emitEvt, msgLabel
   if (typeof entry === 'string') {
     let subItems = []
     const items = entry.trim().split(/\s*\]\s*/)
@@ -46,15 +46,18 @@ function parseEntry(entry, emitBack) {
       ;[evt, mapTo] = body.split(/\s*-->\s*/)
     } else if (body.includes('<--')) {
       ;[evt, mapTo] = body.split(/\s*<--\s*/)
+    } else if (body.includes('+')) {
+      evt = body
     } else {
-      evt = mapTo = body
+      evt = mapTo = body // TBD
     }
+    ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
   } else if (emitBack) {
     ;[[mapTo, evt]] = Object.entries(entry)
   } else {
     ;[[evt, mapTo]] = Object.entries(entry)
   }
-  return { pre, post, evt, mapTo }
+  return { pre, post, evt, mapTo, emitEvt, msgLabel }
 }
 
 function assignMsg(ctx, prop) {
@@ -75,10 +78,12 @@ function assignMsg(ctx, prop) {
 }
 
 function assignResp(ctx, prop, resp) {
-  if (ctx[prop] !== undefined) {
-    ctx[prop] = resp
-  } else {
-    console.warn(`${prop} not defined on instance`)
+  if (prop !== undefined) {
+    if (ctx[prop] !== undefined) {
+      ctx[prop] = resp
+    } else {
+      console.warn(`${prop} not defined on instance`)
+    }
   }
 }
 
@@ -157,8 +162,8 @@ const register = {
   },
   emitters({ ctx, socket, entries }) {
     entries.forEach((entry) => {
-      const { pre, post, evt, mapTo } = parseEntry(entry)
-      const [emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
+      const { pre, post, evt, mapTo, emitEvt, msgLabel } = parseEntry(entry)
+      // const [emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
       ctx[emitEvt] = async function() {
         const msg = assignMsg(ctx, msgLabel)
         await runHook(ctx, pre)

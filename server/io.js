@@ -13,7 +13,7 @@ function IOServer({ host, port, server = http.createServer() }) {
     ioChannels.forEach((channel) => {
       io.of(`/${channel}`).on('connection', (socket) => {
         consola.info('socket.io client connected to', channel)
-        const svc = require(`./channels/${channel}`).Svc()
+        const svc = require(`./channels/${channel}`).Svc(socket, io)
         Object.entries(svc).forEach(([evt, fn]) => {
           if (typeof fn === 'function') {
             socket.on(evt, (msg, cb) => {
