@@ -4,9 +4,7 @@
       Welcome to room {{ room }}, {{ user }}!
     </h3>
     <h3 v-else>Joining room...{{ room }}</h3>
-
-    <p>Room info: {{ roomInfo }}</p>
-    <p>ROOM</p>
+    <h4>Users in room: {{ roomUsers }}</h4>
     <div class="room">
       <nav class="channel-select">
         <div class="sidebar-sticky">
@@ -16,20 +14,21 @@
               :key="channel"
               class="nav-item channel-container"
             >
-              <a
+              <nuxt-link class="nav-link" :to="channelRoute(channel)">
+                {{ channel }}
+              </nuxt-link>
+              <!-- <a
                 class="nav-link"
                 :class="channel.active"
                 @click="joinChannel(channel)"
                 >{{ channel }}
-              </a>
+              </a> -->
             </li>
           </ul>
         </div>
       </nav>
+      <nuxt-child v-if="showChannel"></nuxt-child>
     </div>
-
-    Channel here??
-    <nuxt-child></nuxt-child>
   </div>
 </template>
 
@@ -50,6 +49,10 @@ export default {
     }
   },
   computed: {
+    channelRoute() {
+      return (channel) => `/rooms/${this.room}/${channel}`
+    },
+
     channels() {
       return this.roomInfo.room ? this.roomInfo.room.channels : []
     },
@@ -57,16 +60,27 @@ export default {
     joinMsg() {
       const { room, user } = this
       return { room, user }
+    },
+
+    roomUsers() {
+      return this.roomInfo.room ? this.roomInfo.room.users : []
+    },
+
+    showChannel() {
+      return (
+        this.channels.length > 0 &&
+        this.channels.includes(this.$route.params.channel)
+      )
     }
   },
   watch: {
-    room() {
+    room(newVal) {
       this.joinRoom()
     }
   },
   mounted() {
     this.socket = this.$nuxtSocket({ channel: '/room' })
-    this.joinRoom()
+    if (this.joinMsg.room) this.joinRoom()
   },
   methods: {
     toastNotify(resp) {
@@ -79,26 +93,12 @@ export default {
 <style scoped>
 .room {
   display: grid;
-  grid-template: 80px repeat(5, 80px) [header-start content-row-start] / 1fr 4fr 1fr [channel-nav content-col-start right-pane];
-  grid-row-gap: 5px;
-}
-
-.room-header {
-  grid-column: span 3;
+  grid-template: 80px repeat(5, 80px) / 1fr 5fr;
+  grid-gap: 15px;
 }
 
 .channel-select {
   grid-row: span 5;
-}
-
-.channel-content {
-  grid-row: span 4;
-  grid-column: 2;
-}
-
-.channel-msgs-txt {
-  width: 95%;
-  height: 100%;
 }
 
 .channel-container {
@@ -109,17 +109,5 @@ export default {
 
 .channel-container .active {
   background-color: lavender;
-}
-
-.room-users {
-  grid-column: 3;
-}
-
-.input-msg {
-  grid-column: 2;
-}
-
-.submit-btn {
-  grid-column: span 1;
 }
 </style>

@@ -6,7 +6,7 @@
         <nuxt-link :to="roomRoute(room)">{{ room }} </nuxt-link>
       </li>
     </ul>
-    <nuxt-child :user="user"></nuxt-child>
+    <nuxt-child v-if="showRoom" :user="user"></nuxt-child>
   </div>
 </template>
 
@@ -15,12 +15,18 @@ export default {
   data() {
     return {
       rooms: [],
-      user: 'abc' // `user_${Date.now().toString().slice(7)}`
+      user: 'abc' // `user_${Date.now().toString().slice(7)}`,
     }
   },
   computed: {
     roomRoute() {
       return (room) => `/rooms/${room}`
+    },
+
+    showRoom() {
+      return (
+        this.rooms.length > 0 && this.rooms.includes(this.$route.params.room)
+      )
     }
   },
   mounted() {
