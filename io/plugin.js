@@ -216,7 +216,6 @@ const register = {
       if (entries.constructor.name === 'Array') {
         const fnName = storeFns[setName]
         if (fnName) {
-          console.log('register L', setName, entries)
           register.listenersVuex({
             ctx,
             socket,
@@ -224,7 +223,6 @@ const register = {
             storeFn: store[fnName]
           })
         } else {
-          console.log('register E', setName, entries)
           register.emitBacksVuex({ ctx, store, useSocket, socket, entries })
         }
       } else {
