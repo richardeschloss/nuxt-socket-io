@@ -487,7 +487,7 @@ test('Namespace config (emitbacks)', async (t) => {
   })
 })
 
-test('Rooms', async (t) => {
+test('Get Rooms', async (t) => {
   const namespace = {
     emitters: ['getRooms --> rooms']
   }
@@ -502,7 +502,7 @@ test('Rooms', async (t) => {
   })
 })
 
-test.only('Room', (t) => {
+test('Join Room (and check joinedRoom event)', (t) => {
   t.timeout(5000)
   const users = ['userABC', 'userXYZ']
   const namespace = {
@@ -520,10 +520,7 @@ test.only('Room', (t) => {
           room: 'vueJS',
           user
         },
-        joinedRoom: {
-          user,
-          namespace
-        },
+        joinedRoom: {},
         roomInfo: {},
         toastNotify(resp) {
           called.toastNotify = true
@@ -547,9 +544,87 @@ test.only('Room', (t) => {
         t.is(userResp, user)
         t.true(room.users.includes(user))
         if (++doneCnt === users.length) {
+          sockets.forEach((s) => s.close())
           resolve()
         }
       }, 100)
+    })
+  })
+})
+
+test.only('Join channel and send message', (t) => {
+  t.timeout(5000)
+  const users = ['userABC', 'userXYZ']
+  const namespace = {
+    emitters: [
+      'joinChannel + joinMsg --> channelInfo',
+      'sendMsg + userMsg --> msgRxd [updateChats'
+    ],
+    listeners: ['joinedChannel [toastNotify', 'chatMessage [updateChats']
+  }
+
+  let doneCnt = 0
+  const sockets = []
+
+  return new Promise((resolve) => {
+    const room = 'vueJS'
+    const channel = 'general'
+    users.forEach((user, idx) => {
+      const called = { toastNotify: false, updateChats: false }
+      const context = {
+        joinMsg: {
+          room,
+          channel,
+          user
+        },
+        joinedChannel: {},
+        channelInfo: {},
+        userMsg: {
+          inputMsg: `Hi from user ${user}`,
+          user,
+          room,
+          channel
+        },
+        msgRxd: '',
+        updateChats(resp) {
+          called.updateChats = true
+        },
+        toastNotify(resp) {
+          called.toastNotify = true
+        }
+      }
+      setTimeout(async () => {
+        const socket = await testNamespace({
+          t,
+          context,
+          namespace,
+          channel: '/channel',
+          teardown: false
+        })
+        sockets.push(socket)
+      }, 100 * (idx + 1))
+
+      setTimeout(() => {
+        if (idx === 0) {
+          t.true(called.toastNotify)
+          t.is(context.joinedChannel.user, users[1])
+        }
+        const {
+          channel: fndChannel,
+          user: userResp,
+          namespace
+        } = context.channelInfo
+        t.is(namespace, `rooms/${room}/${channel}`)
+        t.is(userResp, user)
+        t.is(context.msgRxd, context.userMsg.inputMsg)
+        if (++doneCnt === users.length) {
+          const [firstChat] = fndChannel.chats
+          t.is(firstChat.user, users[0])
+          t.is(firstChat.inputMsg, `Hi from user ${users[0]}`)
+          sockets.forEach((s) => s.close())
+          resolve()
+        }
+      }, 1000)
     })
   })
 })
