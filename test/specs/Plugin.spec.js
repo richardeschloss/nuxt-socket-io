@@ -567,3 +567,7 @@ test('Socket plugin (from nuxt.config)', async (t) => {
     })
   })
 })
+
+test('Rooms placeholder', async (t) => {
+  t.pass()
+})
