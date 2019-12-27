@@ -83,9 +83,9 @@ module.exports = {
               'sendMsg + userMsg --> msgRxd [updateChats'
             ],
             listeners: [
-              'joinedChannel [updateUsers',
-              'leftChannel [updateUsers',
-              'chatMessage [updateChats'
+              'joinedChannel [updateChannelInfo',
+              'leftChannel [updateChannelInfo',
+              'chatMessage [appendChats'
             ]
           }
         }
