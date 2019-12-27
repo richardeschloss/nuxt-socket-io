@@ -59,16 +59,18 @@ test('Room page (two clients)', (t) => {
     }
 
     function checkJoined() {
-      setTimeout(() => {
+      setImmediate(() => {
         clients.forEach((client) => {
           t.is(client.vm.roomInfo.users.length, users.length)
         })
+        clients[0].vm.socket.on('leftRoom', () => {
+          checkLeft()
+        })
         clients[1].vm.$route.params.room = otherRoom
-        checkLeft()
-      }, 1000)
+      })
     }
 
-    users.forEach(async (user) => {
+    users.forEach(async (user, idx) => {
       const $nuxtSocket = await injectPlugin({}, Plugin)
       const options = {
         propsData: {
@@ -93,9 +95,12 @@ test('Room page (two clients)', (t) => {
       const wrapper = shallowMount(Room, options)
       t.truthy(wrapper.isVueInstance())
       clients.push(wrapper)
-      if (++doneCnt === users.length) {
-        checkJoined()
-      }
+      if (idx === 0) doneCnt++
+      wrapper.vm.socket.on('joinedRoom', () => {
+        if (++doneCnt === users.length) {
+          checkJoined()
+        }
+      })
     })
   })
 })
