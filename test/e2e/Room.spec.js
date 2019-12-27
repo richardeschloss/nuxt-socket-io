@@ -39,29 +39,6 @@ beforeEach(() => {
   })
 })
 
-test('Room page mounted ok', async (t) => {
-  const wrapper = shallowMount(Room, {
-    store,
-    localVue,
-    stubs: {
-      'nuxt-child': true,
-      'nuxt-link': true
-    },
-    mocks: {
-      $route: {
-        params: {
-          room: 'vueJS'
-        }
-      },
-      $router: [],
-      $nuxtSocket: await injectPlugin({}, Plugin)
-    }
-  })
-  t.truthy(wrapper.isVueInstance())
-  const { room, $route } = wrapper.vm
-  t.is(room, $route.params.room)
-})
-
 test('Room page (two clients)', (t) => {
   t.timeout(5000)
   const users = ['user1', 'user2']
@@ -72,7 +49,6 @@ test('Room page (two clients)', (t) => {
   return new Promise((resolve) => {
     function checkLeft() {
       setTimeout(() => {
-        console.log('checkLeft')
         const [c1, c2] = clients
         t.is(c1.vm.roomInfo.room, room)
         t.is(c1.vm.roomInfo.users.length, 1)
@@ -107,7 +83,7 @@ test('Room page (two clients)', (t) => {
         mocks: {
           $route: {
             params: {
-              room: ''
+              room
             }
           },
           $router: [],
@@ -115,7 +91,7 @@ test('Room page (two clients)', (t) => {
         }
       }
       const wrapper = shallowMount(Room, options)
-      wrapper.vm.$route.params.room = room
+      t.truthy(wrapper.isVueInstance())
       clients.push(wrapper)
       if (++doneCnt === users.length) {
         checkJoined()

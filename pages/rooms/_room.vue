@@ -80,19 +80,17 @@ export default {
   },
   watch: {
     async room(newRoom, oldRoom) {
-      if (oldRoom !== undefined && oldRoom !== '') {
-        this.leaveMsg = { room: oldRoom, user: this.user }
-        await this.leaveRoom()
-      }
+      this.leaveMsg = { room: oldRoom, user: this.user }
+      await this.leaveRoom()
 
-      if (newRoom !== undefined && newRoom !== '') {
-        this.joinMsg = { room: newRoom, user: this.user }
-        this.joinRoom()
-      }
+      this.joinMsg = { room: newRoom, user: this.user }
+      this.joinRoom()
     }
   },
   mounted() {
     this.socket = this.$nuxtSocket({ channel: '/room' })
+    this.joinMsg = { room: this.room, user: this.user }
+    this.joinRoom()
   },
   methods: {
     updateUsers(resp) {
