@@ -48,12 +48,13 @@ function Svc(socket, io) {
     },
     sendMsg({ inputMsg, room, channel, user, namespace }) {
       const fndChannel = getChannel(room, channel)
-      fndChannel.chats.push({
+      const chatMsg = {
         user,
         inputMsg,
         timestamp: Date.now()
-      })
-      socket.to(namespace).emit('chatMessage', inputMsg)
+      }
+      fndChannel.chats.push(chatMsg)
+      socket.to(namespace).emit('chatMessage', chatMsg)
       return Promise.resolve(inputMsg)
     }
   })

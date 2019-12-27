@@ -586,7 +586,7 @@ test('Channel (emitters and listeners)', (t) => {
     listeners: [
       'joinedChannel [updateUsers',
       'leftChannel [userLeft',
-      'chatMessage [updateChats'
+      'chatMessage [appendChat'
     ]
   }
 
@@ -596,6 +596,7 @@ test('Channel (emitters and listeners)', (t) => {
   return new Promise((resolve) => {
     const room = 'vueJS'
     const channel = 'general'
+    const chatNamespace = `rooms/${room}/${channel}`
     users.forEach((user, idx) => {
       const context = {
         joinMsg: {
@@ -605,27 +606,31 @@ test('Channel (emitters and listeners)', (t) => {
         },
         joinedChannel: {},
         channelInfo: {},
+        chatMessage: '',
         userMsg: {
           inputMsg: `Hi from user ${user}`,
           user,
           room,
-          channel
+          channel,
+          namespace: chatNamespace
         },
         msgRxd: '',
+        appendChat(resp) {
+          t.is(context.chatMessage.inputMsg, `Hi from user ${users[1]}`)
+        },
         userLeft({ user: goneUser, users: usersNow }) {
           t.is(goneUser, users[1])
           t.is(usersNow.length, 1)
           resolve()
         },
+        updateChats(resp) {
+          t.is(resp, context.userMsg.inputMsg)
+        },
         updateUsers({ user: joinedUser }) {
           t.is(joinedUser, users[1])
         }
       }
-      const callees = Callees({
-        t,
-        callItems: ['updateChats'],
-        context
-      })
+
       setTimeout(async () => {
         const socket = await testNamespace({
           t,
@@ -647,7 +652,7 @@ test('Channel (emitters and listeners)', (t) => {
           chats,
           namespace
         } = context.channelInfo
-        t.is(namespace, `rooms/${room}/${channel}`)
+        t.is(namespace, chatNamespace)
         t.is(fndChannel, channel)
         t.is(userResp, user)
         t.is(context.msgRxd, context.userMsg.inputMsg)
@@ -655,7 +660,6 @@ test('Channel (emitters and listeners)', (t) => {
           const [firstChat] = chats
           t.is(firstChat.user, users[0])
           t.is(firstChat.inputMsg, `Hi from user ${users[0]}`)
-          callees.called()
           sockets[1].close()
         }
       }, 1000)

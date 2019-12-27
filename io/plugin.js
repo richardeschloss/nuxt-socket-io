@@ -107,8 +107,8 @@ const register = {
     entries.forEach((entry) => {
       const { pre, post, evt, mapTo } = parseEntry(entry)
       if (propExists(ctx, mapTo)) {
-        ctx.$watch(mapTo, async function(data) {
-          await runHook(ctx, pre)
+        ctx.$watch(mapTo, async function(data, oldData) {
+          await runHook(ctx, pre, { data, oldData })
           return new Promise((resolve) => {
             socket.emit(evt, { data }, (resp) => {
               runHook(ctx, post, resp)
