@@ -1,6 +1,6 @@
 export default {
   require: ['@babel/register', './test/e2e.setup.js'],
-  // serial: true,
+  serial: true,
   files: ['test/e2e/**/*'],
   sources: ['**/*.{js,vue}'],
   babel: {
