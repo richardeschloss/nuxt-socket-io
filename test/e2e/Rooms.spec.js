@@ -30,7 +30,6 @@ let store
 beforeEach(() => {
   localVue = createLocalVue()
   localVue.use(Vuex)
-  // localVue.use(VueRouter)
   localVue.use(BootstrapVue)
   store = new Vuex.Store({
     state,

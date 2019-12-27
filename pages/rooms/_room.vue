@@ -27,7 +27,7 @@
           </ul>
         </div>
       </nav>
-      <nuxt-child v-if="showChannel"></nuxt-child>
+      <nuxt-child v-if="showChannel" :user="user"></nuxt-child>
     </div>
   </div>
 </template>
@@ -42,10 +42,11 @@ export default {
   },
   data() {
     return {
-      room: this.$route.params.room,
       joined: false,
       joinedRoom: {},
-      roomInfo: {}
+      roomInfo: {},
+      joinMsg: {},
+      leaveMsg: {}
     }
   },
   computed: {
@@ -62,9 +63,8 @@ export default {
       return this.roomInfo.channels ? this.roomInfo.channels : []
     },
 
-    joinMsg() {
-      const { room, user } = this
-      return { room, user }
+    room() {
+      return this.$route.params.room
     },
 
     roomUsers() {
@@ -79,20 +79,24 @@ export default {
     }
   },
   watch: {
-    room(newVal) {
-      this.joinRoom()
+    async room(newRoom, oldRoom) {
+      if (oldRoom !== undefined && oldRoom !== '') {
+        this.leaveMsg = { room: oldRoom, user: this.user }
+        await this.leaveRoom()
+      }
+
+      if (newRoom !== undefined && newRoom !== '') {
+        this.joinMsg = { room: newRoom, user: this.user }
+        this.joinRoom()
+      }
     }
   },
   mounted() {
     this.socket = this.$nuxtSocket({ channel: '/room' })
-    if (this.joinMsg.room) this.joinRoom()
   },
   methods: {
     updateUsers(resp) {
-      console.log('another user join / leave evt...', resp)
-      console.log('users before', this.roomInfo.users.length)
       this.roomInfo.users = resp.users
-      console.log('users after', this.roomInfo.users.length)
     }
   }
 }
