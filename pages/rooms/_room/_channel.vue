@@ -5,6 +5,7 @@
         <b-form-textarea
           v-model="chatMsgsTxt"
           class="channel-msgs-txt"
+          readonly
         ></b-form-textarea>
       </div>
       <div class="channel-users">
@@ -40,9 +41,9 @@ export default {
       channelInfo: {},
       chatMessage: '',
       inputMsg: '',
-      msgRxd: '',
+      msgRxd: {},
       joinMsg: {},
-      leaveMsg: {},
+      leaveMsg: {}
     }
   },
   computed: {
@@ -100,12 +101,10 @@ export default {
   },
   methods: {
     appendChats(resp) {
-      // console.log('msgRxd!! appendChats for user', this.user, resp.user, resp)
+      this.channelInfo.chats.push(resp)
+      this.inputMsg = ''
     },
 
-    updateChats(resp) {
-      // console.log('updateChats', resp)
-    },
     updateChannelInfo(resp) {
       const { room, users, channel, chats, namespace } = resp
       const { channel: activeChannel, room: activeRoom } = this

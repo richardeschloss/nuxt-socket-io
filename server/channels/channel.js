@@ -55,7 +55,7 @@ function Svc(socket, io) {
       }
       fndChannel.chats.push(chatMsg)
       socket.to(namespace).emit('chatMessage', chatMsg)
-      return Promise.resolve(inputMsg)
+      return Promise.resolve(chatMsg)
     }
   })
 
