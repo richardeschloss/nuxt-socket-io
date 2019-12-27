@@ -39,17 +39,6 @@ beforeEach(() => {
   })
 })
 
-test('ProgressBar is a Vue component', (t) => {
-  const wrapper = shallowMount(ProgressBar, {
-    store,
-    localVue,
-    mocks: {
-      $nuxtSocket: () => {}
-    }
-  })
-  t.truthy(wrapper.isVueInstance())
-})
-
 test('Get Progress', async (t) => {
   t.timeout(10000)
   const wrapper = shallowMount(ProgressBar, {
@@ -59,6 +48,7 @@ test('Get Progress', async (t) => {
       $nuxtSocket: await injectPlugin({}, Plugin)
     }
   })
+  t.truthy(wrapper.isVueInstance())
   const refreshInfo = { period: 50 }
   wrapper.setData({ refreshInfo })
   return new Promise((resolve) => {
@@ -79,12 +69,19 @@ test('Get Progress', async (t) => {
       })
     })
     wrapper.vm.getProgress().then(() => {
-      const { showProgress, congratulate, progress, progressVuex } = wrapper.vm
-      t.false(showProgress)
-      t.true(congratulate)
-      t.is(progress, 100)
-      t.is(progressVuex, progress)
-      resolve()
+      setTimeout(() => {
+        const {
+          showProgress,
+          congratulate,
+          progress,
+          progressVuex
+        } = wrapper.vm
+        t.false(showProgress)
+        t.true(congratulate)
+        t.is(progress, 100)
+        t.is(progressVuex, progress)
+        resolve()
+      }, 1000)
     })
   })
 })

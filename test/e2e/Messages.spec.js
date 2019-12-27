@@ -35,17 +35,6 @@ beforeEach(() => {
   })
 })
 
-test('Messages is a Vue component', (t) => {
-  const wrapper = shallowMount(Messages, {
-    store,
-    localVue,
-    mocks: {
-      $nuxtSocket: () => {}
-    }
-  })
-  t.truthy(wrapper.isVueInstance())
-})
-
 test('Get Message', async (t) => {
   const wrapper = shallowMount(Messages, {
     store,
@@ -54,6 +43,7 @@ test('Get Message', async (t) => {
       $nuxtSocket: await injectPlugin({}, Plugin)
     }
   })
+  t.truthy(wrapper.isVueInstance())
   const testJSON = { id: 'abc123' }
   const expected = 'It worked! Received msg: ' + JSON.stringify(testJSON)
   const expectedChats = [
@@ -101,9 +91,9 @@ test('Get Message (namespace cfg)', async (t) => {
       })
     })
     wrapper.vm.socket.on('chatMessage3', (msg) => {
-      wrapper.vm.$nextTick(() => {
+      setTimeout(() => {
         t.is(wrapper.vm.message3Rxd, expectedMessage3)
-      })
+      }, 500)
     })
     await wrapper.vm.getMessage2()
     t.is(wrapper.vm.message2Rxd, expected)

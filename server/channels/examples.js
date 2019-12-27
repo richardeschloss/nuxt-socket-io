@@ -4,8 +4,8 @@ function Svc() {
       return new Promise((resolve) => {
         let progress = 0
         const timer = setInterval(() => {
-          notify({ evt: 'progress', data: progress })
           progress += 10
+          notify({ evt: 'progress', data: progress })
           if (progress === 100) {
             clearInterval(timer)
             resolve(progress)
