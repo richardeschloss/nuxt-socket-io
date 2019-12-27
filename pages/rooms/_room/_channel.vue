@@ -1,7 +1,5 @@
 <template>
   <div>
-    <h4>Welcome to channel {{ channel }}</h4>
-    ChannelInfo {{ channelInfo }}
     <div class="channel">
       <div class="channel-content">
         <b-form-textarea
@@ -10,19 +8,18 @@
         ></b-form-textarea>
       </div>
       <div class="channel-users">
-        Users in channel:
-        <div>user...</div>
+        <label>Users in channel:</label>
         <div v-for="channelUser in channelInfo.users" :key="channelUser">
           {{ channelUser }}
         </div>
       </div>
       <b-form-input
-        v-model="userMsg.inputMsg"
+        v-model="inputMsg"
         class="input-msg"
         type="text"
-        @keyup.enter="sendMessage"
+        @keyup.enter="sendMsg"
       />
-      <b-button class="submit-btn" type="button" @click="sendMessage()"
+      <b-button class="submit-btn" type="button" @click="sendMsg()"
         >Submit</b-button
       >
     </div>
@@ -41,43 +38,80 @@ export default {
     return {
       joinedChannel: {},
       channelInfo: {},
-      userMsg: {
-        inputMsg: '',
-        user: this.user,
-        room: this.room,
-        channel: this.channel
-      },
-      msgRxd: ''
+      chatMessage: '',
+      inputMsg: '',
+      msgRxd: '',
+      joinMsg: {},
+      leaveMsg: {},
     }
   },
   computed: {
     chatMsgsTxt() {
-      return ''
-    },
-
-    joinMsg() {
-      const { room, channel, user } = this
-      return { room, channel, user }
+      const { chats } = this.channelInfo
+      if (chats !== undefined && chats.length > 0) {
+        const formatted = []
+        chats.forEach(({ user, inputMsg, timestamp }) => {
+          formatted.push(
+            `${user}: ${inputMsg} (${new Date(timestamp).toLocaleString()}))`
+          )
+        })
+        return formatted.join('\r\n')
+      } else {
+        return ''
+      }
     },
 
     channel() {
       return this.$route.params.channel
     },
 
+    namespace() {
+      return this.channelInfo.namespace
+    },
+
     room() {
       return this.$route.params.room
+    },
+
+    userMsg() {
+      return {
+        inputMsg: this.inputMsg,
+        user: this.user,
+        room: this.room,
+        channel: this.channel,
+        namespace: this.namespace
+      }
+    }
+  },
+  watch: {
+    channel(newChannel, oldChannel) {
+      const { room, user } = this
+      this.leaveMsg = { room, channel: oldChannel, user }
+      this.leaveChannel()
+
+      this.joinMsg = { room, channel: newChannel, user }
+      this.joinChannel()
     }
   },
   mounted() {
     this.socket = this.$nuxtSocket({ channel: '/channel' })
+    this.joinMsg = { room: this.room, channel: this.channel, user: this.user }
     this.joinChannel()
   },
   methods: {
-    updateChats(resp) {
-      console.log('updateChats')
+    appendChats(resp) {
+      // console.log('msgRxd!! appendChats for user', this.user, resp.user, resp)
     },
-    toastNotify(resp) {
-      console.log('toastNotify')
+
+    updateChats(resp) {
+      // console.log('updateChats', resp)
+    },
+    updateChannelInfo(resp) {
+      const { room, users, channel, chats, namespace } = resp
+      const { channel: activeChannel, room: activeRoom } = this
+      if (room === activeRoom && channel === activeChannel) {
+        Object.assign(this.channelInfo, { users, chats, namespace })
+      }
     }
   }
 }
