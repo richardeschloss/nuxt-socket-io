@@ -80,7 +80,7 @@ module.exports = {
             emitters: [
               'joinChannel + joinMsg --> channelInfo',
               'leaveChannel + leaveMsg',
-              'sendMsg + userMsg --> msgRxd [updateChats'
+              'sendMsg + userMsg --> msgRxd [appendChats'
             ],
             listeners: [
               'joinedChannel [updateChannelInfo',

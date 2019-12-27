@@ -614,7 +614,7 @@ test('Channel (emitters and listeners)', (t) => {
           channel,
           namespace: chatNamespace
         },
-        msgRxd: '',
+        msgRxd: {},
         appendChat(resp) {
           t.is(context.chatMessage.inputMsg, `Hi from user ${users[1]}`)
         },
@@ -624,7 +624,7 @@ test('Channel (emitters and listeners)', (t) => {
           resolve()
         },
         updateChats(resp) {
-          t.is(resp, context.userMsg.inputMsg)
+          t.is(resp.inputMsg, context.userMsg.inputMsg)
         },
         updateUsers({ user: joinedUser }) {
           t.is(joinedUser, users[1])
@@ -655,7 +655,7 @@ test('Channel (emitters and listeners)', (t) => {
         t.is(namespace, chatNamespace)
         t.is(fndChannel, channel)
         t.is(userResp, user)
-        t.is(context.msgRxd, context.userMsg.inputMsg)
+        t.is(context.msgRxd.inputMsg, context.userMsg.inputMsg)
         if (++doneCnt === users.length) {
           const [firstChat] = chats
           t.is(firstChat.user, users[0])

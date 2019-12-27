@@ -106,10 +106,10 @@ export default {
     },
 
     updateChannelInfo(resp) {
-      const { room, users, channel, chats, namespace } = resp
+      const { room, users, channel, namespace } = resp
       const { channel: activeChannel, room: activeRoom } = this
       if (room === activeRoom && channel === activeChannel) {
-        Object.assign(this.channelInfo, { users, chats, namespace })
+        Object.assign(this.channelInfo, { users, namespace })
       }
     }
   }
