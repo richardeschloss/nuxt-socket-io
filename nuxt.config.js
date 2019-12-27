@@ -70,16 +70,20 @@ module.exports = {
             emitters: ['getRooms --> rooms']
           },
           '/room': {
-            emitters: ['joinRoom + joinMsg --> roomInfo'],
+            emitters: [
+              'joinRoom + joinMsg --> roomInfo',
+              'leaveRoom + leaveMsg'
+            ],
             listeners: ['joinedRoom [updateUsers', 'leftRoom [updateUsers']
           },
           '/channel': {
             emitters: [
               'joinChannel + joinMsg --> channelInfo',
+              'leaveChannel + leaveMsg',
               'sendMsg + userMsg --> msgRxd [updateChats'
             ],
             listeners: [
-              'joinedChannel [toastNotify',
+              'joinedChannel [updateUsers',
               'leftChannel [updateUsers',
               'chatMessage [updateChats'
             ]
