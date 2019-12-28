@@ -6,14 +6,14 @@ const socketIO = require('socket.io')
 function IOServer({ host, port, server = http.createServer() }) {
   let _io
   function registerIO(io) {
-    const ioChannels = fs
-      .readdirSync('./server/channels')
+    const namespaces = fs
+      .readdirSync('./server/namespaces')
       .map((f) => f.replace('.js', ''))
 
-    ioChannels.forEach((channel) => {
-      io.of(`/${channel}`).on('connection', (socket) => {
-        consola.info('socket.io client connected to', channel)
-        const svc = require(`./channels/${channel}`).Svc()
+    namespaces.forEach((namespace) => {
+      io.of(`/${namespace}`).on('connection', (socket) => {
+        consola.info('socket.io client connected to', namespace)
+        const svc = require(`./namespaces/${namespace}`).Svc(socket, io)
         Object.entries(svc).forEach(([evt, fn]) => {
           if (typeof fn === 'function') {
             socket.on(evt, (msg, cb) => {
@@ -25,6 +25,9 @@ function IOServer({ host, port, server = http.createServer() }) {
               }).then(cb)
             })
           }
+        })
+        socket.on('disconnect', () => {
+          consola.info('client disconnected from', namespace)
         })
       })
     })

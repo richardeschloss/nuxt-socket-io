@@ -1,7 +1,8 @@
 export const state = () => ({
   progress: 0,
   sample: 341,
-  sample2: 243
+  sample2: 243,
+  sample2b: '243b'
 })
 
 export const mutations = {
@@ -15,5 +16,9 @@ export const mutations = {
 
   SET_SAMPLE2(state, sample2) {
     state.sample2 = sample2
+  },
+
+  SET_SAMPLE2B(state, sample2b) {
+    state.sample2b = sample2b
   }
 }

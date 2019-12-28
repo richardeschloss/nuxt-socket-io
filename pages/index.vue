@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container index-container">
     <div>
       <logo />
       <h1 class="title">
@@ -22,8 +22,10 @@
       </div>
     </div>
     <div>
-      <messages></messages>
+      <messages style="height: 500px; overflow-y: scroll;"></messages>
       <nuxt-link to="examples">Thirsty for more examples?</nuxt-link>
+      <br />
+      <nuxt-link to="rooms">Feeling Ready for...Chat Rooms?</nuxt-link>
     </div>
   </div>
 </template>
@@ -40,8 +42,8 @@ export default {
 }
 </script>
 
-<style>
-.container {
+<style scoped>
+.index-container {
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
