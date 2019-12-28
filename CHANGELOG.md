@@ -2,6 +2,17 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2019-12-27
+
+### Added
+- Support for namespace configuration
+- Chat rooms example in [`examples/rooms`](https://github.com/richardeschloss/nuxt-socket-io/tree/examples/rooms) branch.
+- Automated tests for new feature and example pages.
+
+### Changed
+- Internally, refactored some of the plugin code to improve readability, input validation and consistency.
+- Organization of automated tests. Tests now run a bit faster and are easier to maintain.
+
 ## [1.0.6] - 2019-12-21
 
 ### Added
