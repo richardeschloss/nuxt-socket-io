@@ -31,7 +31,7 @@ function propExists(obj, path) {
 }
 
 function parseEntry(entry, emitBack) {
-  let evt, mapTo, pre, body, post
+  let evt, mapTo, pre, body, post, emitEvt, msgLabel
   if (typeof entry === 'string') {
     let subItems = []
     const items = entry.trim().split(/\s*\]\s*/)
@@ -46,15 +46,18 @@ function parseEntry(entry, emitBack) {
       ;[evt, mapTo] = body.split(/\s*-->\s*/)
     } else if (body.includes('<--')) {
       ;[evt, mapTo] = body.split(/\s*<--\s*/)
+    } else if (body.includes('+')) {
+      evt = body
     } else {
       evt = mapTo = body
     }
+    ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
   } else if (emitBack) {
     ;[[mapTo, evt]] = Object.entries(entry)
   } else {
     ;[[evt, mapTo]] = Object.entries(entry)
   }
-  return { pre, post, evt, mapTo }
+  return { pre, post, evt, mapTo, emitEvt, msgLabel }
 }
 
 function assignMsg(ctx, prop) {
@@ -75,10 +78,12 @@ function assignMsg(ctx, prop) {
 }
 
 function assignResp(ctx, prop, resp) {
-  if (ctx[prop] !== undefined) {
-    ctx[prop] = resp
-  } else {
-    console.warn(`${prop} not defined on instance`)
+  if (prop !== undefined) {
+    if (ctx[prop] !== undefined) {
+      ctx[prop] = resp
+    } else {
+      console.warn(`${prop} not defined on instance`)
+    }
   }
 }
 
@@ -102,8 +107,8 @@ const register = {
     entries.forEach((entry) => {
       const { pre, post, evt, mapTo } = parseEntry(entry)
       if (propExists(ctx, mapTo)) {
-        ctx.$watch(mapTo, async function(data) {
-          await runHook(ctx, pre)
+        ctx.$watch(mapTo, async function(data, oldData) {
+          await runHook(ctx, pre, { data, oldData })
           return new Promise((resolve) => {
             socket.emit(evt, { data }, (resp) => {
               runHook(ctx, post, resp)
@@ -157,8 +162,7 @@ const register = {
   },
   emitters({ ctx, socket, entries }) {
     entries.forEach((entry) => {
-      const { pre, post, evt, mapTo } = parseEntry(entry)
-      const [emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
+      const { pre, post, evt, mapTo, emitEvt, msgLabel } = parseEntry(entry)
       ctx[emitEvt] = async function() {
         const msg = assignMsg(ctx, msgLabel)
         await runHook(ctx, pre)

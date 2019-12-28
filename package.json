@@ -35,6 +35,7 @@
     "test:specs:watch": "cross-env TEST=specs ava --config specs.config.js --color --watch",
     "test:e2e": "cross-env TEST=e2e ava --config e2e.config.js",
     "test:e2e:cov": "cross-env TEST=e2e nyc ava --config e2e.config.js",
+    "test:e2e:watch": "cross-env TEST=e2e ava --config e2e.config.js --color --watch",
     "posttest": "rm io/plugin.compiled.js"
   },
   "files": [

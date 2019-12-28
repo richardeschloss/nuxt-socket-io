@@ -61,6 +61,7 @@ export default {
     handleDone(resp) {
       this.showProgress = false
       this.congratulate = true
+      this.progress = 100
       this.$store.commit('examples/SET_PROGRESS', this.progress)
     },
     reset() {

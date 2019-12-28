@@ -1,5 +1,4 @@
 import path from 'path'
-import consola from 'consola'
 import { serial as test } from 'ava'
 import config from '@/nuxt.config'
 import { state as indexState } from '@/store/index'
@@ -14,6 +13,25 @@ state.examples = examplesState()
 state.examples.__ob__ = ''
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
+
+function Callees({ t, callItems = [], context }) {
+  const called = {}
+  const svc = Object.freeze({
+    called() {
+      callItems.forEach((item) => {
+        t.true(called[item])
+      })
+    },
+    register() {
+      callItems.forEach((item) => {
+        called[item] = false
+        context[item] = () => (called[item] = true)
+      })
+    }
+  })
+  svc.register()
+  return svc
+}
 
 function loadPlugin({
   t,
@@ -54,7 +72,7 @@ function loadPlugin({
 }
 
 function parseEntry(entry, emitBack) {
-  let evt, mapTo, pre, body, post
+  let evt, mapTo, pre, body, post, emitEvt, msgLabel
   if (typeof entry === 'string') {
     let subItems = []
     const items = entry.trim().split(/\s*\]\s*/)
@@ -69,15 +87,18 @@ function parseEntry(entry, emitBack) {
       ;[evt, mapTo] = body.split(/\s*-->\s*/)
     } else if (body.includes('<--')) {
       ;[evt, mapTo] = body.split(/\s*<--\s*/)
+    } else if (body.includes('+')) {
+      evt = body
     } else {
       evt = mapTo = body
     }
+    ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
   } else if (emitBack) {
     ;[[mapTo, evt]] = Object.entries(entry)
   } else {
     ;[[evt, mapTo]] = Object.entries(entry)
   }
-  return { pre, post, evt, mapTo }
+  return { pre, post, evt, mapTo, emitEvt, msgLabel }
 }
 
 async function testNamespace({
@@ -85,7 +106,8 @@ async function testNamespace({
   context,
   namespace,
   url = 'http://localhost:3000',
-  channel = '/index'
+  channel = '/index',
+  teardown = true
 }) {
   const testCfg = {
     sockets: [
@@ -133,8 +155,7 @@ async function testNamespace({
     }
     let doneCnt = 0
     emitters.forEach((entry) => {
-      const { evt, mapTo } = parseEntry(entry)
-      const [emitEvt] = evt.split(/\s*\+\s*/)
+      const { mapTo, emitEvt } = parseEntry(entry)
       context[emitEvt]().then((resp) => {
         if (context[mapTo] !== undefined) {
           if (typeof resp === 'object') {
@@ -150,8 +171,10 @@ async function testNamespace({
           }
         }
         if (++doneCnt === emitters.length) {
-          socket.close()
-          resolve()
+          if (teardown) {
+            socket.close()
+          }
+          resolve(socket)
         }
       })
     })
@@ -381,12 +404,7 @@ test('Namespace config (listeners)', async (t) => {
     chatMessage4: '',
     message5Rxd: ''
   }
-  const callItems = ['preEmit', 'handleAck']
-  const called = {}
-  callItems.forEach((item) => {
-    called[item] = false
-    context[item] = () => (called[item] = true)
-  })
+  const callees = Callees({ t, callItems: ['preEmit', 'handleAck'], context })
   const namespace = {
     emitters: ['getMessage2 + testMsg --> message2Rxd'],
     listeners: [
@@ -397,43 +415,36 @@ test('Namespace config (listeners)', async (t) => {
     ]
   }
   await testNamespace({ t, context, namespace })
-  callItems.forEach((item) => {
-    t.true(called[item])
-    t.is(context.chatMessage4, 'Hi again')
-  })
+  callees.called()
 })
 
 test('Namespace config (emitters)', async (t) => {
   const callItems = ['reset', 'handleDone', 'preProgress', 'postProgress']
-  const called = {}
   const context = {
     progress: 0,
     refreshInfo: {
       period: 50
     },
     someString: 'Hello world',
+    someString2: 'Hello world2',
     myArray: [],
     someArray: [3, 1, 2],
     myObj: {}
   }
-  callItems.forEach((item) => {
-    called[item] = false
-    context[item] = () => (called[item] = true)
-  })
+  const callees = Callees({ t, callItems, context })
   const namespace = {
     emitters: [
       'reset] getProgress + refreshInfo --> progress [handleDone',
       'sample3',
       'receiveString + someString --> myArray',
       'receiveArray + someArray --> myObj',
-      'noMethod] receiveArray2 + undefProp --> undefProp2 [noMethod2'
+      'noMethod] receiveArray2 + undefProp --> undefProp2 [noMethod2',
+      'receiveString2 + someString2'
     ],
     listeners: ['preProgress] progress [postProgress']
   }
   await testNamespace({ t, context, namespace, channel: '/examples' })
-  callItems.forEach((item) => {
-    t.true(called[item])
-  })
+  callees.called()
 })
 
 test('Namespace config (emitbacks)', async (t) => {
@@ -445,8 +456,7 @@ test('Namespace config (emitbacks)', async (t) => {
       'preEmit] sample5'
     ]
   }
-
-  const called = { preEmit: false, handleDone: false }
+  const called = { preEmit: false }
 
   const context = {
     sample3: 100,
@@ -461,11 +471,8 @@ test('Namespace config (emitbacks)', async (t) => {
         t.true(called.preEmit)
       }
     },
-    preEmit() {
-      called.preEmit = true
-    },
+    preEmit: () => (called.preEmit = true),
     handleDone({ msg }) {
-      called.handleDone = true
       t.is(msg, 'rxd sample ' + newData.sample3)
     }
   }
@@ -480,9 +487,183 @@ test('Namespace config (emitbacks)', async (t) => {
   await testNamespace({ t, context, namespace, channel: '/examples' })
   return new Promise((resolve) => {
     setTimeout(() => {
-      t.true(called.handleDone)
       resolve()
     }, 1000)
+  })
+})
+
+test('Rooms (emitters)', async (t) => {
+  const namespace = {
+    emitters: ['getRooms --> rooms']
+  }
+
+  const expected = ['vueJS', 'nuxtJS']
+  const context = {
+    rooms: []
+  }
+  await testNamespace({
+    t,
+    context,
+    namespace,
+    channel: '/rooms',
+    teardown: false
+  })
+  expected.forEach((room, idx) => {
+    t.is(room, context.rooms[idx])
+  })
+})
+
+test('Room (emitters and listeners)', (t) => {
+  t.timeout(5000)
+  const users = ['userABC', 'userXYZ']
+  const namespace = {
+    emitters: ['joinRoom + joinMsg --> roomInfo'],
+    listeners: ['joinedRoom [updateUsers', 'leftRoom [userLeft']
+  }
+  let doneCnt = 0
+  const sockets = []
+
+  return new Promise((resolve) => {
+    const room = 'vueJS'
+    users.forEach(async (user, idx) => {
+      const called = { updateUsers: false }
+      const context = {
+        joinMsg: {
+          room,
+          user
+        },
+        joinedRoom: {},
+        roomInfo: {},
+        userLeft({ user: goneUser, users: usersNow }) {
+          t.is(goneUser, users[1])
+          t.is(usersNow.length, 1)
+          sockets[0].close()
+          resolve()
+        },
+        updateUsers(resp) {
+          called.updateUsers = true
+        }
+      }
+      const socket = await testNamespace({
+        t,
+        context,
+        namespace,
+        channel: '/room',
+        teardown: false
+      })
+      sockets.push(socket)
+      setTimeout(() => {
+        if (idx === 0) {
+          t.true(called.updateUsers)
+          t.is(context.joinedRoom.user, users[1])
+        }
+        const {
+          room: roomName,
+          users: roomUsers,
+          user: userResp,
+          namespace
+        } = context.roomInfo
+        t.is(namespace, `rooms/${context.joinMsg.room}`)
+        t.is(roomName, room)
+        t.is(userResp, user)
+        t.true(roomUsers.includes(user))
+        if (++doneCnt === users.length) {
+          sockets[1].close()
+        }
+      }, 100)
+    })
+  })
+})
+
+test('Channel (emitters and listeners)', (t) => {
+  t.timeout(5000)
+  const users = ['userABC', 'userXYZ']
+  const namespace = {
+    emitters: [
+      'joinChannel + joinMsg --> channelInfo',
+      'sendMsg + userMsg --> msgRxd [updateChats'
+    ],
+    listeners: [
+      'joinedChannel [updateUsers',
+      'leftChannel [userLeft',
+      'chatMessage [appendChat'
+    ]
+  }
+
+  let doneCnt = 0
+  const sockets = []
+
+  return new Promise((resolve) => {
+    const room = 'vueJS'
+    const channel = 'general'
+    const chatNamespace = `rooms/${room}/${channel}`
+    users.forEach((user, idx) => {
+      const context = {
+        joinMsg: {
+          room,
+          channel,
+          user
+        },
+        joinedChannel: {},
+        channelInfo: {},
+        chatMessage: '',
+        userMsg: {
+          inputMsg: `Hi from user ${user}`,
+          user,
+          room,
+          channel,
+          namespace: chatNamespace
+        },
+        msgRxd: {},
+        appendChat(resp) {
+          t.is(context.chatMessage.inputMsg, `Hi from user ${users[1]}`)
+        },
+        userLeft({ user: goneUser, users: usersNow }) {
+          t.is(goneUser, users[1])
+          t.is(usersNow.length, 1)
+          resolve()
+        },
+        updateChats(resp) {
+          t.is(resp.inputMsg, context.userMsg.inputMsg)
+        },
+        updateUsers({ user: joinedUser }) {
+          t.is(joinedUser, users[1])
+        }
+      }
+
+      setTimeout(async () => {
+        const socket = await testNamespace({
+          t,
+          context,
+          namespace,
+          channel: '/channel',
+          teardown: false
+        })
+        sockets.push(socket)
+      }, 100 * (idx + 1))
+
+      setTimeout(() => {
+        if (idx === 0) {
+          t.is(context.joinedChannel.user, users[1])
+        }
+        const {
+          channel: fndChannel,
+          user: userResp,
+          chats,
+          namespace
+        } = context.channelInfo
+        t.is(namespace, chatNamespace)
+        t.is(fndChannel, channel)
+        t.is(userResp, user)
+        t.is(context.msgRxd.inputMsg, context.userMsg.inputMsg)
+        if (++doneCnt === users.length) {
+          const [firstChat] = chats
+          t.is(firstChat.user, users[0])
+          t.is(firstChat.inputMsg, `Hi from user ${users[0]}`)
+          sockets[1].close()
+        }
+      }, 1000)
+    })
   })
 })
 

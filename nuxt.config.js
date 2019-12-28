@@ -65,6 +65,28 @@ module.exports = {
               'reset] getProgress + refreshInfo --> progress [handleDone'
             ],
             listeners: ['progress']
+          },
+          '/rooms': {
+            emitters: ['getRooms --> rooms']
+          },
+          '/room': {
+            emitters: [
+              'joinRoom + joinMsg --> roomInfo',
+              'leaveRoom + leaveMsg'
+            ],
+            listeners: ['joinedRoom [updateUsers', 'leftRoom [updateUsers']
+          },
+          '/channel': {
+            emitters: [
+              'joinChannel + joinMsg --> channelInfo',
+              'leaveChannel + leaveMsg',
+              'sendMsg + userMsg --> msgRxd [appendChats'
+            ],
+            listeners: [
+              'joinedChannel [updateChannelInfo',
+              'leftChannel [updateChannelInfo',
+              'chatMessage [appendChats'
+            ]
           }
         }
       },

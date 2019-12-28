@@ -6,7 +6,7 @@ import { BootstrapVue } from 'bootstrap-vue'
 import config from '@/nuxt.config'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
 import { injectPlugin } from '@/test/utils'
-import ProgressBar from '@/components/ProgressBar.vue'
+import Rooms from '@/pages/rooms.vue'
 import { state as indexState, mutations, actions } from '@/store/index'
 import {
   state as examplesState,
@@ -39,49 +39,31 @@ beforeEach(() => {
   })
 })
 
-test('Get Progress', async (t) => {
-  t.timeout(10000)
-  const wrapper = shallowMount(ProgressBar, {
+test('Rooms page', async (t) => {
+  const wrapper = shallowMount(Rooms, {
     store,
     localVue,
+    stubs: {
+      'nuxt-child': true
+    },
     mocks: {
+      $route: {
+        params: {
+          room: 'vueJS'
+        }
+      },
+      $router: [],
       $nuxtSocket: await injectPlugin({}, Plugin)
     }
   })
+  wrapper.setData({ selectedRoom: 'vueJS' })
   t.truthy(wrapper.isVueInstance())
-  const refreshInfo = { period: 50 }
-  wrapper.setData({ refreshInfo })
   return new Promise((resolve) => {
-    wrapper.vm.socket.on('progress', (data) => {
-      // The component will set this.progress. Wait for it...
-      wrapper.vm.$nextTick(() => {
-        const {
-          showProgress,
-          congratulate,
-          progress,
-          progressVuex
-        } = wrapper.vm
-        t.is(progressVuex, progress)
-        if (progress < 100) {
-          t.true(showProgress)
-          t.false(congratulate)
-        }
-      })
-    })
-    wrapper.vm.getProgress().then(() => {
-      setTimeout(() => {
-        const {
-          showProgress,
-          congratulate,
-          progress,
-          progressVuex
-        } = wrapper.vm
-        t.false(showProgress)
-        t.true(congratulate)
-        t.is(progress, 100)
-        t.is(progressVuex, progress)
-        resolve()
-      }, 1000)
-    })
+    setTimeout(() => {
+      t.true(wrapper.vm.rooms.length > 0)
+      wrapper.vm.toRoom()
+      t.is(wrapper.vm.$router[0], `/rooms/${wrapper.vm.selectedRoom}`)
+      resolve()
+    }, 1500)
   })
 })
