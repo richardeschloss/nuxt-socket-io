@@ -1,5 +1,6 @@
 export const state = () => ({
-  chatMessages: ''
+  chatMessages: '',
+  titleFromUser: ''
 })
 
 export const mutations = {

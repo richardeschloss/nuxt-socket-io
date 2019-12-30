@@ -52,7 +52,11 @@ module.exports = {
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
-          emitBacks: ['examples/sample', { 'examples/sample2': 'sample2' }]
+          emitBacks: [
+            'examples/sample',
+            { 'examples/sample2': 'sample2' },
+            'titleFromUser'
+          ]
         },
         namespaces: {
           '/index': {

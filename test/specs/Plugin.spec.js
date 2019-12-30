@@ -284,12 +284,8 @@ test('Socket plugin (vuex options missing actions)', async (t) => {
 test('Socket plugin (vuex opts ok)', async (t) => {
   const callItems = ['pre1', 'post1', 'preEmit', 'postAck']
   const callCnt = { storeWatch: 0, storeCommit: 0, storeDispatch: 0 }
-  const called = {}
   const context = {}
-  callItems.forEach((item) => {
-    called[item] = false
-    context[item] = () => (called[item] = true)
-  })
+  const callees = Callees({ t, context, callItems })
   const vuexOpts = {
     actions: [
       'nonExist1] someAction [nonExist2',
@@ -300,16 +296,15 @@ test('Socket plugin (vuex opts ok)', async (t) => {
     emitBacks: [
       'noPre] examples/sample [noPost',
       { 'examples/sample2': 'sample2' },
-      'preEmit] sample2b <-- examples/sample2b [postAck'
+      'preEmit] sample2b <-- examples/sample2b [postAck',
+      'titleFromUser' // defined in store/index.js (for issue #35)
     ]
   }
   const testUrl = 'http://localhost:3000/examples'
   await testVuexOpts({ t, context, vuexOpts, callCnt, url: testUrl })
   return new Promise((resolve) => {
     setTimeout(() => {
-      callItems.forEach((item) => {
-        t.true(called[item])
-      })
+      callees.called()
       t.is(callCnt.storeCommit, vuexOpts.mutations.length)
       t.is(callCnt.storeDispatch, vuexOpts.actions.length)
       resolve()
