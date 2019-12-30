@@ -38,6 +38,11 @@ function Svc() {
     echoBack({ notify, evt, data }) {
       notify({ evt, data })
       return Promise.resolve()
+    },
+    titleFromUser(msg) {
+      return Promise.resolve({
+        data: `received msg ${msg}!`
+      })
     }
   })
 }

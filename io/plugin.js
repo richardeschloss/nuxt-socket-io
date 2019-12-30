@@ -96,7 +96,7 @@ async function runHook(ctx, prop, data) {
 
 function propByPath(obj, path) {
   return path.split(/[\/\.]/).reduce((out, prop) => {
-    if (out && out[prop]) {
+    if (out !== undefined && out[prop] !== undefined) {
       return out[prop]
     }
   }, obj)
