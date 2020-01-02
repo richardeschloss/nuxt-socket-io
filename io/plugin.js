@@ -19,6 +19,18 @@ function PluginOptions() {
 
 const _pOptions = PluginOptions()
 
+function camelCase(str) {
+  return str
+    .replace(/[\_\-\s](.)/g, function($1) {
+      return $1.toUpperCase()
+    })
+    .replace(/[\-\_\s]/g, '')
+    .replace(/^(.)/, function($1) {
+      return $1.toLowerCase()
+    })
+    .replace(/[^\w\s]/gi, '')
+}
+
 function propExists(obj, path) {
   const exists = path.split('.').reduce((out, prop) => {
     if (out && out[prop]) {
@@ -235,6 +247,28 @@ const register = {
         )
       }
     })
+  },
+  socketStatus({ ctx, socket, connectUrl }) {
+    const socketStatus = { connectUrl }
+    const clientEvts = [
+      'connect_error', 
+      'connect_timeout',
+      'reconnect',
+      'reconnect_attempt',
+      'reconnecting',
+      'reconnect_error',
+      'reconnect_failed',
+      'ping',
+      'pong'
+    ]
+    clientEvts.forEach((evt) => {
+      const prop = camelCase(evt)
+      socketStatus[prop] = ''
+      socket.on(evt, (resp) => {
+        Object.assign(ctx.socketStatus, { [prop]: resp })
+      })
+    })
+    Object.assign(ctx, { socketStatus })
   }
 }
 
@@ -303,6 +337,10 @@ function nuxtSocket(ioOpts) {
     })
   }
 
+  if (this.socketStatus !== undefined && typeof this.socketStatus === 'object') {
+    register.socketStatus({ ctx: this, socket, connectUrl })
+  }
+  
   if (teardown) {
     this.onComponentDestroy = this.$destroy
     this.$destroy = function() {

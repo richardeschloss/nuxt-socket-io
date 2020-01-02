@@ -1,5 +1,6 @@
 <template>
   <div>
+    <socket-status></socket-status>
     <div>
       <h2>Component-defined method:</h2>
       <p>
@@ -54,14 +55,20 @@
 
 <script>
 import { mapState } from 'vuex'
+import SocketStatus from '@/components/SocketStatus.vue'
+
 export default {
+  components: {
+    SocketStatus
+  },
   data() {
     return {
       chatMessage2: '',
       messageRxd: '',
       message2Rxd: '',
       message3Rxd: '',
-      testMsg: { id: 'xyz' }
+      testMsg: { id: 'xyz' },
+      socketStatus: {}
     }
   },
   computed: mapState(['chatMessages']),
