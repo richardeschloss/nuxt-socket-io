@@ -39,6 +39,7 @@
     "posttest": "rm io/plugin.compiled.js"
   },
   "files": [
+    "components/SocketStatus.vue",
     "io",
     "utils"
   ],

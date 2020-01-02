@@ -40,6 +40,10 @@ function loadPlugin({
   plugin = Plugin,
   callCnt = { storeWatch: 0, storeCommit: 0, storeDispatch: 0 }
 }) {
+  if (!context.$on) {
+    context.$on = function(evt, cb) {}
+  }
+
   return new Promise((resolve, reject) => {
     context.$store = {
       commit: (msg) => {
@@ -251,6 +255,82 @@ test('Socket plugin (no vuex options)', async (t) => {
   }
   pOptions.set(testCfg)
   await loadPlugin({ t, ioOpts: { name: 'home' } })
+})
+
+test('Socket plugin (socket status OK)', async (t) => {
+  const cbs = []
+  const context = {
+    socketStatus: {},
+    $on(evt, cb) {
+      cbs.push(cb)
+    },
+    $emit(evt) {
+      cbs.forEach((cb) => cb())
+    }
+  }
+  const url = 'http://localhost:3000'
+  const testCfg = {
+    sockets: [
+      {
+        default: true,
+        url
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  await loadPlugin({ t, ioOpts: {}, context })
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      Object.entries(context.socketStatus).forEach(([key, val]) => {
+        if (key === 'connectUrl') {
+          t.is(val, url)
+        } else {
+          t.is(val, '')
+        }
+      })
+      context.$emit('closeSockets')
+      resolve()
+    }, 150)
+  })
+})
+
+test('Socket plugin (socket status NOT ok)', async (t) => {
+  const cbs = []
+  const context = {
+    socketStatus: {},
+    $on(evt, cb) {
+      cbs.push(cb)
+    },
+    $emit(evt) {
+      cbs.forEach((cb) => cb())
+    }
+  }
+  const url = 'http://localhost:3001'
+  const testCfg = {
+    sockets: [
+      {
+        default: true,
+        url
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  await loadPlugin({ t, ioOpts: {}, context })
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      Object.entries(context.socketStatus).forEach(([key, val]) => {
+        if (key === 'connectUrl') {
+          t.is(val, url)
+        } else if (key === 'connectError') {
+          t.is(val.message, 'xhr poll error')
+        } else {
+          t.is(val, '')
+        }
+      })
+      context.$emit('closeSockets')
+      resolve()
+    }, 150)
+  })
 })
 
 test('Socket plugin (vuex options empty)', async (t) => {
@@ -664,7 +744,16 @@ test('Channel (emitters and listeners)', (t) => {
 
 test('Teardown (enabled)', async (t) => {
   let componentDestroyCnt = 0
+  const cbs = []
   const context = {
+    $on(evt, cb) {
+      t.is(evt, 'closeSockets')
+      cbs.push(cb)
+    },
+    $emit(evt) {
+      t.is(evt, 'closeSockets')
+      cbs.forEach((cb) => cb())
+    },
     $destroy() {
       componentDestroyCnt++
     }
@@ -679,11 +768,15 @@ test('Teardown (enabled)', async (t) => {
   }
   pOptions.set(testCfg)
   const socket = await loadPlugin({ t, context })
+  const socket2 = context.nuxtSocket({})
   const evt = 'test'
   socket.on(evt, () => {})
+  socket2.on(evt, () => {})
   t.true(socket.hasListeners(evt))
+  t.true(socket2.hasListeners(evt))
   context.$destroy()
   t.false(socket.hasListeners(evt))
+  t.false(socket2.hasListeners(evt))
   t.is(componentDestroyCnt, 1)
 })
 
