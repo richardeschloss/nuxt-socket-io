@@ -1,7 +1,7 @@
 {
   "all": false,
   "reporter": ["html", "text"],
-  "exclude": ["node_modules", "io/tmp.compiled.js"],
-  "include": ["io"],
-  "extension": [".js"]
+  "exclude": ["node_modules"],
+  "include": ["io", "components/SocketStatus.vue"],
+  "extension": [".js", ".vue"]
 }

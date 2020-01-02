@@ -4,6 +4,10 @@
     <socket-status :status="socketStatus"></socket-status>
     <hr />
     <socket-status :status="badStatus"></socket-status>
+
+    <hr />
+    (No status here)
+    <socket-status></socket-status>
   </div>
 </template>
 
@@ -22,12 +26,13 @@ export default {
   },
   mounted() {
     this.goodSocket = this.$nuxtSocket({
+      name: 'goodSocket',
       channel: '/index',
       reconnection: false
     })
 
     this.badSocket = this.$nuxtSocket({
-      name: 'test',
+      name: 'badSocket',
       channel: '/index',
       reconnection: true,
       statusProp: 'badStatus'
