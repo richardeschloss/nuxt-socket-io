@@ -1,6 +1,6 @@
 {
   "name": "nuxt-socket-io",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Socket.io module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "main": "io/module.js",
@@ -40,7 +40,8 @@
   },
   "files": [
     "components/SocketStatus.vue",
-    "io",
+    "io/module.js",
+    "io/plugin.js",
     "utils"
   ],
   "dependencies": {
