@@ -10,7 +10,6 @@ const { io } = config
 pOptions.set(io)
 
 let localVue
-let store
 
 beforeEach(() => {
   localVue = createLocalVue()
@@ -18,7 +17,6 @@ beforeEach(() => {
 
 test('IO Status Page', async (t) => {
   const wrapper = mount(IOStatus, {
-    store,
     localVue,
     stubs: {
       'nuxt-link': true
