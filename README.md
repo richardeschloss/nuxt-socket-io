@@ -60,23 +60,31 @@ The syntax is as follows:
 > preEmit hook] componentMethod + msg --> componentProp [postRx hook
 
 → The `preEmit` and `postRx` hooks are optional, but if using them, the "]" and "[" characters are needed so the plugin can parse them.
+
 → The `msg` is optional, but if using, must use the '+' character
+
 → The `componentMethod` is auto-created by the plugin and sends the event with the same name. If the `componentMethod` is named "getMessage" it sends the event "getMessage"
+
 → The `componentProp` is optional, but if entered, will be the property that will get set with the response, if a response comes back. This is optional too, and needs to be initially defined on the component, otherwise it won't get set. Vuejs will also complain if you try to render undefined props. If `componentProp` is omitted from the entry, the arrow "-->" can allso be omitted.
 
 * **Listeners**: 
 > 'preHook] listenEvent --> componentProp [postRx hook'
 
 → Both `preHook` and `postRx` hooks are optional. Here, `preHook` is called when data is received, but *before* setting componentProp. `postRx` hook is called 
+
 → If using the arrow syntax, when `listenEvent` is received, `componentProp` will get set with that event's data. If only the `listenEvent` is entered, then the plugin will try to set a property on the component of the same name. I.e., if `listenEvent` is "progressRxd", then the plugin will try to set `this.progressRxd` on the component.
+
 → Important NOTE: This syntax can now also work on the Vuex options for mutations and actions, which are also set up as listeners.
 
 * **Emitbacks**:
 > 'preEmitHook] emitEvt <-- watchProp [postAck hook'
 
 → `preEmitHook` and `postAck` hooks are optional. `preEmitHook` runs before emitting the event, `postAck` hook runs after receiving the acknolwedgement, if any..
+
 → `watchProp` is the property on the component to watch using "myObj.child.grandchild" syntax. Just like you would on the component. 
+
 → `emitEvt` is the event name to emit back to the server when the `watchProp` changes. If `watchProp` and the arrow "<--" are omitted, then `emitEvt` will double as the `watchProp`. 
+
 → Important NOTE: this syntax can now also work in the Vuex options for emitbacks, with ONE important difference. In Vuex (and Nuxt, specifically), the watch property path may require forward slashes "/". For example, if your stores folder has an "examples.js" file in it, with state properties "sample" and "sample2", watchProp would have to be specified as "examples/sample" and "examples/sample2". The exception to the rule is "index.js" which is treated as the stores root. I.e., "sample" in index.js would be referred to simply as "sample" and not "index/sample")
 
 ---
@@ -149,6 +157,57 @@ methods: {
       .on('someData', handleSomeData)
     }
   }
+```
+
+## Socket Status
+Sometimes, it may be desired to check the status of the socket IO connection. Fortunately, the Socket.IO client API emits events to help understand the status:
+
+```
+const clientEvts = [
+  'connect_error', 
+  'connect_timeout',
+  'reconnect',
+  'reconnect_attempt',
+  'reconnecting',
+  'reconnect_error',
+  'reconnect_failed',
+  'ping',
+  'pong'
+]
+```
+
+If it is desired to check the status, you can simply opt-in by defining the property `socketStatus` on the same component that instantiates nuxtSocket. The plugin will then automatically set that status (it will use the camel-cased versions of the event names as prop names). If it is desired to use a prop name other than `socketStatus`, simply specify the `statusProp` when specifying the `ioOpts`:
+
+Examples:
+
+```
+data() {
+  return {
+    socketStatus: {},
+    badStatus: {}
+  }
+},
+mounted() {
+  this.goodSocket = this.$nuxtSocket({
+    name: 'goodSocket',
+    channel: '/index',
+    reconnection: false
+  })
+
+  this.badSocket = this.$nuxtSocket({
+    name: 'badSocket',
+    channel: '/index',
+    reconnection: true,
+    statusProp: 'badStatus'
+  })
+}
+```
+
+As a convenience, a SocketStatus.vue component is now also packaged with nuxt-socket-io, which will help visualize the status:
+
+```
+<socket-status :status="socketStatus"></socket-status>
+<socket-status :status="badStatus"></socket-status>
 ```
 
 ## Build Setup

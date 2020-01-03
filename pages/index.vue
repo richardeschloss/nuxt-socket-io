@@ -26,6 +26,8 @@
       <nuxt-link to="examples">Thirsty for more examples?</nuxt-link>
       <br />
       <nuxt-link to="rooms">Feeling Ready for...Chat Rooms?</nuxt-link>
+      <br />
+      <nuxt-link to="ioStatus">When in doubt, check the IO Status</nuxt-link>
     </div>
   </div>
 </template>

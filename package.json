@@ -1,6 +1,6 @@
 {
   "name": "nuxt-socket-io",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Socket.io module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "main": "io/module.js",
@@ -29,16 +29,17 @@
     "start": "cross-env NODE_ENV=production node server/index.js",
     "generate": "nuxt generate",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore .",
-    "test": "npm run test:specs:cov",
+    "test": "npm run test:specs:cov && npm run test:e2e:cov",
     "test:specs": "cross-env TEST=specs ava --config specs.config.js",
     "test:specs:cov": "cross-env TEST=specs nyc ava --config specs.config.js",
     "test:specs:watch": "cross-env TEST=specs ava --config specs.config.js --color --watch",
     "test:e2e": "cross-env TEST=e2e ava --config e2e.config.js",
-    "test:e2e:cov": "cross-env TEST=e2e nyc ava --config e2e.config.js",
+    "test:e2e:cov": "cross-env TEST=e2e nyc --no-clean ava --config e2e.config.js",
     "test:e2e:watch": "cross-env TEST=e2e ava --config e2e.config.js --color --watch",
     "posttest": "rm io/plugin.compiled.js"
   },
   "files": [
+    "components/SocketStatus.vue",
     "io",
     "utils"
   ],

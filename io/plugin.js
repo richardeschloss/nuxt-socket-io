@@ -19,6 +19,18 @@ function PluginOptions() {
 
 const _pOptions = PluginOptions()
 
+function camelCase(str) {
+  return str
+    .replace(/[\_\-\s](.)/g, function($1) {
+      return $1.toUpperCase()
+    })
+    .replace(/[\-\_\s]/g, '')
+    .replace(/^(.)/, function($1) {
+      return $1.toLowerCase()
+    })
+    .replace(/[^\w\s]/gi, '')
+}
+
 function propExists(obj, path) {
   const exists = path.split('.').reduce((out, prop) => {
     if (out && out[prop]) {
@@ -235,11 +247,33 @@ const register = {
         )
       }
     })
+  },
+  socketStatus({ ctx, socket, connectUrl, statusProp }) {
+    const socketStatus = { connectUrl }
+    const clientEvts = [
+      'connect_error', 
+      'connect_timeout',
+      'reconnect',
+      'reconnect_attempt',
+      'reconnecting',
+      'reconnect_error',
+      'reconnect_failed',
+      'ping',
+      'pong'
+    ]
+    clientEvts.forEach((evt) => {
+      const prop = camelCase(evt)
+      socketStatus[prop] = ''
+      socket.on(evt, (resp) => {
+        Object.assign(ctx[statusProp], { [prop]: resp })
+      })
+    })
+    Object.assign(ctx, { [statusProp]: socketStatus })
   }
 }
 
 function nuxtSocket(ioOpts) {
-  const { name, channel = '', teardown = true, ...connectOpts } = ioOpts
+  const { name, channel = '', statusProp = 'socketStatus', teardown = true, ...connectOpts } = ioOpts
   const pluginOptions = _pOptions.get()
   const { sockets } = pluginOptions
   const { $store: store } = this
@@ -303,12 +337,26 @@ function nuxtSocket(ioOpts) {
     })
   }
 
+  if (this.socketStatus !== undefined && typeof this.socketStatus === 'object') {
+    register.socketStatus({ ctx: this, socket, connectUrl, statusProp })
+  }
+  
   if (teardown) {
-    this.onComponentDestroy = this.$destroy
-    this.$destroy = function() {
-      this.onComponentDestroy()
+    if ( this.onComponentDestroy === undefined ) {
+      this.onComponentDestroy = this.$destroy
+    }
+
+    this.$on('closeSockets', function() {
       socket.removeAllListeners()
       socket.close()
+    })
+    
+    if (!this.registeredTeardown) {
+      this.$destroy = function () {
+        this.$emit('closeSockets')
+        this.onComponentDestroy()
+      }
+      this.registeredTeardown = true
     }
 
     socket.on('disconnect', () => {
