@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.11] - TBD
+### Added
+- Feature to pass arguments to the emitter function (arguments would take priority over the "msg" specified in emitters config in `nuxt.config`)
+
 ## [1.0.9] - 2020-01-03
 ### Added
 - SocketStatus feature. Disabled by default, opt-in to use it. SocketStatus component will also be included now.

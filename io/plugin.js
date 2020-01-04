@@ -175,8 +175,8 @@ const register = {
   emitters({ ctx, socket, entries }) {
     entries.forEach((entry) => {
       const { pre, post, evt, mapTo, emitEvt, msgLabel } = parseEntry(entry)
-      ctx[emitEvt] = async function() {
-        const msg = assignMsg(ctx, msgLabel)
+      ctx[emitEvt] = async function(args) {
+        const msg = args || assignMsg(ctx, msgLabel)
         await runHook(ctx, pre)
         return new Promise((resolve, reject) => {
           socket.emit(emitEvt, msg, (resp) => {
