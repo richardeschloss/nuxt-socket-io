@@ -15,7 +15,7 @@ function Svc() {
     },
     echoBack({ notify, evt, data }) {
       notify({ evt, data })
-      return Promise.resolve()
+      return Promise.resolve({ evt, data })
     },
     'examples/sample': ({ data: sample, notify }) => {
       return new Promise((resolve) => {

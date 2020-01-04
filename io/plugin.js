@@ -21,10 +21,10 @@ const _pOptions = PluginOptions()
 
 function camelCase(str) {
   return str
-    .replace(/[\_\-\s](.)/g, function($1) {
+    .replace(/[_\-\s](.)/g, function($1) {
       return $1.toUpperCase()
     })
-    .replace(/[\-\_\s]/g, '')
+    .replace(/[-_\s]/g, '')
     .replace(/^(.)/, function($1) {
       return $1.toLowerCase()
     })
@@ -107,7 +107,7 @@ async function runHook(ctx, prop, data) {
 }
 
 function propByPath(obj, path) {
-  return path.split(/[\/\.]/).reduce((out, prop) => {
+  return path.split(/[/.]/).reduce((out, prop) => {
     if (out !== undefined && out[prop] !== undefined) {
       return out[prop]
     }
@@ -174,7 +174,7 @@ const register = {
   },
   emitters({ ctx, socket, entries }) {
     entries.forEach((entry) => {
-      const { pre, post, evt, mapTo, emitEvt, msgLabel } = parseEntry(entry)
+      const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(entry)
       ctx[emitEvt] = async function(args) {
         const msg = args || assignMsg(ctx, msgLabel)
         await runHook(ctx, pre)
@@ -273,7 +273,13 @@ const register = {
 }
 
 function nuxtSocket(ioOpts) {
-  const { name, channel = '', statusProp = 'socketStatus', teardown = true, ...connectOpts } = ioOpts
+  const {
+    name,
+    channel = '',
+    statusProp = 'socketStatus',
+    teardown = true,
+    ...connectOpts
+  } = ioOpts
   const pluginOptions = _pOptions.get()
   const { sockets } = pluginOptions
   const { $store: store } = this
@@ -337,12 +343,15 @@ function nuxtSocket(ioOpts) {
     })
   }
 
-  if (this.socketStatus !== undefined && typeof this.socketStatus === 'object') {
+  if (
+    this.socketStatus !== undefined &&
+    typeof this.socketStatus === 'object'
+  ) {
     register.socketStatus({ ctx: this, socket, connectUrl, statusProp })
   }
-  
+
   if (teardown) {
-    if ( this.onComponentDestroy === undefined ) {
+    if (this.onComponentDestroy === undefined) {
       this.onComponentDestroy = this.$destroy
     }
 
@@ -350,7 +359,7 @@ function nuxtSocket(ioOpts) {
       socket.removeAllListeners()
       socket.close()
     })
-    
+
     if (!this.registeredTeardown) {
       this.$destroy = function () {
         this.$emit('closeSockets')

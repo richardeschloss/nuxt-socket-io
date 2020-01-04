@@ -504,7 +504,8 @@ test('Namespace config (emitters)', async (t) => {
     someString2: 'Hello world2',
     myArray: [],
     someArray: [3, 1, 2],
-    myObj: {}
+    myObj: {},
+    echoResp: {}
   }
   const callees = Callees({ t, callItems, context })
   const namespace = {
@@ -514,12 +515,23 @@ test('Namespace config (emitters)', async (t) => {
       'receiveString + someString --> myArray',
       'receiveArray + someArray --> myObj',
       'noMethod] receiveArray2 + undefProp --> undefProp2 [noMethod2',
-      'receiveString2 + someString2'
+      'receiveString2 + someString2',
+      'echoBack --> echoResp'
     ],
     listeners: ['preProgress] progress [postProgress']
   }
-  await testNamespace({ t, context, namespace, channel: '/examples' })
+  const socket = await testNamespace({
+    t,
+    context,
+    namespace,
+    channel: '/examples',
+    teardown: false
+  })
   callees.called()
+  const argsAsMsg = { data: 'some data!!' }
+  await context.echoBack(argsAsMsg)
+  t.is(argsAsMsg.data, context.echoResp.data)
+  socket.close()
 })
 
 test('Namespace config (emitbacks)', async (t) => {
