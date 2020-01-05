@@ -557,7 +557,7 @@ test('Namespace config (emitters, emitTimeout)', async (t) => {
   })
 })
 
-test('Namespace config (emitters, emitErrors prop)', async (t) => {
+test('Namespace config (emitters, emitErrors prop absorbs emitTimeout)', async (t) => {
   const context = {
     item: {},
     emitErrors: {}
@@ -574,6 +574,44 @@ test('Namespace config (emitters, emitErrors prop)', async (t) => {
   Object.entries(context.emitErrors).forEach(([emitter, errs], idx) => {
     t.is(emitter, namespace.emitters[idx])
     t.true(errs.includes('emitTimeout'))
+  })
+})
+
+test('Namespace config (emitters, emitErrors prop absorbs other errors)', async (t) => {
+  const context = {
+    item: {},
+    emitErrors: {}
+  }
+  const namespace = {
+    emitters: ['echoError']
+  }
+  await testNamespace({
+    t,
+    context,
+    namespace,
+    channel: '/examples'
+  })
+
+  Object.entries(context.emitErrors).forEach(([emitter, errs], idx) => {
+    t.is(emitter, namespace.emitters[idx])
+    t.true(errs.includes('ExampleError'))
+  })
+})
+
+test('Namespace config (emitters, emitErrors does not absorb errors when prop undefined)', async (t) => {
+  const context = {
+    item: {}
+  }
+  const namespace = {
+    emitters: ['echoError']
+  }
+  await testNamespace({
+    t,
+    context,
+    namespace,
+    channel: '/examples'
+  }).catch((err) => {
+    t.is(err, 'ExampleError')
   })
 })
 

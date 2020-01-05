@@ -186,10 +186,24 @@ const register = {
         await runHook(ctx, pre)
         return new Promise((resolve, reject) => {
           socket.emit(emitEvt, msg, (resp) => {
-            // if resp.err... and resp.err = {} register.emitErrors
-            assignResp(ctx, mapTo, resp)
-            runHook(ctx, post, resp)
-            resolve(resp)
+            const { err } = resp
+            if (err !== undefined) {
+              if (typeof ctx[emitErrorsProp] === 'object') {
+                register.emitErrors({
+                  ctx,
+                  err,
+                  emitEvt,
+                  emitErrorsProp
+                })
+                resolve()
+              } else {
+                reject(err)
+              }
+            } else {
+              assignResp(ctx, mapTo, resp)
+              runHook(ctx, post, resp)
+              resolve(resp)
+            }
           })
           if (emitTimeout) { 
             setTimeout(() => {
