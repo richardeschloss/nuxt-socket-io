@@ -115,6 +115,12 @@ function propByPath(obj, path) {
 }
 
 const register = {
+  emitErrors({ ctx, err, emitEvt, emitErrorsProp }) {
+    if (ctx[emitErrorsProp][emitEvt] === undefined) {
+      ctx[emitErrorsProp][emitEvt] = []
+    }
+    ctx[emitErrorsProp][emitEvt].push(err)
+  },
   emitBacks({ ctx, socket, entries }) {
     entries.forEach((entry) => {
       const { pre, post, evt, mapTo } = parseEntry(entry)
@@ -172,7 +178,7 @@ const register = {
       )
     })
   },
-  emitters({ ctx, socket, entries }) {
+  emitters({ ctx, socket, entries, emitTimeout, emitErrorsProp }) {
     entries.forEach((entry) => {
       const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(entry)
       ctx[emitEvt] = async function(args) {
@@ -180,10 +186,27 @@ const register = {
         await runHook(ctx, pre)
         return new Promise((resolve, reject) => {
           socket.emit(emitEvt, msg, (resp) => {
+            // if resp.err... and resp.err = {} register.emitErrors
             assignResp(ctx, mapTo, resp)
             runHook(ctx, post, resp)
             resolve(resp)
           })
+          if (emitTimeout) { 
+            setTimeout(() => {
+              const err = 'emitTimeout'
+              if (typeof ctx[emitErrorsProp] === 'object') {
+                register.emitErrors({
+                  ctx,
+                  err,
+                  emitEvt,
+                  emitErrorsProp
+                })
+                resolve()
+              } else {
+                reject({ err, emitEvt, hint: `is ${emitEvt} supported on the backend?` })
+              }
+            }, emitTimeout)
+          }
         })
       }
     })
@@ -208,12 +231,12 @@ const register = {
       })
     })
   },
-  namespace({ ctx, namespaceCfg, socket }) {
+  namespace({ ctx, namespaceCfg, socket, emitTimeout, emitErrorsProp }) {
     const { emitters = [], listeners = [], emitBacks = [] } = namespaceCfg
     const sets = { emitters, listeners, emitBacks }
     Object.entries(sets).forEach(([setName, entries]) => {
       if (entries.constructor.name === 'Array') {
-        register[setName]({ ctx, socket, entries })
+        register[setName]({ ctx, socket, entries, emitTimeout, emitErrorsProp })
       } else {
         console.warn(
           `[nuxt-socket-io]: ${setName} needs to be an array in namespace config`
@@ -278,6 +301,8 @@ function nuxtSocket(ioOpts) {
     channel = '',
     statusProp = 'socketStatus',
     teardown = true,
+    emitTimeout,
+    emitErrorsProp = 'emitErrors',
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
@@ -328,7 +353,9 @@ function nuxtSocket(ioOpts) {
       register.namespace({
         ctx: this,
         namespaceCfg,
-        socket
+        socket,
+        emitTimeout,
+        emitErrorsProp
       })
     }
   }

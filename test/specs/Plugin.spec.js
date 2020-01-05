@@ -111,6 +111,7 @@ async function testNamespace({
   namespace,
   url = 'http://localhost:3000',
   channel = '/index',
+  emitTimeout,
   teardown = true
 }) {
   const testCfg = {
@@ -133,7 +134,8 @@ async function testNamespace({
     t,
     context,
     ioOpts: {
-      channel
+      channel,
+      emitTimeout
     }
   })
 
@@ -153,34 +155,36 @@ async function testNamespace({
     })
   }
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if (emitters.length === 0 || listeners.constructor.name !== 'Array') {
       resolve()
     }
     let doneCnt = 0
     emitters.forEach((entry) => {
       const { mapTo, emitEvt } = parseEntry(entry)
-      context[emitEvt]().then((resp) => {
-        if (context[mapTo] !== undefined) {
-          if (typeof resp === 'object') {
-            Object.entries(resp).forEach(([key, val]) => {
-              t.is(val, context[mapTo][key])
-            })
-          } else if (mapTo) {
-            setImmediate(() => {
-              t.is(resp, context[mapTo])
-            })
-          } else {
-            t.not(resp, context[mapTo])
+      context[emitEvt]()
+        .then((resp) => {
+          if (context[mapTo] !== undefined) {
+            if (typeof resp === 'object') {
+              Object.entries(resp).forEach(([key, val]) => {
+                t.is(val, context[mapTo][key])
+              })
+            } else if (mapTo) {
+              setImmediate(() => {
+                t.is(resp, context[mapTo])
+              })
+            } else {
+              t.not(resp, context[mapTo])
+            }
           }
-        }
-        if (++doneCnt === emitters.length) {
-          if (teardown) {
-            socket.close()
+          if (++doneCnt === emitters.length) {
+            if (teardown) {
+              socket.close()
+            }
+            resolve(socket)
           }
-          resolve(socket)
-        }
-      })
+        })
+        .catch(reject)
     })
   })
 }
@@ -532,6 +536,45 @@ test('Namespace config (emitters)', async (t) => {
   await context.echoBack(argsAsMsg)
   t.is(argsAsMsg.data, context.echoResp.data)
   socket.close()
+})
+
+test('Namespace config (emitters, emitTimeout)', async (t) => {
+  const context = {
+    item: {}
+  }
+  const namespace = {
+    emitters: ['undefMethod']
+  }
+  await testNamespace({
+    t,
+    context,
+    namespace,
+    emitTimeout: 1000
+  }).catch(({ err, emitEvt, hint }) => {
+    t.is(err, 'emitTimeout')
+    t.is(emitEvt, 'undefMethod')
+    t.is(hint, `is ${emitEvt} supported on the backend?`)
+  })
+})
+
+test('Namespace config (emitters, emitErrors prop)', async (t) => {
+  const context = {
+    item: {},
+    emitErrors: {}
+  }
+  const namespace = {
+    emitters: ['undefMethod']
+  }
+  await testNamespace({
+    t,
+    context,
+    namespace,
+    emitTimeout: 1000
+  })
+  Object.entries(context.emitErrors).forEach(([emitter, errs], idx) => {
+    t.is(emitter, namespace.emitters[idx])
+    t.true(errs.includes('emitTimeout'))
+  })
 })
 
 test('Namespace config (emitbacks)', async (t) => {
