@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Feature to pass arguments to the emitter function (arguments would take priority over the "msg" specified in emitters config in `nuxt.config`)
 
+### Fixed
+- Fixed potential overwriting of emitter methods by properly setting `mapTo`. (overwriting could have accidentally been done by the call to `assignResp`) 
+- Expanded test timeout to fix broken tests
+
 ## [1.0.9] - 2020-01-03
 ### Added
 - SocketStatus feature. Disabled by default, opt-in to use it. SocketStatus component will also be included now.

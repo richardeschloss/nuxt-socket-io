@@ -125,7 +125,7 @@ const register = {
           return new Promise((resolve) => {
             socket.emit(evt, { data }, (resp) => {
               runHook(ctx, post, resp)
-              if (post !== undefined) resolve(resp)
+              resolve(resp)
             })
             if (post === undefined) resolve()
           })
