@@ -22,7 +22,12 @@ function IOServer({ host, port, server = http.createServer() }) {
                   socket.emit(notifyEvt, data)
                 },
                 ...msg
-              }).then(cb)
+              })
+                .then(cb)
+                .catch((err) => {
+                  // eslint-disable-next-line standard/no-callback-literal
+                  cb({ emitError: err.message })
+                })
             })
           }
         })
