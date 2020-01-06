@@ -2,13 +2,21 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## [1.0.11] - TBD
+## [AFK NOTICE] - 2020-01-06 to 2020-01-11
+Important NOTE: The maintainer of this project will be away from keyboard for this time. If issues arise in 1.0.11, please consider reverting to v1.0.10 or deferring your issues until I return. Thanks for your understanding!
+
+## [1.0.11] - 2020-01-05
 ### Added
+- Error-handling feature for emitters. Handles both timeout and non-timeout kinds of errors.
 - Feature to pass arguments to the emitter function (arguments would take priority over the "msg" specified in emitters config in `nuxt.config`)
 
 ### Fixed
 - Fixed potential overwriting of emitter methods by properly setting `mapTo`. (overwriting could have accidentally been done by the call to `assignResp`) 
 - Expanded test timeout to fix broken tests
+
+## [1.0.10] - 2020-01-03
+### Changed
+- Minor change: v1.0.9 accidentally packaged `plugin.compiled.js` which is only used for tests and not needed in the distro. 
 
 ## [1.0.9] - 2020-01-03
 ### Added
