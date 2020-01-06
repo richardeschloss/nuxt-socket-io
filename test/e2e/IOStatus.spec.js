@@ -16,6 +16,7 @@ beforeEach(() => {
 })
 
 test('IO Status Page', async (t) => {
+  t.timeout(5000)
   const wrapper = mount(IOStatus, {
     localVue,
     stubs: {
@@ -25,7 +26,6 @@ test('IO Status Page', async (t) => {
       $nuxtSocket: await injectPlugin({}, Plugin)
     }
   })
-  console.log('Wrapper is vue instance:', wrapper.isVueInstance())
   t.truthy(wrapper.isVueInstance())
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -52,6 +52,6 @@ test('IO Status Page', async (t) => {
         t.truthy(fndItem)
       })
       resolve()
-    }, 1500)
+    }, 3500)
   })
 })
