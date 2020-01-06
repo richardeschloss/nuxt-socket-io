@@ -25,6 +25,7 @@ test('IO Status Page', async (t) => {
       $nuxtSocket: await injectPlugin({}, Plugin)
     }
   })
+  console.log('Wrapper is vue instance:', wrapper.isVueInstance())
   t.truthy(wrapper.isVueInstance())
   return new Promise((resolve) => {
     setTimeout(() => {
