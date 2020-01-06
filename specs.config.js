@@ -1,6 +1,6 @@
 export default {
   require: ['@babel/register', './test/specs.setup.js'],
-  files: ['test/specs/**/*'],
+  files: ['test/specs/Plugin.spec.js'],
   sources: ['**/*.{js,vue}'],
   babel: {
     testOptions: {

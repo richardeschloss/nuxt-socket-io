@@ -121,6 +121,28 @@ const register = {
     }
     ctx[emitErrorsProp][emitEvt].push(err)
   },
+  emitTimeout({ ctx, emitEvt, emitErrorsProp, emitTimeout, timerObj }) {
+    return new Promise((resolve, reject) => {
+      timerObj.timer = setTimeout(() => {
+        const err = {
+          message: 'emitTimeout',
+          emitEvt,
+          emitTimeout,
+          hint: [
+            `1) Is ${emitEvt} supported on the backend?`,
+            `2) Is emitTimeout ${emitTimeout} ms too small?`
+          ].join('\r\n'),
+          timestamp: Date.now()
+        }
+        if (typeof ctx[emitErrorsProp] === 'object') {
+          register.emitErrors({ ctx, err, emitEvt, emitErrorsProp })
+          resolve()
+        } else {
+          reject(err)
+        }
+      }, emitTimeout)
+    })
+  },
   emitBacks({ ctx, socket, entries }) {
     entries.forEach((entry) => {
       const { pre, post, evt, mapTo } = parseEntry(entry)
@@ -185,7 +207,9 @@ const register = {
         const msg = args || assignMsg(ctx, msgLabel)
         await runHook(ctx, pre)
         return new Promise((resolve, reject) => {
+          const timerObj = {}
           socket.emit(emitEvt, msg, (resp) => {
+            clearTimeout(timerObj.timer)
             const { err } = resp
             if (err !== undefined) {
               if (typeof ctx[emitErrorsProp] === 'object') {
@@ -205,21 +229,17 @@ const register = {
               resolve(resp)
             }
           })
-          if (emitTimeout) { 
-            setTimeout(() => {
-              const err = 'emitTimeout'
-              if (typeof ctx[emitErrorsProp] === 'object') {
-                register.emitErrors({
-                  ctx,
-                  err,
-                  emitEvt,
-                  emitErrorsProp
-                })
-                resolve()
-              } else {
-                reject({ err, emitEvt, hint: `is ${emitEvt} supported on the backend?` })
-              }
-            }, emitTimeout)
+          if (emitTimeout) {
+            register
+              .emitTimeout({
+                ctx,
+                emitEvt,
+                emitErrorsProp,
+                emitTimeout,
+                timerObj
+              })
+              .then(resolve)
+              .catch(reject)
           }
         })
       }
@@ -288,7 +308,7 @@ const register = {
   socketStatus({ ctx, socket, connectUrl, statusProp }) {
     const socketStatus = { connectUrl }
     const clientEvts = [
-      'connect_error', 
+      'connect_error',
       'connect_timeout',
       'reconnect',
       'reconnect_attempt',
@@ -402,7 +422,7 @@ function nuxtSocket(ioOpts) {
     })
 
     if (!this.registeredTeardown) {
-      this.$destroy = function () {
+      this.$destroy = function() {
         this.$emit('closeSockets')
         this.onComponentDestroy()
       }

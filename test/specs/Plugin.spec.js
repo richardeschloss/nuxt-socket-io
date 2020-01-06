@@ -91,12 +91,16 @@ function parseEntry(entry, emitBack) {
       ;[evt, mapTo] = body.split(/\s*-->\s*/)
     } else if (body.includes('<--')) {
       ;[evt, mapTo] = body.split(/\s*<--\s*/)
-    } else if (body.includes('+')) {
-      evt = body
     } else {
-      evt = mapTo = body
+      evt = body // = mapTo = body
     }
-    ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
+
+    if (emitBack) {
+      ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
+      if (!mapTo) {
+        mapTo = evt
+      }
+    }
   } else if (emitBack) {
     ;[[mapTo, evt]] = Object.entries(entry)
   } else {
@@ -161,7 +165,8 @@ async function testNamespace({
     }
     let doneCnt = 0
     emitters.forEach((entry) => {
-      const { mapTo, emitEvt } = parseEntry(entry)
+      const { mapTo, emitEvt } = parseEntry(entry, true)
+      console.log('mapTo...', mapTo, emitEvt)
       context[emitEvt]()
         .then((resp) => {
           if (context[mapTo] !== undefined) {
@@ -171,6 +176,7 @@ async function testNamespace({
               })
             } else if (mapTo) {
               setImmediate(() => {
+                console.log('mapTo', mapTo)
                 t.is(resp, context[mapTo])
               })
             } else {
@@ -538,7 +544,7 @@ test('Namespace config (emitters)', async (t) => {
   socket.close()
 })
 
-test('Namespace config (emitters, emitTimeout)', async (t) => {
+test.only('Namespace config (emitters, emitTimeout)', async (t) => {
   const context = {
     item: {}
   }
@@ -550,14 +556,22 @@ test('Namespace config (emitters, emitTimeout)', async (t) => {
     context,
     namespace,
     emitTimeout: 1000
-  }).catch(({ err, emitEvt, hint }) => {
-    t.is(err, 'emitTimeout')
+  }).catch(({ message, emitEvt, emitTimeout, hint, timestamp }) => {
+    t.is(message, 'emitTimeout')
     t.is(emitEvt, 'undefMethod')
-    t.is(hint, `is ${emitEvt} supported on the backend?`)
+    t.is(emitTimeout, 1000)
+    t.is(
+      hint,
+      [
+        `1) Is ${emitEvt} supported on the backend?`,
+        `2) Is emitTimeout ${emitTimeout} ms too small?`
+      ].join('\r\n')
+    )
+    t.truthy(timestamp)
   })
 })
 
-test('Namespace config (emitters, emitErrors prop absorbs emitTimeout)', async (t) => {
+test.only('Namespace config (emitters, emitTimeout --> emitErrors)', async (t) => {
   const context = {
     item: {},
     emitErrors: {}
@@ -565,15 +579,36 @@ test('Namespace config (emitters, emitErrors prop absorbs emitTimeout)', async (
   const namespace = {
     emitters: ['undefMethod']
   }
-  await testNamespace({
+  const socket = await testNamespace({
     t,
     context,
     namespace,
-    emitTimeout: 1000
+    emitTimeout: 1000,
+    teardown: false
   })
-  Object.entries(context.emitErrors).forEach(([emitter, errs], idx) => {
-    t.is(emitter, namespace.emitters[idx])
-    t.true(errs.includes('emitTimeout'))
+  context.emitErrors.undefMethod.forEach(
+    ({ message, emitEvt, emitTimeout, hint, timestamp }) => {
+      t.is(message, 'emitTimeout')
+      t.is(emitEvt, 'undefMethod')
+      t.is(emitTimeout, 1000)
+      t.is(
+        hint,
+        [
+          `1) Is ${emitEvt} supported on the backend?`,
+          `2) Is emitTimeout ${emitTimeout} ms too small?`
+        ].join('\r\n')
+      )
+      t.truthy(timestamp)
+    }
+  )
+  return new Promise((resolve) => {
+    context.undefMethod().then(() => {
+      console.log('here??')
+      socket.close()
+      t.pass()
+      // t.is(context.emitErrors.undefMethod.length, 2)
+      resolve()
+    })
   })
 })
 
