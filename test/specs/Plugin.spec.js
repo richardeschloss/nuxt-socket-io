@@ -4,7 +4,7 @@ import config from '@/nuxt.config'
 import { state as indexState } from '@/store/index'
 import { state as examplesState } from '@/store/examples'
 import { compileAndImportPlugin } from '@/test/utils'
-
+import { parseEntry } from '@/io/plugin.utils'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
 
 const { io } = config
@@ -75,42 +75,13 @@ function loadPlugin({
   })
 }
 
-function parseEntry(entry, emitBack) {
-  let evt, mapTo, pre, body, post, emitEvt, msgLabel
-  if (typeof entry === 'string') {
-    let subItems = []
-    const items = entry.trim().split(/\s*\]\s*/)
-    if (items.length > 1) {
-      pre = items[0]
-      subItems = items[1].split(/\s*\[\s*/)
-    } else {
-      subItems = items[0].split(/\s*\[\s*/)
-    }
-    ;[body, post] = subItems
-    if (body.includes('-->')) {
-      ;[evt, mapTo] = body.split(/\s*-->\s*/)
-    } else if (body.includes('<--')) {
-      ;[evt, mapTo] = body.split(/\s*<--\s*/)
-    } else if (body.includes('+')) {
-      evt = body
-    } else {
-      evt = mapTo = body
-    }
-    ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
-  } else if (emitBack) {
-    ;[[mapTo, evt]] = Object.entries(entry)
-  } else {
-    ;[[evt, mapTo]] = Object.entries(entry)
-  }
-  return { pre, post, evt, mapTo, emitEvt, msgLabel }
-}
-
 async function testNamespace({
   t,
   context,
   namespace,
   url = 'http://localhost:3000',
   channel = '/index',
+  emitTimeout,
   teardown = true
 }) {
   const testCfg = {
@@ -133,7 +104,8 @@ async function testNamespace({
     t,
     context,
     ioOpts: {
-      channel
+      channel,
+      emitTimeout
     }
   })
 
@@ -153,34 +125,36 @@ async function testNamespace({
     })
   }
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if (emitters.length === 0 || listeners.constructor.name !== 'Array') {
       resolve()
     }
     let doneCnt = 0
     emitters.forEach((entry) => {
-      const { mapTo, emitEvt } = parseEntry(entry)
-      context[emitEvt]().then((resp) => {
-        if (context[mapTo] !== undefined) {
-          if (typeof resp === 'object') {
-            Object.entries(resp).forEach(([key, val]) => {
-              t.is(val, context[mapTo][key])
-            })
-          } else if (mapTo) {
-            setImmediate(() => {
-              t.is(resp, context[mapTo])
-            })
-          } else {
-            t.not(resp, context[mapTo])
+      const { mapTo, emitEvt } = parseEntry(entry, 'emitter')
+      context[emitEvt]()
+        .then((resp) => {
+          if (context[mapTo] !== undefined) {
+            if (typeof resp === 'object') {
+              Object.entries(resp).forEach(([key, val]) => {
+                t.is(val, context[mapTo][key])
+              })
+            } else if (mapTo) {
+              setImmediate(() => {
+                t.is(resp, context[mapTo])
+              })
+            } else {
+              t.not(resp, context[mapTo])
+            }
           }
-        }
-        if (++doneCnt === emitters.length) {
-          if (teardown) {
-            socket.close()
+          if (++doneCnt === emitters.length) {
+            if (teardown) {
+              socket.close()
+            }
+            resolve(socket)
           }
-          resolve(socket)
-        }
-      })
+        })
+        .catch(reject)
     })
   })
 }
@@ -504,7 +478,8 @@ test('Namespace config (emitters)', async (t) => {
     someString2: 'Hello world2',
     myArray: [],
     someArray: [3, 1, 2],
-    myObj: {}
+    myObj: {},
+    echoResp: {}
   }
   const callees = Callees({ t, callItems, context })
   const namespace = {
@@ -514,12 +489,150 @@ test('Namespace config (emitters)', async (t) => {
       'receiveString + someString --> myArray',
       'receiveArray + someArray --> myObj',
       'noMethod] receiveArray2 + undefProp --> undefProp2 [noMethod2',
-      'receiveString2 + someString2'
+      'receiveString2 + someString2',
+      'echoBack --> echoResp'
     ],
     listeners: ['preProgress] progress [postProgress']
   }
-  await testNamespace({ t, context, namespace, channel: '/examples' })
+  const socket = await testNamespace({
+    t,
+    context,
+    namespace,
+    channel: '/examples',
+    teardown: false
+  })
   callees.called()
+  const argsAsMsg = { data: 'some data!!' }
+  await context.echoBack(argsAsMsg)
+  t.is(argsAsMsg.data, context.echoResp.data)
+  socket.close()
+})
+
+test('Namespace config (emitters; prevent overwriting emitter)', async (t) => {
+  const context = {
+    echoBack: {}
+  }
+  const namespace = {
+    emitters: ['echoBack --> echoBack']
+  }
+  const socket = await testNamespace({
+    t,
+    context,
+    namespace,
+    channel: '/examples',
+    teardown: false
+  })
+  const argsAsMsg = { data: 'some data!!' }
+  await context.echoBack(argsAsMsg)
+  t.is(typeof context.echoBack, 'function')
+  socket.close()
+})
+
+test('Namespace config (emitters, emitTimeout)', async (t) => {
+  const context = {
+    item: {}
+  }
+  const namespace = {
+    emitters: ['undefMethod']
+  }
+  await testNamespace({
+    t,
+    context,
+    namespace,
+    emitTimeout: 1000
+  }).catch(({ message, emitEvt, emitTimeout, hint, timestamp }) => {
+    t.is(message, 'emitTimeout')
+    t.is(emitEvt, 'undefMethod')
+    t.is(emitTimeout, 1000)
+    t.is(
+      hint,
+      [
+        `1) Is ${emitEvt} supported on the backend?`,
+        `2) Is emitTimeout ${emitTimeout} ms too small?`
+      ].join('\r\n')
+    )
+    t.truthy(timestamp)
+  })
+})
+
+test('Namespace config (emitters, emitTimeout --> emitErrors)', async (t) => {
+  const context = {
+    item: {},
+    emitErrors: {}
+  }
+  const namespace = {
+    emitters: ['undefMethod']
+  }
+  const socket = await testNamespace({
+    t,
+    context,
+    namespace,
+    emitTimeout: 1000,
+    teardown: false
+  })
+  context.emitErrors.undefMethod.forEach(
+    ({ message, emitEvt, emitTimeout, hint, timestamp }) => {
+      t.is(message, 'emitTimeout')
+      t.is(emitEvt, 'undefMethod')
+      t.is(emitTimeout, 1000)
+      t.is(
+        hint,
+        [
+          `1) Is ${emitEvt} supported on the backend?`,
+          `2) Is emitTimeout ${emitTimeout} ms too small?`
+        ].join('\r\n')
+      )
+      t.truthy(timestamp)
+    }
+  )
+  return new Promise((resolve) => {
+    context.undefMethod().then(() => {
+      socket.close()
+      t.is(context.emitErrors.undefMethod.length, 2)
+      resolve()
+    })
+  })
+})
+
+test('Namespace config (emitters, emitErrors rejected)', async (t) => {
+  const context = {
+    item: {}
+  }
+  const namespace = {
+    emitters: ['echoError']
+  }
+  await testNamespace({
+    t,
+    context,
+    namespace,
+    channel: '/examples'
+  }).catch(({ message, emitEvt, timestamp }) => {
+    t.is(emitEvt, 'echoError')
+    t.is(message, 'ExampleError')
+    t.truthy(timestamp)
+  })
+})
+
+test('Namespace config (emitters, emitErrors prop absorbs other errors)', async (t) => {
+  const context = {
+    item: {},
+    emitErrors: {}
+  }
+  const namespace = {
+    emitters: ['echoError']
+  }
+  await testNamespace({
+    t,
+    context,
+    namespace,
+    channel: '/examples'
+  })
+
+  context.emitErrors.echoError.forEach(({ message, emitEvt, timestamp }) => {
+    t.is(emitEvt, 'echoError')
+    t.is(message, 'ExampleError')
+    t.truthy(timestamp)
+  })
 })
 
 test('Namespace config (emitbacks)', async (t) => {

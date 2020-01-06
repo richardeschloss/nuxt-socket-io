@@ -4,6 +4,7 @@
 
 import io from 'socket.io-client'
 import consola from 'consola'
+import { parseEntry } from '@/io/plugin.utils'
 
 function PluginOptions() {
   let _pluginOptions
@@ -21,10 +22,10 @@ const _pOptions = PluginOptions()
 
 function camelCase(str) {
   return str
-    .replace(/[\_\-\s](.)/g, function($1) {
+    .replace(/[_\-\s](.)/g, function($1) {
       return $1.toUpperCase()
     })
-    .replace(/[\-\_\s]/g, '')
+    .replace(/[-_\s]/g, '')
     .replace(/^(.)/, function($1) {
       return $1.toLowerCase()
     })
@@ -40,36 +41,6 @@ function propExists(obj, path) {
     }
   }, obj)
   return !!exists
-}
-
-function parseEntry(entry, emitBack) {
-  let evt, mapTo, pre, body, post, emitEvt, msgLabel
-  if (typeof entry === 'string') {
-    let subItems = []
-    const items = entry.trim().split(/\s*\]\s*/)
-    if (items.length > 1) {
-      pre = items[0]
-      subItems = items[1].split(/\s*\[\s*/)
-    } else {
-      subItems = items[0].split(/\s*\[\s*/)
-    }
-    ;[body, post] = subItems
-    if (body.includes('-->')) {
-      ;[evt, mapTo] = body.split(/\s*-->\s*/)
-    } else if (body.includes('<--')) {
-      ;[evt, mapTo] = body.split(/\s*<--\s*/)
-    } else if (body.includes('+')) {
-      evt = body
-    } else {
-      evt = mapTo = body
-    }
-    ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
-  } else if (emitBack) {
-    ;[[mapTo, evt]] = Object.entries(entry)
-  } else {
-    ;[[evt, mapTo]] = Object.entries(entry)
-  }
-  return { pre, post, evt, mapTo, emitEvt, msgLabel }
 }
 
 function assignMsg(ctx, prop) {
@@ -92,7 +63,9 @@ function assignMsg(ctx, prop) {
 function assignResp(ctx, prop, resp) {
   if (prop !== undefined) {
     if (ctx[prop] !== undefined) {
-      ctx[prop] = resp
+      if (typeof ctx[prop] !== 'function') {
+        ctx[prop] = resp
+      }
     } else {
       console.warn(`${prop} not defined on instance`)
     }
@@ -107,7 +80,7 @@ async function runHook(ctx, prop, data) {
 }
 
 function propByPath(obj, path) {
-  return path.split(/[\/\.]/).reduce((out, prop) => {
+  return path.split(/[/.]/).reduce((out, prop) => {
     if (out !== undefined && out[prop] !== undefined) {
       return out[prop]
     }
@@ -115,16 +88,44 @@ function propByPath(obj, path) {
 }
 
 const register = {
+  emitErrors({ ctx, err, emitEvt, emitErrorsProp }) {
+    if (ctx[emitErrorsProp][emitEvt] === undefined) {
+      ctx[emitErrorsProp][emitEvt] = []
+    }
+    ctx[emitErrorsProp][emitEvt].push(err)
+  },
+  emitTimeout({ ctx, emitEvt, emitErrorsProp, emitTimeout, timerObj }) {
+    return new Promise((resolve, reject) => {
+      timerObj.timer = setTimeout(() => {
+        const err = {
+          message: 'emitTimeout',
+          emitEvt,
+          emitTimeout,
+          hint: [
+            `1) Is ${emitEvt} supported on the backend?`,
+            `2) Is emitTimeout ${emitTimeout} ms too small?`
+          ].join('\r\n'),
+          timestamp: Date.now()
+        }
+        if (typeof ctx[emitErrorsProp] === 'object') {
+          register.emitErrors({ ctx, err, emitEvt, emitErrorsProp })
+          resolve()
+        } else {
+          reject(err)
+        }
+      }, emitTimeout)
+    })
+  },
   emitBacks({ ctx, socket, entries }) {
     entries.forEach((entry) => {
-      const { pre, post, evt, mapTo } = parseEntry(entry)
+      const { pre, post, evt, mapTo } = parseEntry(entry, 'emitBack') // TBD
       if (propExists(ctx, mapTo)) {
         ctx.$watch(mapTo, async function(data, oldData) {
           await runHook(ctx, pre, { data, oldData })
           return new Promise((resolve) => {
             socket.emit(evt, { data }, (resp) => {
               runHook(ctx, post, resp)
-              if (post !== undefined) resolve(resp)
+              resolve(resp)
             })
             if (post === undefined) resolve()
           })
@@ -136,7 +137,7 @@ const register = {
   },
   emitBacksVuex({ ctx, store, useSocket, socket, entries }) {
     entries.forEach((entry) => {
-      const { pre, post, evt, mapTo } = parseEntry(entry, true)
+      const { pre, post, evt, mapTo } = parseEntry(entry, 'emitBack')
 
       if (useSocket.registeredWatchers.includes(mapTo)) {
         return
@@ -172,18 +173,53 @@ const register = {
       )
     })
   },
-  emitters({ ctx, socket, entries }) {
+  emitters({ ctx, socket, entries, emitTimeout, emitErrorsProp }) {
     entries.forEach((entry) => {
-      const { pre, post, evt, mapTo, emitEvt, msgLabel } = parseEntry(entry)
-      ctx[emitEvt] = async function() {
-        const msg = assignMsg(ctx, msgLabel)
+      const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(entry, 'emitter')
+      ctx[emitEvt] = async function(args) {
+        const msg = args || assignMsg(ctx, msgLabel)
         await runHook(ctx, pre)
         return new Promise((resolve, reject) => {
+          const timerObj = {}
           socket.emit(emitEvt, msg, (resp) => {
-            assignResp(ctx, mapTo, resp)
-            runHook(ctx, post, resp)
-            resolve(resp)
+            clearTimeout(timerObj.timer)
+            const { emitError, ...errorDetails } = resp
+            if (emitError !== undefined) {
+              const err = {
+                message: emitError,
+                emitEvt,
+                errorDetails,
+                timestamp: Date.now()
+              }
+              if (typeof ctx[emitErrorsProp] === 'object') {
+                register.emitErrors({
+                  ctx,
+                  err,
+                  emitEvt,
+                  emitErrorsProp
+                })
+                resolve()
+              } else {
+                reject(err)
+              }
+            } else {
+              assignResp(ctx, mapTo, resp)
+              runHook(ctx, post, resp)
+              resolve(resp)
+            }
           })
+          if (emitTimeout) {
+            register
+              .emitTimeout({
+                ctx,
+                emitEvt,
+                emitErrorsProp,
+                emitTimeout,
+                timerObj
+              })
+              .then(resolve)
+              .catch(reject)
+          }
         })
       }
     })
@@ -208,12 +244,12 @@ const register = {
       })
     })
   },
-  namespace({ ctx, namespaceCfg, socket }) {
+  namespace({ ctx, namespaceCfg, socket, emitTimeout, emitErrorsProp }) {
     const { emitters = [], listeners = [], emitBacks = [] } = namespaceCfg
     const sets = { emitters, listeners, emitBacks }
     Object.entries(sets).forEach(([setName, entries]) => {
       if (entries.constructor.name === 'Array') {
-        register[setName]({ ctx, socket, entries })
+        register[setName]({ ctx, socket, entries, emitTimeout, emitErrorsProp })
       } else {
         console.warn(
           `[nuxt-socket-io]: ${setName} needs to be an array in namespace config`
@@ -251,7 +287,7 @@ const register = {
   socketStatus({ ctx, socket, connectUrl, statusProp }) {
     const socketStatus = { connectUrl }
     const clientEvts = [
-      'connect_error', 
+      'connect_error',
       'connect_timeout',
       'reconnect',
       'reconnect_attempt',
@@ -273,7 +309,15 @@ const register = {
 }
 
 function nuxtSocket(ioOpts) {
-  const { name, channel = '', statusProp = 'socketStatus', teardown = true, ...connectOpts } = ioOpts
+  const {
+    name,
+    channel = '',
+    statusProp = 'socketStatus',
+    teardown = true,
+    emitTimeout,
+    emitErrorsProp = 'emitErrors',
+    ...connectOpts
+  } = ioOpts
   const pluginOptions = _pOptions.get()
   const { sockets } = pluginOptions
   const { $store: store } = this
@@ -322,7 +366,9 @@ function nuxtSocket(ioOpts) {
       register.namespace({
         ctx: this,
         namespaceCfg,
-        socket
+        socket,
+        emitTimeout,
+        emitErrorsProp
       })
     }
   }
@@ -337,12 +383,15 @@ function nuxtSocket(ioOpts) {
     })
   }
 
-  if (this.socketStatus !== undefined && typeof this.socketStatus === 'object') {
+  if (
+    this.socketStatus !== undefined &&
+    typeof this.socketStatus === 'object'
+  ) {
     register.socketStatus({ ctx: this, socket, connectUrl, statusProp })
   }
-  
+
   if (teardown) {
-    if ( this.onComponentDestroy === undefined ) {
+    if (this.onComponentDestroy === undefined) {
       this.onComponentDestroy = this.$destroy
     }
 
@@ -350,9 +399,9 @@ function nuxtSocket(ioOpts) {
       socket.removeAllListeners()
       socket.close()
     })
-    
+
     if (!this.registeredTeardown) {
-      this.$destroy = function () {
+      this.$destroy = function() {
         this.$emit('closeSockets')
         this.onComponentDestroy()
       }

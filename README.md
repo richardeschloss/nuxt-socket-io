@@ -210,6 +210,51 @@ As a convenience, a SocketStatus.vue component is now also packaged with nuxt-so
 <socket-status :status="badStatus"></socket-status>
 ```
 
+## Error Handling
+
+Sometimes, errors will occur. Two main categories of errors can be thought of as: 1) timeouts, and 2) non-timeout related. The plugin allows the user to take advantage of new built-in error handling features.
+
+1.Handling timeout errors: The user opts-in to let the plugin handle timeout errors by specifying an `emitTimeout (ms)` in the IO options when instantiating the nuxtSocket:
+
+```
+this.socket = this.$nuxtSocket({ channel: '/examples', emitTimeout: 1000 }) // 1000 ms
+```
+
+Then, if an emitTimeout occurs, there are two possible outcomes. One is, the plugin's method will reject with an 'emitTimeout' error, and it will be up to the user to catch the error downstream:
+
+```
+this.someEmitMethod() 
+.catch((err) => { // If method times out, catch the err
+  /* Handle err */
+})
+```
+
+Alternatively, another outcome can occur if the user defines a property `emitErrors` on the component, in which case the plugin won't throw an error, but will in stead *set* that property (`emitErrors`). This may result in much cleaner code, and may make it easy to work with component computed properties that change when `emitErrors` property changes:
+
+```
+data() {
+  emitErrors: { // Emit errors will get collected here now
+  }
+}
+...
+this.someEmitMethod() // Now, when this times out, emitErrors will get updated (i.e., an error won't be thrown)
+```
+
+2. Handling non-timeout errors, such as bad requests, or anything specific to your application's backend. Again, like before, if `emitErrors` is defined, that will get set, otherwise, the emitError will get thrown.
+
+If the user would prefer to use a different name for the emitErrors prop, he can do so by specifying `emitErrorsProp` in the ioOptions:
+
+```
+data() {
+  myEmitErrors: { // Emit errors will get collected here now
+  }
+}
+
+mounted() {
+  this.socket = this.$nuxtSocket({ emitErrorsProp: 'myEmitErrors' })
+}
+```
+
 ## Build Setup
 
 ```bash
@@ -231,8 +276,7 @@ $ npm run generate
 
 ## Todo Items and Notes
 
-- 10/21/2019: Added emitBacks feature. Now what changes in Vuex can be emitted back to whoever is listening. So, reactivity extends beyond the client to wherever you need it. Better documentation is planned to explain how to use this feature.
+- Project is growing, pretty soon, it may be time to improve the docs (and give them their own hosted page)
 - The module will use either the "io" options or the module options. I chose the name `io` because it's concise, but this may conflict with naming used by other modules. The module merges the two options, which may or may not cause headaches. We'll see... if it does, I'm open to changing the name to perhaps `nuxtSocket`.
-- Users of the module, just like any users of socket.io-client, just need to remember that they are still responsible for handling listeners (and removing them). This module only gives the app developer the socket reference(s).
 
 For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
