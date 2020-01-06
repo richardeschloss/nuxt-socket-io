@@ -63,7 +63,9 @@ function assignMsg(ctx, prop) {
 function assignResp(ctx, prop, resp) {
   if (prop !== undefined) {
     if (ctx[prop] !== undefined) {
-      ctx[prop] = resp
+      if (typeof ctx[prop] !== 'function') {
+        ctx[prop] = resp
+      }
     } else {
       console.warn(`${prop} not defined on instance`)
     }
@@ -116,7 +118,7 @@ const register = {
   },
   emitBacks({ ctx, socket, entries }) {
     entries.forEach((entry) => {
-      const { pre, post, evt, mapTo } = parseEntry(entry, true) // TBD
+      const { pre, post, evt, mapTo } = parseEntry(entry, 'emitBack') // TBD
       if (propExists(ctx, mapTo)) {
         ctx.$watch(mapTo, async function(data, oldData) {
           await runHook(ctx, pre, { data, oldData })
@@ -135,7 +137,7 @@ const register = {
   },
   emitBacksVuex({ ctx, store, useSocket, socket, entries }) {
     entries.forEach((entry) => {
-      const { pre, post, evt, mapTo } = parseEntry(entry, true)
+      const { pre, post, evt, mapTo } = parseEntry(entry, 'emitBack')
 
       if (useSocket.registeredWatchers.includes(mapTo)) {
         return
@@ -173,7 +175,7 @@ const register = {
   },
   emitters({ ctx, socket, entries, emitTimeout, emitErrorsProp }) {
     entries.forEach((entry) => {
-      const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(entry, true)
+      const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(entry, 'emitter')
       ctx[emitEvt] = async function(args) {
         const msg = args || assignMsg(ctx, msgLabel)
         await runHook(ctx, pre)
@@ -181,8 +183,14 @@ const register = {
           const timerObj = {}
           socket.emit(emitEvt, msg, (resp) => {
             clearTimeout(timerObj.timer)
-            const { err } = resp
-            if (err !== undefined) {
+            const { emitError, ...errorDetails } = resp
+            if (emitError !== undefined) {
+              const err = {
+                message: emitError,
+                emitEvt,
+                errorDetails,
+                timestamp: Date.now()
+              }
               if (typeof ctx[emitErrorsProp] === 'object') {
                 register.emitErrors({
                   ctx,

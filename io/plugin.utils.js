@@ -1,4 +1,4 @@
-export function parseEntry(entry, entryEmits) {
+export function parseEntry(entry, entryType) {
   let evt, mapTo, pre, body, post, emitEvt, msgLabel
   if (typeof entry === 'string') {
     let subItems = []
@@ -18,12 +18,12 @@ export function parseEntry(entry, entryEmits) {
       evt = body
     }
 
-    if (entryEmits) {
+    if (entryType === 'emitter') {
       ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
     } else if (mapTo === undefined) {
       mapTo = evt
     }
-  } else if (entryEmits) {
+  } else if (entryType === 'emitBack') {
     ;[[mapTo, evt]] = Object.entries(entry)
   } else {
     ;[[evt, mapTo]] = Object.entries(entry)

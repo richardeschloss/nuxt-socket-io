@@ -26,7 +26,7 @@ function IOServer({ host, port, server = http.createServer() }) {
                 .then(cb)
                 .catch((err) => {
                   // eslint-disable-next-line standard/no-callback-literal
-                  cb({ err: err.message })
+                  cb({ emitError: err.message })
                 })
             })
           }

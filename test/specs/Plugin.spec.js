@@ -131,7 +131,7 @@ async function testNamespace({
     }
     let doneCnt = 0
     emitters.forEach((entry) => {
-      const { mapTo, emitEvt } = parseEntry(entry, true)
+      const { mapTo, emitEvt } = parseEntry(entry, 'emitter')
       context[emitEvt]()
         .then((resp) => {
           if (context[mapTo] !== undefined) {
@@ -508,7 +508,27 @@ test('Namespace config (emitters)', async (t) => {
   socket.close()
 })
 
-test.only('Namespace config (emitters, emitTimeout)', async (t) => {
+test('Namespace config (emitters; prevent overwriting emitter)', async (t) => {
+  const context = {
+    echoBack: {}
+  }
+  const namespace = {
+    emitters: ['echoBack --> echoBack']
+  }
+  const socket = await testNamespace({
+    t,
+    context,
+    namespace,
+    channel: '/examples',
+    teardown: false
+  })
+  const argsAsMsg = { data: 'some data!!' }
+  await context.echoBack(argsAsMsg)
+  t.is(typeof context.echoBack, 'function')
+  socket.close()
+})
+
+test('Namespace config (emitters, emitTimeout)', async (t) => {
   const context = {
     item: {}
   }
@@ -535,7 +555,7 @@ test.only('Namespace config (emitters, emitTimeout)', async (t) => {
   })
 })
 
-test.only('Namespace config (emitters, emitTimeout --> emitErrors)', async (t) => {
+test('Namespace config (emitters, emitTimeout --> emitErrors)', async (t) => {
   const context = {
     item: {},
     emitErrors: {}
@@ -574,6 +594,25 @@ test.only('Namespace config (emitters, emitTimeout --> emitErrors)', async (t) =
   })
 })
 
+test('Namespace config (emitters, emitErrors rejected)', async (t) => {
+  const context = {
+    item: {}
+  }
+  const namespace = {
+    emitters: ['echoError']
+  }
+  await testNamespace({
+    t,
+    context,
+    namespace,
+    channel: '/examples'
+  }).catch(({ message, emitEvt, timestamp }) => {
+    t.is(emitEvt, 'echoError')
+    t.is(message, 'ExampleError')
+    t.truthy(timestamp)
+  })
+})
+
 test('Namespace config (emitters, emitErrors prop absorbs other errors)', async (t) => {
   const context = {
     item: {},
@@ -589,26 +628,10 @@ test('Namespace config (emitters, emitErrors prop absorbs other errors)', async 
     channel: '/examples'
   })
 
-  Object.entries(context.emitErrors).forEach(([emitter, errs], idx) => {
-    t.is(emitter, namespace.emitters[idx])
-    t.true(errs.includes('ExampleError'))
-  })
-})
-
-test('Namespace config (emitters, emitErrors does not absorb errors when prop undefined)', async (t) => {
-  const context = {
-    item: {}
-  }
-  const namespace = {
-    emitters: ['echoError']
-  }
-  await testNamespace({
-    t,
-    context,
-    namespace,
-    channel: '/examples'
-  }).catch((err) => {
-    t.is(err, 'ExampleError')
+  context.emitErrors.echoError.forEach(({ message, emitEvt, timestamp }) => {
+    t.is(emitEvt, 'echoError')
+    t.is(message, 'ExampleError')
+    t.truthy(timestamp)
   })
 })
 
