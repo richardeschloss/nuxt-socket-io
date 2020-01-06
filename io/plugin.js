@@ -4,6 +4,7 @@
 
 import io from 'socket.io-client'
 import consola from 'consola'
+import { parseEntry } from '@/io/plugin.utils'
 
 function PluginOptions() {
   let _pluginOptions
@@ -40,36 +41,6 @@ function propExists(obj, path) {
     }
   }, obj)
   return !!exists
-}
-
-function parseEntry(entry, emitBack) {
-  let evt, mapTo, pre, body, post, emitEvt, msgLabel
-  if (typeof entry === 'string') {
-    let subItems = []
-    const items = entry.trim().split(/\s*\]\s*/)
-    if (items.length > 1) {
-      pre = items[0]
-      subItems = items[1].split(/\s*\[\s*/)
-    } else {
-      subItems = items[0].split(/\s*\[\s*/)
-    }
-    ;[body, post] = subItems
-    if (body.includes('-->')) {
-      ;[evt, mapTo] = body.split(/\s*-->\s*/)
-    } else if (body.includes('<--')) {
-      ;[evt, mapTo] = body.split(/\s*<--\s*/)
-    } else if (body.includes('+')) {
-      evt = body
-    } else {
-      evt = mapTo = body
-    }
-    ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
-  } else if (emitBack) {
-    ;[[mapTo, evt]] = Object.entries(entry)
-  } else {
-    ;[[evt, mapTo]] = Object.entries(entry)
-  }
-  return { pre, post, evt, mapTo, emitEvt, msgLabel }
 }
 
 function assignMsg(ctx, prop) {
@@ -145,7 +116,7 @@ const register = {
   },
   emitBacks({ ctx, socket, entries }) {
     entries.forEach((entry) => {
-      const { pre, post, evt, mapTo } = parseEntry(entry)
+      const { pre, post, evt, mapTo } = parseEntry(entry, true) // TBD
       if (propExists(ctx, mapTo)) {
         ctx.$watch(mapTo, async function(data, oldData) {
           await runHook(ctx, pre, { data, oldData })
@@ -202,7 +173,7 @@ const register = {
   },
   emitters({ ctx, socket, entries, emitTimeout, emitErrorsProp }) {
     entries.forEach((entry) => {
-      const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(entry)
+      const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(entry, true)
       ctx[emitEvt] = async function(args) {
         const msg = args || assignMsg(ctx, msgLabel)
         await runHook(ctx, pre)

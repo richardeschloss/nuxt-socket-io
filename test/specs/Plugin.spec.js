@@ -4,7 +4,7 @@ import config from '@/nuxt.config'
 import { state as indexState } from '@/store/index'
 import { state as examplesState } from '@/store/examples'
 import { compileAndImportPlugin } from '@/test/utils'
-
+import { parseEntry } from '@/io/plugin.utils'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
 
 const { io } = config
@@ -75,40 +75,6 @@ function loadPlugin({
   })
 }
 
-function parseEntry(entry, emitBack) {
-  let evt, mapTo, pre, body, post, emitEvt, msgLabel
-  if (typeof entry === 'string') {
-    let subItems = []
-    const items = entry.trim().split(/\s*\]\s*/)
-    if (items.length > 1) {
-      pre = items[0]
-      subItems = items[1].split(/\s*\[\s*/)
-    } else {
-      subItems = items[0].split(/\s*\[\s*/)
-    }
-    ;[body, post] = subItems
-    if (body.includes('-->')) {
-      ;[evt, mapTo] = body.split(/\s*-->\s*/)
-    } else if (body.includes('<--')) {
-      ;[evt, mapTo] = body.split(/\s*<--\s*/)
-    } else {
-      evt = body // = mapTo = body
-    }
-
-    if (emitBack) {
-      ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
-      if (!mapTo) {
-        mapTo = evt
-      }
-    }
-  } else if (emitBack) {
-    ;[[mapTo, evt]] = Object.entries(entry)
-  } else {
-    ;[[evt, mapTo]] = Object.entries(entry)
-  }
-  return { pre, post, evt, mapTo, emitEvt, msgLabel }
-}
-
 async function testNamespace({
   t,
   context,
@@ -166,7 +132,6 @@ async function testNamespace({
     let doneCnt = 0
     emitters.forEach((entry) => {
       const { mapTo, emitEvt } = parseEntry(entry, true)
-      console.log('mapTo...', mapTo, emitEvt)
       context[emitEvt]()
         .then((resp) => {
           if (context[mapTo] !== undefined) {
@@ -176,7 +141,6 @@ async function testNamespace({
               })
             } else if (mapTo) {
               setImmediate(() => {
-                console.log('mapTo', mapTo)
                 t.is(resp, context[mapTo])
               })
             } else {
@@ -603,10 +567,8 @@ test.only('Namespace config (emitters, emitTimeout --> emitErrors)', async (t) =
   )
   return new Promise((resolve) => {
     context.undefMethod().then(() => {
-      console.log('here??')
       socket.close()
-      t.pass()
-      // t.is(context.emitErrors.undefMethod.length, 2)
+      t.is(context.emitErrors.undefMethod.length, 2)
       resolve()
     })
   })
