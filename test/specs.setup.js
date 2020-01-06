@@ -10,7 +10,7 @@ compilePlugin({
   src: pResolve('./io/plugin.js'),
   tmpFile: pResolve('./io/plugin.compiled.js'),
   options: io,
-  overwrite: false // true
+  overwrite: true
 })
 ioPorts.forEach((port) => {
   ioServerInit({ port }).catch((err) => {
