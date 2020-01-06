@@ -229,16 +229,18 @@ this.someEmitMethod()
 })
 ```
 
-Alternatively, another outcome can occur if the user defines a property `emitErrors` on the component, in which case the plugin won't throw an error, but will in stead *set* that property (`emitErrors`). This may result in much cleaner code, and may make it easy to work with component computed properties that change when `emitErrors` property changes:
+Alternatively, another outcome can occur if the user defines a property `emitErrors` on the component *and* the server responds with an error (see below), in which case the plugin won't throw an error, but will in stead *set* that property (`emitErrors`). This may result in much cleaner code, and may make it easy to work with component computed properties that change when `emitErrors` property changes:
 
 ```
 data() {
-  emitErrors: { // Emit errors will get collected here now
+  emitErrors: { // Emit errors will get collected here now, if resp.emitError is defined
   }
 }
 ...
 this.someEmitMethod() // Now, when this times out, emitErrors will get updated (i.e., an error won't be thrown)
 ```
+
+Important NOTE: in order for `this.emitErrors` to get updated, the server must send it's error response back as an *object*, and set a property `emitError` with the details. 
 
 2. Handling non-timeout errors, such as bad requests, or anything specific to your application's backend. Again, like before, if `emitErrors` is defined, that will get set, otherwise, the emitError will get thrown.
 
