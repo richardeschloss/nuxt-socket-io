@@ -4,7 +4,7 @@
 
 import io from 'socket.io-client'
 import consola from 'consola'
-import { parseEntry } from '@/io/plugin.utils'
+import { parseEntry } from './plugin.utils'
 
 function PluginOptions() {
   let _pluginOptions
