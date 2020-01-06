@@ -4,7 +4,6 @@ import config from '@/nuxt.config'
 import { state as indexState } from '@/store/index'
 import { state as examplesState } from '@/store/examples'
 import { compileAndImportPlugin } from '@/test/utils'
-import { parseEntry } from '@/io/plugin.utils'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
 
 const { io } = config
@@ -13,6 +12,39 @@ state.examples = examplesState()
 state.examples.__ob__ = ''
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
+
+function parseEntry(entry, entryType) {
+  let evt, mapTo, pre, body, post, emitEvt, msgLabel
+  if (typeof entry === 'string') {
+    let subItems = []
+    const items = entry.trim().split(/\s*\]\s*/)
+    if (items.length > 1) {
+      pre = items[0]
+      subItems = items[1].split(/\s*\[\s*/)
+    } else {
+      subItems = items[0].split(/\s*\[\s*/)
+    }
+    ;[body, post] = subItems
+    if (body.includes('-->')) {
+      ;[evt, mapTo] = body.split(/\s*-->\s*/)
+    } else if (body.includes('<--')) {
+      ;[evt, mapTo] = body.split(/\s*<--\s*/)
+    } else {
+      evt = body
+    }
+
+    if (entryType === 'emitter') {
+      ;[emitEvt, msgLabel] = evt.split(/\s*\+\s*/)
+    } else if (mapTo === undefined) {
+      mapTo = evt
+    }
+  } else if (entryType === 'emitBack') {
+    ;[[mapTo, evt]] = Object.entries(entry)
+  } else {
+    ;[[evt, mapTo]] = Object.entries(entry)
+  }
+  return { pre, post, evt, mapTo, emitEvt, msgLabel }
+}
 
 function Callees({ t, callItems = [], context }) {
   const called = {}

@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 Important NOTE: The maintainer of this project will be away from keyboard for this time. If issues arise in 1.0.11, please consider reverting to v1.0.10 or deferring your issues until I return. Thanks for your understanding!
 
 ## [1.0.12] - 2020-01-06
+### Fixed
+- Moved plugin utils back into plugin. It seemed like the utils were not getting built by Nuxt. 
 
 ## [1.0.11] - 2020-01-05
 ### Added
