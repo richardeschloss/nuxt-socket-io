@@ -8,6 +8,9 @@
 
 > Nuxt Socket.io module (wrapper) -- easily configure and use your socket.io clients!
 
+1. [Installation](#installation)
+2. [Configuration (io sockets)](#configuration-io-sockets)
+
 ## Installation
 
 > npm i --save nuxt-socket-io
