@@ -48,7 +48,7 @@ module.exports = {
       {
         name: 'heroku',
         url: 'https://nuxt-socket-io-server.herokuapp.com',
-        default: true,
+        default: process.env.DEPLOY === 'GH_PAGES',
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
@@ -97,7 +97,7 @@ module.exports = {
       {
         name: 'home',
         url: 'http://localhost:3000',
-        default: false,
+        default: process.env.DEPLOY !== 'GH_PAGES',
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
@@ -143,7 +143,6 @@ module.exports = {
           }
         }
       },
-      { name: 'goodSocket', url: 'http://localhost:3000' },
       { name: 'badSocket', url: 'http://localhost:3001' },
       { name: 'work', url: 'http://somedomain1:3000' },
       { name: 'car', url: 'http://somedomain2:3000' },
