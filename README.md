@@ -8,6 +8,14 @@
 
 > Nuxt Socket.io module (wrapper) -- easily configure and use your socket.io clients!
 
+# Working demo
+
+Heroku hosts the IO Server, netlify hosts the IO Client (Nuxt app). See it in action here:
+
+https://nuxt-socket-io.netlify.com
+
+Yes, Heroku could have also hosted the Nuxt app, however, for this demo, I wanted to separate the two. This may make the code easier to maintain, but I may consider using heroku for all purposes.
+
 # Table of Contents
 
 1. [Installation](#installation-)
@@ -17,7 +25,7 @@
 5. [Socket Status]()
 6. [Error Handling]()
 7. [Build Setup]()
-8. [Contributing]()
+8. [Contributing](nuxt-socket-io/blob/master/CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
 
