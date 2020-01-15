@@ -8,11 +8,33 @@
 
 > Nuxt Socket.io module (wrapper) -- easily configure and use your socket.io clients!
 
-## Installation
+# Working demo
+
+Heroku hosts the IO Server, netlify hosts the IO Client (Nuxt app). See it in action [here](https://nuxt-socket-io.netlify.com)
+
+Yes, Heroku could have also hosted the Nuxt app, however, for this demo, I wanted to separate the two. This may make the code easier to maintain, but I may consider using heroku for all purposes.
+
+# Documentation
+
+These docs are hosted on the `gh-pages` branch. View a larger version of this [here](https://richardeschloss.github.io/nuxt-socket-io/)
+
+# Table of Contents
+
+1. [Installation](#installation-)
+2. [Configuration (io sockets)](#configuration-io-sockets-)
+3. [Configuration (namespaces)](#configuration-namespaces-) 
+4. [Usage](#usage-in-components-or-pages-)
+5. [Socket Status](#socket-status-)
+6. [Error Handling](#error-handling-)
+7. [Build Setup](#build-setup-)
+8. [Todo Items](#todo-items-and-notes-)
+9. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
+
+## Installation [↑](#nuxt-socket-io)
 
 > npm i --save nuxt-socket-io
 
-## Configuration (io sockets)
+## Configuration (io sockets) [↑](#nuxt-socket-io)
 
 Then in your `nuxt.config.js` file, specify your sockets:
 
@@ -51,7 +73,7 @@ modules: [
 ...
 ```
 
-## Configuration (Namespaces)
+## Configuration (Namespaces) [↑](#nuxt-socket-io)
 
 It is also possible to configure namespaces in `nuxt.config`. Each socket set can have its own configuration of namespaces and each namespace can now have emitters, listeners, and emitbacks. The configuration supports an arrow syntax in each entry to help describe the flow (with pre/post hook designation support too). 
 
@@ -66,6 +88,8 @@ The syntax is as follows:
 → The `componentMethod` is auto-created by the plugin and sends the event with the same name. If the `componentMethod` is named "getMessage" it sends the event "getMessage"
 
 → The `componentProp` is optional, but if entered, will be the property that will get set with the response, if a response comes back. This is optional too, and needs to be initially defined on the component, otherwise it won't get set. Vuejs will also complain if you try to render undefined props. If `componentProp` is omitted from the entry, the arrow "-->" can allso be omitted.
+
+Note: as of v1.0.12, it is now also possible to call the emitter with an argument. So, if `getMessage` is called with args as `getMessage({ id: 123 })`, the args will be the message that gets sent. Args that are passed in takes priority over the referenced `msg`.
 
 * **Listeners**: 
 > 'preHook] listenEvent --> componentProp [postRx hook'
@@ -124,7 +148,7 @@ When `this.getProgress()` is called, *first* `this.reset()` will be called (if i
 * Listeners:
 When event "progress" is received, `this.progress` will get set to that data.
 
-## Usage in your components or pages: (EASY!)
+## Usage in components or pages: [↑](#nuxt-socket-io)
 
 ```
 mounted() {
@@ -159,7 +183,7 @@ methods: {
   }
 ```
 
-## Socket Status
+## Socket Status [↑](#nuxt-socket-io)
 Sometimes, it may be desired to check the status of the socket IO connection. Fortunately, the Socket.IO client API emits events to help understand the status:
 
 ```
@@ -210,7 +234,7 @@ As a convenience, a SocketStatus.vue component is now also packaged with nuxt-so
 <socket-status :status="badStatus"></socket-status>
 ```
 
-## Error Handling
+## Error Handling [↑](#nuxt-socket-io)
 
 Sometimes, errors will occur. Two main categories of errors can be thought of as: 1) timeouts, and 2) non-timeout related. The plugin allows the user to take advantage of new built-in error handling features.
 
@@ -257,7 +281,7 @@ mounted() {
 }
 ```
 
-## Build Setup
+## Build Setup [↑](#nuxt-socket-io)
 
 ```bash
 # install dependencies
@@ -276,9 +300,8 @@ $ npm run start
 $ npm run generate
 ```
 
-## Todo Items and Notes
+## Todo Items and Notes [↑](#nuxt-socket-io)
 
-- Project is growing, pretty soon, it may be time to improve the docs (and give them their own hosted page)
-- The module will use either the "io" options or the module options. I chose the name `io` because it's concise, but this may conflict with naming used by other modules. The module merges the two options, which may or may not cause headaches. We'll see... if it does, I'm open to changing the name to perhaps `nuxtSocket`.
+- May want to implement a debug logging feature (for logging IO events)
 
 For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
