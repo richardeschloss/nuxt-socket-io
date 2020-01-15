@@ -10,17 +10,13 @@
 
 # Working demo
 
-Heroku hosts the IO Server, netlify hosts the IO Client (Nuxt app). See it in action here:
-
-https://nuxt-socket-io.netlify.com
+Heroku hosts the IO Server, netlify hosts the IO Client (Nuxt app). See it in action [here](https://nuxt-socket-io.netlify.com)
 
 Yes, Heroku could have also hosted the Nuxt app, however, for this demo, I wanted to separate the two. This may make the code easier to maintain, but I may consider using heroku for all purposes.
 
 # Documentation
 
-These docs are hosted on the `gh-pages` branch. View a larger version of this here:
-
-https://richardeschloss.github.io/nuxt-socket-io/
+These docs are hosted on the `gh-pages` branch. View a larger version of this [here](https://richardeschloss.github.io/nuxt-socket-io/)
 
 # Table of Contents
 
