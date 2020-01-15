@@ -28,7 +28,7 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 6. [Error Handling](#error-handling-)
 7. [Build Setup](#build-setup-)
 8. [Todo Items](#todo-items-and-notes-)
-9. [Contributing](CONTRIBUTING.md)
+9. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
 
