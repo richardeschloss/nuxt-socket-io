@@ -25,7 +25,7 @@
         v-model="inputMsg"
         class="input-msg"
         type="text"
-        @keyup.enter="sendMsg"
+        @keyup.enter="sendMsg()"
       />
       <b-button class="submit-btn" type="button" @click="sendMsg()"
         >Submit</b-button
