@@ -301,7 +301,5 @@ $ npm run generate
 ## Todo Items and Notes [↑](#nuxt-socket-io)
 
 - May want to implement a debug logging feature (for logging IO events)
-- Project is growing, pretty soon, it may be time to improve the docs (and give them their own hosted page; maybe use Nuxt stories for this?)
-- The module will use either the "io" options or the module options. I chose the name `io` because it's concise, but this may conflict with naming used by other modules. The module merges the two options, which may or may not cause headaches. We'll see... if it does, I'm open to changing the name to perhaps `nuxtSocket`.
 
 For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
