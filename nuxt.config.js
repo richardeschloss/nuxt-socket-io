@@ -48,7 +48,7 @@ module.exports = {
       {
         name: 'heroku',
         url: 'https://nuxt-socket-io-server.herokuapp.com',
-        default: false, // true,
+        default: true,
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
@@ -97,7 +97,7 @@ module.exports = {
       {
         name: 'home',
         url: 'http://localhost:3000',
-        default: true, // false,
+        default: false,
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
