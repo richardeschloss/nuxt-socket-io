@@ -2,6 +2,17 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.13] - 2020-01-15
+### Added
+- Hosted demo, split across heroku (server) and netlify (client)
+- Contributing guidelines.
+
+### Changed
+- Improved documentation, and now host them on the `gh-pages` branch. Docs now have a table of contents
+
+### Fixed 
+- Minor bug fix in the chat rooms example (`@keyup.enter` defined on the input message just needed to be updated)
+
 ## [AFK NOTICE] - 2020-01-06 to 2020-01-11
 Important NOTE: The maintainer of this project will be away from keyboard for this time. If issues arise in 1.0.11, please consider reverting to v1.0.10 or deferring your issues until I return. Thanks for your understanding!
 

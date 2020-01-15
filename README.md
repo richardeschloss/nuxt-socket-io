@@ -89,6 +89,8 @@ The syntax is as follows:
 
 → The `componentProp` is optional, but if entered, will be the property that will get set with the response, if a response comes back. This is optional too, and needs to be initially defined on the component, otherwise it won't get set. Vuejs will also complain if you try to render undefined props. If `componentProp` is omitted from the entry, the arrow "-->" can allso be omitted.
 
+Note: as of v1.0.12, it is now also possible to call the emitter with an argument. So, if `getMessage` is called with args as `getMessage({ id: 123 })`, the args will be the message that gets sent. Args that are passed in takes priority over the referenced `msg`.
+
 * **Listeners**: 
 > 'preHook] listenEvent --> componentProp [postRx hook'
 
