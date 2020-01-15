@@ -26,7 +26,7 @@ export default {
   },
   mounted() {
     this.goodSocket = this.$nuxtSocket({
-      name: 'goodSocket',
+      // name: 'goodSocket',
       channel: '/index',
       reconnection: false
     })

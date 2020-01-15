@@ -1,12 +1,3 @@
-const routerBase =
-  process.env.DEPLOY_ENV === 'GH_PAGES'
-    ? {
-        router: {
-          base: '/nuxt-socket-io/demos/'
-        }
-      }
-    : {}
-
 module.exports = {
   mode: 'universal',
   /*
@@ -57,7 +48,7 @@ module.exports = {
       {
         name: 'heroku',
         url: 'https://nuxt-socket-io-server.herokuapp.com',
-        default: process.env.DEPLOY_ENV === 'GH_PAGES',
+        default: false, // true,
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
@@ -106,7 +97,7 @@ module.exports = {
       {
         name: 'home',
         url: 'http://localhost:3000',
-        default: process.env.DEPLOY_ENV === undefined,
+        default: true, // false,
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
@@ -185,6 +176,5 @@ module.exports = {
   },
   generate: {
     dir: 'demos'
-  },
-  ...routerBase
+  }
 }

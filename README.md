@@ -8,8 +8,16 @@
 
 > Nuxt Socket.io module (wrapper) -- easily configure and use your socket.io clients!
 
+# Table of Contents
+
 1. [Installation](#installation-)
 2. [Configuration (io sockets)](#configuration-io-sockets-)
+3. [Configuration (namespaces)](#configuration-namespaces-) 
+4. [Usage](#)
+5. [Socket Status]()
+6. [Error Handling]()
+7. [Build Setup]()
+8. [Contributing]()
 
 ## Installation [↑](#nuxt-socket-io)
 
@@ -54,7 +62,7 @@ modules: [
 ...
 ```
 
-## Configuration (Namespaces)
+## Configuration (Namespaces) [↑](#nuxt-socket-io)
 
 It is also possible to configure namespaces in `nuxt.config`. Each socket set can have its own configuration of namespaces and each namespace can now have emitters, listeners, and emitbacks. The configuration supports an arrow syntax in each entry to help describe the flow (with pre/post hook designation support too). 
 
@@ -127,7 +135,7 @@ When `this.getProgress()` is called, *first* `this.reset()` will be called (if i
 * Listeners:
 When event "progress" is received, `this.progress` will get set to that data.
 
-## Usage in your components or pages: (EASY!)
+## Usage in components or pages: [↑](#nuxt-socket-io)
 
 ```
 mounted() {
@@ -162,7 +170,7 @@ methods: {
   }
 ```
 
-## Socket Status
+## Socket Status [↑](#nuxt-socket-io)
 Sometimes, it may be desired to check the status of the socket IO connection. Fortunately, the Socket.IO client API emits events to help understand the status:
 
 ```
@@ -213,7 +221,7 @@ As a convenience, a SocketStatus.vue component is now also packaged with nuxt-so
 <socket-status :status="badStatus"></socket-status>
 ```
 
-## Error Handling
+## Error Handling [↑](#nuxt-socket-io)
 
 Sometimes, errors will occur. Two main categories of errors can be thought of as: 1) timeouts, and 2) non-timeout related. The plugin allows the user to take advantage of new built-in error handling features.
 
@@ -260,7 +268,7 @@ mounted() {
 }
 ```
 
-## Build Setup
+## Build Setup [↑](#nuxt-socket-io)
 
 ```bash
 # install dependencies
@@ -279,7 +287,7 @@ $ npm run start
 $ npm run generate
 ```
 
-## Todo Items and Notes
+## Todo Items and Notes [↑](#nuxt-socket-io)
 
 - May want to implement a debug logging feature (for logging IO events)
 - Project is growing, pretty soon, it may be time to improve the docs (and give them their own hosted page; maybe use Nuxt stories for this?)
