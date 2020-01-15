@@ -11,11 +11,11 @@
 1. [Installation](#installation)
 2. [Configuration (io sockets)](#configuration-io-sockets)
 
-## Installation [↑]("#")
+## Installation [↑](#)
 
 > npm i --save nuxt-socket-io
 
-## Configuration (io sockets) [↑]("#")
+## Configuration (io sockets) [↑](#)
 
 Then in your `nuxt.config.js` file, specify your sockets:
 
