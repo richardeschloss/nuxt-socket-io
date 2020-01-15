@@ -143,6 +143,7 @@ module.exports = {
           }
         }
       },
+      { name: 'goodSocket', url: 'http://localhost:3000' },
       { name: 'badSocket', url: 'http://localhost:3001' },
       { name: 'work', url: 'http://somedomain1:3000' },
       { name: 'car', url: 'http://somedomain2:3000' },

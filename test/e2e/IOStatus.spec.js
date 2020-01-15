@@ -7,7 +7,12 @@ import SocketStatus from '@/components/SocketStatus.vue'
 import IOStatus from '@/pages/ioStatus.vue'
 
 const { io } = config
-pOptions.set(io)
+const goodSocket = io.sockets.find(({ name }) => name === 'goodSocket')
+const badSocket = io.sockets.find(({ name }) => name === 'badSocket')
+goodSocket.default = true
+pOptions.set({
+  sockets: [goodSocket, badSocket]
+})
 
 let localVue
 
