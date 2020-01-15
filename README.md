@@ -16,16 +16,23 @@ https://nuxt-socket-io.netlify.com
 
 Yes, Heroku could have also hosted the Nuxt app, however, for this demo, I wanted to separate the two. This may make the code easier to maintain, but I may consider using heroku for all purposes.
 
+# Documentation
+
+These docs are hosted on the `gh-pages` branch. View a larger version of this here:
+
+https://richardeschloss.github.io/nuxt-socket-io/
+
 # Table of Contents
 
 1. [Installation](#installation-)
 2. [Configuration (io sockets)](#configuration-io-sockets-)
 3. [Configuration (namespaces)](#configuration-namespaces-) 
-4. [Usage](#)
-5. [Socket Status]()
-6. [Error Handling]()
-7. [Build Setup]()
-8. [Contributing](nuxt-socket-io/blob/master/CONTRIBUTING.md)
+4. [Usage](#usage-in-components-or-pages-)
+5. [Socket Status](#socket-status-)
+6. [Error Handling](#error-handling-)
+7. [Build Setup](#build-setup-)
+8. [Todo Items](#todo-items-and-notes-)
+9. [Contributing](CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
 
