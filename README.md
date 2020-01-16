@@ -27,8 +27,7 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 5. [Socket Status](#socket-status-)
 6. [Error Handling](#error-handling-)
 7. [Build Setup](#build-setup-)
-8. [Todo Items](#todo-items-and-notes-)
-9. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
+8. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
 
@@ -300,8 +299,7 @@ $ npm run start
 $ npm run generate
 ```
 
-## Todo Items and Notes [↑](#nuxt-socket-io)
-
-- May want to implement a debug logging feature (for logging IO events)
-
-For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
+For detailed explanation on how things work, check out:
+- [Nuxt.js docs](https://nuxtjs.org).
+- [Socket.io docs](http://socket.io/docs)
+- [Vuex docs](https://vuex.vuejs.org/guide)
