@@ -296,7 +296,9 @@ To enable debug logging in socket.io-client too, specify it:
 
 More documentation can be found [here](https://socket.io/docs/logging-and-debugging/)
 
-Please remember to disable debug logging in production code!
+Please remember to disable debug logging in production code! My recommendation is to enable debug logging in Chrome dev tools rather than in your own code. This helps ensure localStorage settings stay local to your machine:
+
+![debug_log_setting](https://user-images.githubusercontent.com/5906351/72652017-875f0e80-3942-11ea-8aae-c475034797f8.jpg)
 
 ## Build Setup [↑](#nuxt-socket-io)
 
