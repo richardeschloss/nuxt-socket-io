@@ -4,14 +4,16 @@
       <label>
         Sample Object (will send "examples/sampleObj" when object changes)
       </label>
-      <b-form-input
-        :value="someObj.id"
-        type="number"
-        min="0"
-        style="width:25%;"
-        @input="changeObj($event)"
-      ></b-form-input>
-      <div>Msg: {{ someObj.msg }}</div>
+      <div>
+        <b-form-input
+          :value="someObj.id"
+          type="number"
+          min="0"
+          style="width:25%; display: inline-block;"
+          @input="changeObj($event)"
+        ></b-form-input>
+      </div>
+      <span>Msg: {{ someObj.msg }}</span>
     </div>
     <div>
       <label

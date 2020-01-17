@@ -440,7 +440,11 @@ test('Emitback is not defined in vuex store', (t) => {
 
 test('Duplicate Watchers are not registered', async (t) => {
   const vuexOpts = {
-    emitBacks: ['examples/sample', { 'examples/sample2': 'sample2' }]
+    emitBacks: [
+      'examples/someObj',
+      'examples/sample',
+      { 'examples/sample2': 'sample2' }
+    ]
   }
   const context = {}
   const callCnt = { storeWatch: 0 }
@@ -449,7 +453,7 @@ test('Duplicate Watchers are not registered', async (t) => {
 
   // Instantiate the second socket:
   context.nuxtSocket({ default: true })
-  t.is(callCnt.storeWatch, 2)
+  t.is(callCnt.storeWatch, vuexOpts.emitBacks.length)
 })
 
 test('Namespace config (undefined)', async (t) => {
