@@ -7,14 +7,14 @@ import consola from 'consola'
 
 function PluginOptions() {
   let _pluginOptions
-  const svc = {}
-  if (process.env.TEST) {
-    svc.get = () => _pluginOptions
-    svc.set = (opts) => (_pluginOptions = opts)
-  } else {
-    svc.get = () => (<%= JSON.stringify(options) %>)
+  if (process.env.TEST === undefined) {
+    _pluginOptions = <%= JSON.stringify(options) %>
   }
-  return Object.freeze(svc)
+
+  return Object.freeze({
+    get: () => _pluginOptions,
+    set: (opts) => (_pluginOptions = opts)
+  })
 }
 
 const _pOptions = PluginOptions()
@@ -186,12 +186,12 @@ const register = {
                 'Is state set up correctly in your stores folder?'
               ].join('\n')
             )
-          } else if (
+          }
+           else if (
             typeof watchProp === 'object' &&
             Object.prototype.hasOwnProperty.call(watchProp, '__ob__')
           ) {
-            const errMsg = `${mapTo} is a vuex module. You probably want to watch its properties`
-            throw new Error(errMsg)
+            console.warn(`${mapTo} is an object. You probably want to watch its properties instead`)
           }
           useSocket.registeredWatchers.push(mapTo)
           return watchProp
@@ -444,6 +444,7 @@ function nuxtSocket(ioOpts) {
       socket.close()
     })
   }
+  _pOptions.set({ sockets })
   return socket
 }
 

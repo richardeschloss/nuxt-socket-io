@@ -2,7 +2,11 @@ export const state = () => ({
   progress: 0,
   sample: 341,
   sample2: 243,
-  sample2b: '243b'
+  sample2b: '243b',
+  someObj: {
+    id: 0,
+    msg: ''
+  }
 })
 
 export const mutations = {
@@ -20,5 +24,9 @@ export const mutations = {
 
   SET_SAMPLE2B(state, sample2b) {
     state.sample2b = sample2b
+  },
+
+  SET_SOMEOBJ(state, someObj) {
+    Object.assign(state, { someObj })
   }
 }
