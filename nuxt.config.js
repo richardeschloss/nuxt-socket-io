@@ -102,6 +102,7 @@ module.exports = {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
           emitBacks: [
+            'examples/someObj',
             'examples/sample',
             { 'examples/sample2': 'sample2' },
             'titleFromUser'

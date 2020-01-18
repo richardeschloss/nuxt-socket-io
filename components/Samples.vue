@@ -1,6 +1,21 @@
 <template>
   <div>
     <div>
+      <label>
+        Sample Object (will send "examples/sampleObj" when object changes)
+      </label>
+      <div>
+        <b-form-input
+          :value="someObj.id"
+          type="number"
+          min="0"
+          style="width:25%; display: inline-block;"
+          @input="changeObj($event)"
+        ></b-form-input>
+      </div>
+      <span>Msg: {{ someObj.msg }}</span>
+    </div>
+    <div>
       <label
         >Sample Number (will send "examples/sample" event back on change)</label
       >
@@ -19,6 +34,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { mapState2Way } from '@/utils/esm'
 
 export default {
@@ -32,6 +48,7 @@ export default {
     }
   },
   computed: {
+    ...mapState({ someObj: (state) => state.examples.someObj }),
     sample: mapState2Way({ 'examples/sample': 'examples/SET_SAMPLE' }),
     sample2: {
       get() {
@@ -50,6 +67,13 @@ export default {
   methods: {
     handleAck(ack) {
       console.log('ack received', ack)
+    },
+    changeObj(evt) {
+      const msgs = ['hi from object', 'hi again', 'another msg']
+      const id = parseInt(evt)
+      const msg = msgs[id % msgs.length]
+      const newObj = { id, msg }
+      this.$store.commit('examples/SET_SOMEOBJ', newObj)
     }
   }
 }

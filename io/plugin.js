@@ -4,17 +4,20 @@
 
 import io from 'socket.io-client'
 import consola from 'consola'
+import Debug from 'debug'
+
+const debug = Debug('nuxt-socket-io')
 
 function PluginOptions() {
   let _pluginOptions
-  const svc = {}
-  if (process.env.TEST) {
-    svc.get = () => _pluginOptions
-    svc.set = (opts) => (_pluginOptions = opts)
-  } else {
-    svc.get = () => (<%= JSON.stringify(options) %>)
+  if (process.env.TEST === undefined) {
+    _pluginOptions = <%= JSON.stringify(options) %>
   }
-  return Object.freeze(svc)
+
+  return Object.freeze({
+    get: () => _pluginOptions,
+    set: (opts) => (_pluginOptions = opts)
+  })
 }
 
 const _pOptions = PluginOptions()
@@ -88,6 +91,7 @@ function assignMsg(ctx, prop) {
     } else {
       console.warn(`prop or data item "${prop}" not defined`)
     }
+    debug(`assigned ${prop} to ${msg}`)
   }
   return msg
 }
@@ -97,6 +101,7 @@ function assignResp(ctx, prop, resp) {
     if (ctx[prop] !== undefined) {
       if (typeof ctx[prop] !== 'function') {
         ctx[prop] = resp
+        debug(`assigned ${resp} to ${prop}`)
       }
     } else {
       console.warn(`${prop} not defined on instance`)
@@ -139,6 +144,7 @@ const register = {
           ].join('\r\n'),
           timestamp: Date.now()
         }
+        debug('emitEvt timed out', err)
         if (typeof ctx[emitErrorsProp] === 'object') {
           register.emitErrors({ ctx, err, emitEvt, emitErrorsProp })
           resolve()
@@ -150,9 +156,11 @@ const register = {
   },
   emitBacks({ ctx, socket, entries }) {
     entries.forEach((entry) => {
-      const { pre, post, evt, mapTo } = parseEntry(entry, 'emitBack') // TBD
+      const { pre, post, evt, mapTo } = parseEntry(entry, 'emitBack')
       if (propExists(ctx, mapTo)) {
+        debug('registered local emitBack', { mapTo })
         ctx.$watch(mapTo, async function(data, oldData) {
+          debug('local data changed. Emitting back:', { evt, mapTo, data })
           await runHook(ctx, pre, { data, oldData })
           return new Promise((resolve) => {
             socket.emit(evt, { data }, (resp) => {
@@ -186,17 +194,19 @@ const register = {
                 'Is state set up correctly in your stores folder?'
               ].join('\n')
             )
-          } else if (
+          }
+           else if (
             typeof watchProp === 'object' &&
             Object.prototype.hasOwnProperty.call(watchProp, '__ob__')
           ) {
-            const errMsg = `${mapTo} is a vuex module. You probably want to watch its properties`
-            throw new Error(errMsg)
+            console.warn(`${mapTo} is an object. You probably want to watch its properties instead`)
           }
           useSocket.registeredWatchers.push(mapTo)
+          debug('emitBack registered', { mapTo })
           return watchProp
         },
         async (data) => {
+          debug('emitBack data changed. Emitting back', { evt, data, mapTo })
           await runHook(ctx, pre)
           socket.emit(evt, { data }, (resp) => {
             runHook(ctx, post, resp)
@@ -210,10 +220,12 @@ const register = {
       const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(entry, 'emitter')
       ctx[emitEvt] = async function(args) {
         const msg = args || assignMsg(ctx, msgLabel)
+        debug('Emit evt', { emitEvt, msg })
         await runHook(ctx, pre)
         return new Promise((resolve, reject) => {
           const timerObj = {}
           socket.emit(emitEvt, msg, (resp) => {
+            debug('Emitter response rxd', { emitEvt, resp })
             clearTimeout(timerObj.timer)
             const { emitError, ...errorDetails } = resp
             if (emitError !== undefined) {
@@ -223,6 +235,7 @@ const register = {
                 errorDetails,
                 timestamp: Date.now()
               }
+              debug('Emit error occurred', err)
               if (typeof ctx[emitErrorsProp] === 'object') {
                 register.emitErrors({
                   ctx,
@@ -251,15 +264,19 @@ const register = {
               })
               .then(resolve)
               .catch(reject)
+            debug('Emit timeout registered for evt', { emitEvt, emitTimeout })
           }
         })
       }
+      debug('Emitter created', { emitter: emitEvt })
     })
   },
   listeners({ ctx, socket, entries }) {
     entries.forEach((entry) => {
       const { pre, post, evt, mapTo } = parseEntry(entry)
+      debug('Registered local listener', evt)
       socket.on(evt, async (resp) => {
+        debug('Local listener received data', { evt, resp })
         await runHook(ctx, pre)
         assignResp(ctx, mapTo, resp)
         runHook(ctx, post, resp)
@@ -269,7 +286,9 @@ const register = {
   listenersVuex({ ctx, socket, entries, storeFn }) {
     entries.forEach((entry) => {
       const { pre, post, evt, mapTo } = parseEntry(entry)
+      debug('Registered vuex listener', evt)
       socket.on(evt, async (resp) => {
+        debug('Vuex listener received data', { evt, resp })
         await runHook(ctx, pre)
         storeFn(mapTo, resp)
         runHook(ctx, post, resp)
@@ -390,7 +409,7 @@ function nuxtSocket(ioOpts) {
   const { vuex: vuexOpts, namespaces } = useSocket
 
   const socket = io(connectUrl, connectOpts)
-  consola.info('connect', useSocket.name, connectUrl)
+  consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
 
   if (namespaces) {
     const namespaceCfg = namespaces[channel]
@@ -402,6 +421,7 @@ function nuxtSocket(ioOpts) {
         emitTimeout,
         emitErrorsProp
       })
+      debug('namespaces configured for socket', { name: useSocket.name, channel, namespaceCfg })
     }
   }
 
@@ -413,6 +433,7 @@ function nuxtSocket(ioOpts) {
       socket,
       store
     })
+    debug('vuexOpts configured for socket', { name: useSocket.name, vuexOpts })
   }
 
   if (
@@ -420,9 +441,11 @@ function nuxtSocket(ioOpts) {
     typeof this.socketStatus === 'object'
   ) {
     register.socketStatus({ ctx: this, socket, connectUrl, statusProp })
+    debug('socketStatus registered for socket', { name: useSocket.name, url: connectUrl })
   }
 
   if (teardown) {
+    debug('teardown enabled for socket', { name: useSocket.name })
     if (this.onComponentDestroy === undefined) {
       this.onComponentDestroy = this.$destroy
     }
@@ -434,6 +457,7 @@ function nuxtSocket(ioOpts) {
 
     if (!this.registeredTeardown) {
       this.$destroy = function() {
+        debug('component destroyed, closing socket(s)', { name: useSocket.name, url: useSocket.url })
         this.$emit('closeSockets')
         this.onComponentDestroy()
       }
@@ -441,9 +465,11 @@ function nuxtSocket(ioOpts) {
     }
 
     socket.on('disconnect', () => {
+      debug('server disconnected', { name: useSocket.name, url: useSocket.url })
       socket.close()
     })
   }
+  _pOptions.set({ sockets })
   return socket
 }
 

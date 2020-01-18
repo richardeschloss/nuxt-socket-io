@@ -20,14 +20,16 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 
 # Table of Contents
 
+(NOTE: these links work in Github best)
+
 1. [Installation](#installation-)
 2. [Configuration (io sockets)](#configuration-io-sockets-)
 3. [Configuration (namespaces)](#configuration-namespaces-) 
 4. [Usage](#usage-in-components-or-pages-)
 5. [Socket Status](#socket-status-)
 6. [Error Handling](#error-handling-)
-7. [Build Setup](#build-setup-)
-8. [Todo Items](#todo-items-and-notes-)
+7. [Debug Logging](#debug-logging-)
+8. [Build Setup](#build-setup-)
 9. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
@@ -281,6 +283,23 @@ mounted() {
 }
 ```
 
+## Debug Logging [↑](#nuxt-socket-io)
+
+Debug logging is made possible with the help of the npm module [debug](https://github.com/visionmedia/debug). Fortunately, `socket.io-client` under the hood also uses that same module and allows us to enable debug logging there too. 
+
+To enable debug logging on the nuxt-socket-io module, set the localStorage.debug variable:
+
+> localStorage.debug = 'nuxt-socket-io' // Debug just the plugin
+
+To enable debug logging in socket.io-client too, specify it:
+> localStorage.debug = 'nuxt-socket-io, socket.io-client:socket' // Debug even more (socket.io-client logs too)
+
+More documentation can be found [here](https://socket.io/docs/logging-and-debugging/)
+
+Please remember to disable debug logging in production code! My recommendation is to enable debug logging in Chrome dev tools rather than in your own code. This helps ensure localStorage settings stay local to your machine:
+
+![debug_log_setting](https://user-images.githubusercontent.com/5906351/72652017-875f0e80-3942-11ea-8aae-c475034797f8.jpg)
+
 ## Build Setup [↑](#nuxt-socket-io)
 
 ```bash
@@ -300,8 +319,7 @@ $ npm run start
 $ npm run generate
 ```
 
-## Todo Items and Notes [↑](#nuxt-socket-io)
-
-- May want to implement a debug logging feature (for logging IO events)
-
-For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
+For detailed explanation on how things work, check out:
+- [Nuxt.js docs](https://nuxtjs.org).
+- [Socket.io docs](http://socket.io/docs)
+- [Vuex docs](https://vuex.vuejs.org/guide)

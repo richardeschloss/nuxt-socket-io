@@ -32,6 +32,10 @@ function Svc() {
         resolve()
       })
     },
+    'examples/someObj': ({ data, notify }) => {
+      console.log('someObj received!', data)
+      return Promise.resolve({ msg: 'ok' })
+    },
     sample2({ data: sample, notify }) {
       return new Promise((resolve) => {
         notify({
