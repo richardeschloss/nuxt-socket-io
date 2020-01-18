@@ -2,12 +2,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## [1.0.14] - TBD
+## [1.0.14] - 2020-01-17
 ### Added
 - Added debug logging feature
 
 ### Changed
-- Allow objects defined in Vuex state to be emitted back. Before I disallowed it, but I now enabled it because some developers may want that. I still warn the user about emitting the entire object when it may be desired to just emit the properties that have changed.
+- Allow objects defined in Vuex state to be emitted back. Before I disallowed it (only allowed primitives), but I now enabled it because some developers may want that. I still warn the user about emitting the entire object when it may be desired to just emit the properties that have changed.
 
 ### Fixed
 - Potential duplicate emitback registrations now prevented in non-test environment. Previous version only prevented it in the TEST env. 
