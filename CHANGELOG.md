@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.14] - 2020-01-27
+### Fixed
+- Added a fix for the case where an emitter response is undefined. I have a line the attempts to destructure resp to get `emitError`, but it can't do that if resp is undefined. With the fix it can.
+
 ## [1.0.14] - 2020-01-17
 ### Added
 - Added debug logging feature

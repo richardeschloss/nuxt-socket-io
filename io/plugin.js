@@ -227,7 +227,7 @@ const register = {
           socket.emit(emitEvt, msg, (resp) => {
             debug('Emitter response rxd', { emitEvt, resp })
             clearTimeout(timerObj.timer)
-            const { emitError, ...errorDetails } = resp
+            const { emitError, ...errorDetails } = resp || {}
             if (emitError !== undefined) {
               const err = {
                 message: emitError,

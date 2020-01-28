@@ -99,6 +99,9 @@ function Svc() {
         resp: 'Received string again',
         length: msg.length
       })
+    },
+    receiveUndef(msg) {
+      return Promise.resolve()
     }
   })
 }
