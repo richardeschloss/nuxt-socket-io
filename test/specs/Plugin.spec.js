@@ -526,7 +526,8 @@ test('Namespace config (emitters)', async (t) => {
       'receiveArray + someArray --> myObj',
       'noMethod] receiveArray2 + undefProp --> undefProp2 [noMethod2',
       'receiveString2 + someString2',
-      'echoBack --> echoResp'
+      'echoBack --> echoResp',
+      'receiveUndef'
     ],
     listeners: ['preProgress] progress [postProgress']
   }
