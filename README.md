@@ -29,8 +29,9 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 5. [Socket Status](#socket-status-)
 6. [Error Handling](#error-handling-)
 7. [Debug Logging](#debug-logging-)
-8. [Build Setup](#build-setup-)
-9. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
+8. [Console Warnings](#console-warnings-)
+9. [Build Setup](#build-setup-)
+10. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
 
@@ -299,6 +300,24 @@ More documentation can be found [here](https://socket.io/docs/logging-and-debugg
 Please remember to disable debug logging in production code! My recommendation is to enable debug logging in Chrome dev tools rather than in your own code. This helps ensure localStorage settings stay local to your machine:
 
 ![debug_log_setting](https://user-images.githubusercontent.com/5906351/72652017-875f0e80-3942-11ea-8aae-c475034797f8.jpg)
+
+## Console Warnings [↑](#nuxt-socket-io)
+
+To prevent developers from shooting themselves in the foot, console warnings are enabled by default when not in production mode. They can be muted in a variety of ways.
+
+1. The best way to stop seeing the warnings is to resolve the issue that is being complained about. The plugin was configured a certain way in `nuxt.config` and the plugin will complain when props are not defined but should be. 
+
+2. Most browsers allow the filtering of logs by log level. To hide warnings, you can uncheck the "warnings" under "log level":
+![Screenshot from 2020-02-06 12-52-14](https://user-images.githubusercontent.com/5906351/73973433-c77d3580-48df-11ea-809b-6746a93eca2b.png)
+
+3. While the previous method will be the fastest way to show/hide warnings, that approach will also show/hide *all* console warnings, which may not be desired. If it is only desired to hide this plugin's console warnings, you can do so with the `warnings: false` option. (This defaults to true):
+
+```
+io: {
+  warnings: false, // disables console warnings
+  sockets: [...]
+}
+```
 
 ## Build Setup [↑](#nuxt-socket-io)
 

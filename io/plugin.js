@@ -22,6 +22,8 @@ function PluginOptions() {
 
 const _pOptions = PluginOptions()
 
+let warn
+
 function camelCase(str) {
   return str
     .replace(/[_\-\s](.)/g, function($1) {
@@ -89,7 +91,7 @@ function assignMsg(ctx, prop) {
         msg = ctx[prop]
       }
     } else {
-      console.warn(`prop or data item "${prop}" not defined`)
+      warn(`prop or data item "${prop}" not defined`)
     }
     debug(`assigned ${prop} to ${msg}`)
   }
@@ -104,7 +106,7 @@ function assignResp(ctx, prop, resp) {
         debug(`assigned ${resp} to ${prop}`)
       }
     } else {
-      console.warn(`${prop} not defined on instance`)
+      warn(`${prop} not defined on instance`)
     }
   }
 }
@@ -112,7 +114,7 @@ function assignResp(ctx, prop, resp) {
 async function runHook(ctx, prop, data) {
   if (prop !== undefined) {
     if (ctx[prop]) await ctx[prop](data)
-    else console.warn(`method ${prop} not defined`)
+    else warn(`method ${prop} not defined`)
   }
 }
 
@@ -171,7 +173,7 @@ const register = {
           })
         })
       } else {
-        console.warn(`Specified emitback ${mapTo} is not defined in component`)
+        warn(`Specified emitback ${mapTo} is not defined in component`)
       }
     })
   },
@@ -194,12 +196,6 @@ const register = {
                 'Is state set up correctly in your stores folder?'
               ].join('\n')
             )
-          }
-           else if (
-            typeof watchProp === 'object' &&
-            Object.prototype.hasOwnProperty.call(watchProp, '__ob__')
-          ) {
-            console.warn(`${mapTo} is an object. You probably want to watch its properties instead`)
           }
           useSocket.registeredWatchers.push(mapTo)
           debug('emitBack registered', { mapTo })
@@ -302,7 +298,7 @@ const register = {
       if (entries.constructor.name === 'Array') {
         register[setName]({ ctx, socket, entries, emitTimeout, emitErrorsProp })
       } else {
-        console.warn(
+        warn(
           `[nuxt-socket-io]: ${setName} needs to be an array in namespace config`
         )
       }
@@ -329,7 +325,7 @@ const register = {
           register.emitBacksVuex({ ctx, store, useSocket, socket, entries })
         }
       } else {
-        console.warn(
+        warn(
           `[nuxt-socket-io]: vuexOption ${setName} needs to be an array`
         )
       }
@@ -370,8 +366,12 @@ function nuxtSocket(ioOpts) {
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
-  const { sockets } = pluginOptions
+  const { sockets, warnings = true } = pluginOptions
   const { $store: store } = this
+
+  warn = warnings && process.env.NODE_ENV !== 'production'
+    ? console.warn
+    : () => {}
 
   if (
     !sockets ||

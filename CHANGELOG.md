@@ -2,7 +2,14 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## [1.0.14] - 2020-01-27
+## [1.0.16] - 2020-02-06
+### Added
+- Added option to disable console warnings in non-production mode.
+
+### Changed
+- Took out the warning about the emitBack being an object. 
+
+## [1.0.15] - 2020-01-27
 ### Fixed
 - Added a fix for the case where an emitter response is undefined. I have a line the attempts to destructure resp to get `emitError`, but it can't do that if resp is undefined. With the fix it can.
 
