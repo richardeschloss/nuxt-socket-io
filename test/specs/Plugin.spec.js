@@ -114,9 +114,11 @@ async function testNamespace({
   url = 'http://localhost:3000',
   channel = '/index',
   emitTimeout,
+  warnings = true,
   teardown = true
 }) {
   const testCfg = {
+    warnings,
     sockets: [
       {
         default: true,
@@ -398,7 +400,7 @@ test('Socket plugin (vuex opts ok)', async (t) => {
   })
 })
 
-test('Socket plugin (malformed emitBacks)', async (t) => {
+/* test('Socket plugin (malformed emitBacks)', async (t) => {
   const emitBack = 'examples'
   const vuexOpts = {
     emitBacks: [emitBack]
@@ -409,7 +411,7 @@ test('Socket plugin (malformed emitBacks)', async (t) => {
       emitBack + ' is a vuex module. You probably want to watch its properties'
     )
   })
-})
+}) */
 
 test('Emitback is not defined in vuex store', (t) => {
   const errEmitBack = 'something/undefined'
@@ -862,6 +864,99 @@ test('Channel (emitters and listeners)', (t) => {
           context,
           namespace,
           channel: '/channel',
+          teardown: false
+        })
+        sockets.push(socket)
+      }, 100 * (idx + 1))
+
+      setTimeout(() => {
+        if (idx === 0) {
+          t.is(context.joinedChannel.user, users[1])
+        }
+        const {
+          channel: fndChannel,
+          user: userResp,
+          chats,
+          namespace
+        } = context.channelInfo
+        t.is(namespace, chatNamespace)
+        t.is(fndChannel, channel)
+        t.is(userResp, user)
+        t.is(context.msgRxd.inputMsg, context.userMsg.inputMsg)
+        if (++doneCnt === users.length) {
+          const [firstChat] = chats
+          t.is(firstChat.user, users[0])
+          t.is(firstChat.inputMsg, `Hi from user ${users[0]}`)
+          sockets[1].close()
+        }
+      }, 1000)
+    })
+  })
+})
+
+test('Channel (emitters and listeners, warnings off)', (t) => {
+  t.timeout(5000)
+  const users = ['userABC', 'userXYZ']
+  const namespace = {
+    emitters: [
+      'joinChannel + joinMsg --> channelInfo',
+      'sendMsg + userMsg --> msgRxd [updateChats'
+    ],
+    listeners: [
+      'joinedChannel [updateUsers',
+      'leftChannel [userLeft',
+      'chatMessage [appendChat'
+    ]
+  }
+
+  let doneCnt = 0
+  const sockets = []
+
+  return new Promise((resolve) => {
+    const room = 'vueJS'
+    const channel = 'general'
+    const chatNamespace = `rooms/${room}/${channel}`
+    users.forEach((user, idx) => {
+      const context = {
+        joinMsg: {
+          room,
+          channel,
+          user
+        },
+        joinedChannel: {},
+        channelInfo: {},
+        chatMessage: '',
+        userMsg: {
+          inputMsg: `Hi from user ${user}`,
+          user,
+          room,
+          channel,
+          namespace: chatNamespace
+        },
+        msgRxd: {},
+        appendChat(resp) {
+          t.is(context.chatMessage.inputMsg, `Hi from user ${users[1]}`)
+        },
+        userLeft({ user: goneUser, users: usersNow }) {
+          t.is(goneUser, users[1])
+          t.is(usersNow.length, 1)
+          resolve()
+        },
+        updateChats(resp) {
+          t.is(resp.inputMsg, context.userMsg.inputMsg)
+        },
+        updateUsers({ user: joinedUser }) {
+          t.is(joinedUser, users[1])
+        }
+      }
+
+      setTimeout(async () => {
+        const socket = await testNamespace({
+          t,
+          context,
+          namespace,
+          channel: '/channel',
+          warnings: false,
           teardown: false
         })
         sockets.push(socket)
