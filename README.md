@@ -30,8 +30,9 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 6. [Error Handling](#error-handling-)
 7. [Debug Logging](#debug-logging-)
 8. [Console Warnings](#console-warnings-)
-9. [Build Setup](#build-setup-)
-10. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
+9. [Auto Teardown](#auto-teardown-)
+10. [Build Setup](#build-setup-)
+11. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
 
@@ -318,6 +319,18 @@ io: {
   sockets: [...]
 }
 ```
+
+## Auto Teardown [↑](#nuxt-socket-io)
+
+The plugin, by default, has auto-teardown enabled. As you leave a component that has instantiated nuxtSocket, the plugin will first removeAllListeners (so that duplicates don't get re-registered), then it will close the connection, and then call your component's destroy lifecycle method. Also, while you are on the component, a listener will also be registered for the 'disconnect' event from the server so that it can close it's end of the connection.
+
+If you do not wish to have this behavior, you can disable it by setting `teardown` to false when you instantiate the nuxtSocket:
+
+```
+const socket = this.nuxtSocket({ channel: '/index', teardown: false })
+```
+
+You may want to disable the auto-teardown if you are planning on re-using the socket. However, it should be noted that socket.io-client under the hood will *already* try to re-use a single connection when using different namespaces for the same socket. I personally think it is easier to manage code for the different namespaces and to configure namespaces as described above; i.e., each component gets its own set of "mouths and ears". If your coding style is different and you would still insist on disabling the auto-teardown, then just rememeber it becomes your responsibility to properly removeListeners and perform cleanup.
 
 ## Build Setup [↑](#nuxt-socket-io)
 

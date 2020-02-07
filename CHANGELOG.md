@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.17] - 2020-02-06
+### Added
+- Added documentation on the auto-teardown feature
+
 ## [1.0.16] - 2020-02-06
 ### Added
 - Added option to disable console warnings in non-production mode.
