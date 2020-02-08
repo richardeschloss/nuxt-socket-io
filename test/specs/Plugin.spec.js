@@ -219,6 +219,7 @@ async function testVuexOpts({
       })
     }
   })
+  return socket
 }
 
 test('Socket plugin (empty options)', async (t) => {
@@ -400,19 +401,6 @@ test('Socket plugin (vuex opts ok)', async (t) => {
   })
 })
 
-/* test('Socket plugin (malformed emitBacks)', async (t) => {
-  const emitBack = 'examples'
-  const vuexOpts = {
-    emitBacks: [emitBack]
-  }
-  await testVuexOpts({ t, vuexOpts }).catch((e) => {
-    t.is(
-      e.message,
-      emitBack + ' is a vuex module. You probably want to watch its properties'
-    )
-  })
-}) */
-
 test('Emitback is not defined in vuex store', (t) => {
   const errEmitBack = 'something/undefined'
   const errEmitBacks = [
@@ -456,6 +444,34 @@ test('Duplicate Watchers are not registered', async (t) => {
   // Instantiate the second socket:
   context.nuxtSocket({ default: true })
   t.is(callCnt.storeWatch, vuexOpts.emitBacks.length)
+})
+
+test('Duplicate Vuex Listeners are not registered', async (t) => {
+  const vuexOpts = {
+    mutations: ['progress']
+  }
+  const context = {}
+  const callCnt = { storeCommit: 0 }
+  const testUrl = 'http://localhost:3000/examples'
+
+  // Load and instantiate the first socket:
+  const socket = await testVuexOpts({
+    t,
+    vuexOpts,
+    callCnt,
+    context,
+    url: testUrl
+  })
+  // Instantiate the second socket:
+  context.nuxtSocket({ default: true })
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      t.is(callCnt.storeCommit, vuexOpts.mutations.length)
+      socket.close()
+      resolve()
+    }, 1000)
+  })
 })
 
 test('Namespace config (undefined)', async (t) => {
