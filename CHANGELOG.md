@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.18] - 2020-02-08
+### Added
+- Added a safeguard against duplicate registration of Vuex listeners
+
 ## [1.0.17] - 2020-02-06
 ### Added
 - Added documentation on the auto-teardown feature
