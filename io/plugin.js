@@ -279,16 +279,21 @@ const register = {
       })
     })
   },
-  listenersVuex({ ctx, socket, entries, storeFn }) {
+  listenersVuex({ ctx, socket, entries, storeFn, useSocket }) {
     entries.forEach((entry) => {
       const { pre, post, evt, mapTo } = parseEntry(entry)
-      debug('Registered vuex listener', evt)
-      socket.on(evt, async (resp) => {
+      async function vuexListenerEvt(resp) {
         debug('Vuex listener received data', { evt, resp })
         await runHook(ctx, pre)
         storeFn(mapTo, resp)
         runHook(ctx, post, resp)
-      })
+      }
+      
+      if (useSocket.registeredVuexListeners.includes(evt)) return
+
+      socket.on(evt, vuexListenerEvt)
+      debug('Registered vuex listener', evt)
+      useSocket.registeredVuexListeners.push(evt)
     })
   },
   namespace({ ctx, namespaceCfg, socket, emitTimeout, emitErrorsProp }) {
@@ -319,7 +324,8 @@ const register = {
             ctx,
             socket,
             entries,
-            storeFn: store[fnName]
+            storeFn: store[fnName],
+            useSocket
           })
         } else {
           register.emitBacksVuex({ ctx, store, useSocket, socket, entries })
@@ -352,6 +358,32 @@ const register = {
       })
     })
     Object.assign(ctx, { [statusProp]: socketStatus })
+  },
+  teardown({ ctx, socket, useSocket }) {
+    if (ctx.onComponentDestroy === undefined) {
+      ctx.onComponentDestroy = ctx.$destroy
+    }
+
+    ctx.$on('closeSockets', function() {
+      socket.removeAllListeners()
+      socket.close()
+    })
+
+    if (!ctx.registeredTeardown) {
+      debug('teardown enabled for socket', { name: useSocket.name })
+      ctx.$destroy = function() {
+        debug('component destroyed, closing socket(s)', { name: useSocket.name, url: useSocket.url })
+        useSocket.registeredVuexListeners = []
+        ctx.$emit('closeSockets')
+        ctx.onComponentDestroy()
+      }
+      ctx.registeredTeardown = true
+    }
+
+    socket.on('disconnect', () => {
+      debug('server disconnected', { name: useSocket.name, url: useSocket.url })
+      socket.close()
+    })
   }
 }
 
@@ -403,6 +435,10 @@ function nuxtSocket(ioOpts) {
     useSocket.registeredWatchers = []
   }
 
+  if (!useSocket.registeredVuexListeners) {
+    useSocket.registeredVuexListeners = []
+  }
+
   let { url: connectUrl } = useSocket
   connectUrl += channel
 
@@ -445,28 +481,10 @@ function nuxtSocket(ioOpts) {
   }
 
   if (teardown) {
-    debug('teardown enabled for socket', { name: useSocket.name })
-    if (this.onComponentDestroy === undefined) {
-      this.onComponentDestroy = this.$destroy
-    }
-
-    this.$on('closeSockets', function() {
-      socket.removeAllListeners()
-      socket.close()
-    })
-
-    if (!this.registeredTeardown) {
-      this.$destroy = function() {
-        debug('component destroyed, closing socket(s)', { name: useSocket.name, url: useSocket.url })
-        this.$emit('closeSockets')
-        this.onComponentDestroy()
-      }
-      this.registeredTeardown = true
-    }
-
-    socket.on('disconnect', () => {
-      debug('server disconnected', { name: useSocket.name, url: useSocket.url })
-      socket.close()
+    register.teardown({
+      ctx: this,
+      socket,
+      useSocket
     })
   }
   _pOptions.set({ sockets })
