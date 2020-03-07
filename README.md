@@ -24,8 +24,8 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 
 1. [Installation](#installation-)
 2. [Configuration (io sockets)](#configuration-io-sockets-)
-3. [Configuration (namespaces)](#configuration-namespaces-) 
-4. [Usage](#usage-in-components-or-pages-)
+3. [Configuration (namespaces)](#configuration-namespaces-)
+4. [Usage](#usage-)
 5. [Socket Status](#socket-status-)
 6. [Error Handling](#error-handling-)
 7. [Debug Logging](#debug-logging-)
@@ -79,10 +79,10 @@ modules: [
 
 ## Configuration (Namespaces) [↑](#nuxt-socket-io)
 
-It is also possible to configure namespaces in `nuxt.config`. Each socket set can have its own configuration of namespaces and each namespace can now have emitters, listeners, and emitbacks. The configuration supports an arrow syntax in each entry to help describe the flow (with pre/post hook designation support too). 
+It is also possible to configure namespaces in `nuxt.config`. Each socket set can have its own configuration of namespaces and each namespace can now have emitters, listeners, and emitbacks. The configuration supports an arrow syntax in each entry to help describe the flow (with pre/post hook designation support too).
 
 The syntax is as follows:
-* **Emitters**: 
+* **Emitters**:
 > preEmit hook] componentMethod + msg --> componentProp [postRx hook
 
 → The `preEmit` and `postRx` hooks are optional, but if using them, the "]" and "[" characters are needed so the plugin can parse them.
@@ -95,10 +95,10 @@ The syntax is as follows:
 
 Note: as of v1.0.12, it is now also possible to call the emitter with an argument. So, if `getMessage` is called with args as `getMessage({ id: 123 })`, the args will be the message that gets sent. Args that are passed in takes priority over the referenced `msg`.
 
-* **Listeners**: 
+* **Listeners**:
 > 'preHook] listenEvent --> componentProp [postRx hook'
 
-→ Both `preHook` and `postRx` hooks are optional. Here, `preHook` is called when data is received, but *before* setting componentProp. `postRx` hook is called 
+→ Both `preHook` and `postRx` hooks are optional. Here, `preHook` is called when data is received, but *before* setting componentProp. `postRx` hook is called
 
 → If using the arrow syntax, when `listenEvent` is received, `componentProp` will get set with that event's data. If only the `listenEvent` is entered, then the plugin will try to set a property on the component of the same name. I.e., if `listenEvent` is "progressRxd", then the plugin will try to set `this.progressRxd` on the component.
 
@@ -109,9 +109,9 @@ Note: as of v1.0.12, it is now also possible to call the emitter with an argumen
 
 → `preEmitHook` and `postAck` hooks are optional. `preEmitHook` runs before emitting the event, `postAck` hook runs after receiving the acknolwedgement, if any..
 
-→ `watchProp` is the property on the component to watch using "myObj.child.grandchild" syntax. Just like you would on the component. 
+→ `watchProp` is the property on the component to watch using "myObj.child.grandchild" syntax. Just like you would on the component.
 
-→ `emitEvt` is the event name to emit back to the server when the `watchProp` changes. If `watchProp` and the arrow "<--" are omitted, then `emitEvt` will double as the `watchProp`. 
+→ `emitEvt` is the event name to emit back to the server when the `watchProp` changes. If `watchProp` and the arrow "<--" are omitted, then `emitEvt` will double as the `watchProp`.
 
 → Important NOTE: this syntax can now also work in the Vuex options for emitbacks, with ONE important difference. In Vuex (and Nuxt, specifically), the watch property path may require forward slashes "/". For example, if your stores folder has an "examples.js" file in it, with state properties "sample" and "sample2", watchProp would have to be specified as "examples/sample" and "examples/sample2". The exception to the rule is "index.js" which is treated as the stores root. I.e., "sample" in index.js would be referred to simply as "sample" and not "index/sample")
 
@@ -135,15 +135,15 @@ namespaces: {
 }
 ```
 
-1. First, let's analyze the `/index` config. 
+1. First, let's analyze the `/index` config.
 * Emitters:
 When `getMessage()` is called, the event "getMessage" will be sent with component's data `this.testMsg`. `this.testMsg` should be defined on the component, but if it isn't no message will get sent (the plugin will warn when the component data is not defined). When a response is received, `this.messageRxd` on the component will get set to that response.
 
-* Listeners: 
+* Listeners:
 When `chatMessage2` is received, `this.chatMessage2` on the component will be set. When `chatMessage3` is received, the mapped property `this.message3Rxd` will be set.
 
 2. Let's analyze the `/examples` config.
-* Emitbacks: 
+* Emitbacks:
 When `this.sample3` changes in the component, the event `sample3` will be emitted back to the server. When `this.myObj.sample4` changes in the component, the mapped event `sample4` will be emitted back.
 
 * Emitters:
@@ -152,7 +152,30 @@ When `this.getProgress()` is called, *first* `this.reset()` will be called (if i
 * Listeners:
 When event "progress" is received, `this.progress` will get set to that data.
 
-## Usage in components or pages: [↑](#nuxt-socket-io)
+## Usage: [↑](#nuxt-socket-io)
+
+In order to use nuxtSocket in your components or pages, it's a matter of instantiating it:
+
+```
+this.socket = this.$nuxtSocket({
+  // options
+})
+```
+
+The options that the plugin will use are:
+
+* name - [string] name of the socket. If omitted, the default socket will be used
+* channel - [string] the channel (a.k.a namespace) to connect to. Defaults to ''.
+* teardown - [boolean] specifies whether to enable or disable the "auto-teardown" feature (see section below). Defaults to true.
+* statusProp - [string] specifies the property in [this] component that will be used to contain the socket status. Defaults to 'socketStatus' (referring to an object).
+* emitTimeout - [number] specifies the timeout in milliseconds for an emit event, after which waiting for the emit response will be canceled. Defaults to undefined.
+* emitErrorsProp - [string] specifies the property in [this] component that will be used to contain emit errors (see section below). Defaults to 'emitErrors' (referring to this.emitErrors, an object of arrays)
+* [All other options] - all other options that are supported by socket.io-client will be passed down to socket.io client and respected. Please read their [docs](https://socket.io/docs/client-api/). But please note, if you specify *url* here, it won't be used because you already specified the IO server url in nuxt.config. The idea is, abstract out the actual url from the code. Just connect to "yourSocket" and use it. Helps make the code much easier to read and maintain. If you have an API that lives at a specific path, you can use the "path" option for this purpose (please also refer to [issue 73](https://github.com/richardeschloss/nuxt-socket-io/issues/73) to learn more).
+
+The return value is an actual socket.io-client instance that can be used just like any socket.io-client. So, `this.socket.emit` and `this.socket.on` will be defined just as you would expect.
+
+Here are some examples:
+
 
 ```
 mounted() {
@@ -187,12 +210,14 @@ methods: {
   }
 ```
 
+If it is desired to use nuxtSocket globally, which this author discourages, one way to do so is to commit an instance of nuxtSocket in Vuex, with "teardown" option set to false so that I can be re-used throughout the app. Then, you can simply dispatch Vue actions which would contain the "socket.emit" code. This an interesting approach, but just remember you will be responsible for closing your sockets and performing cleanup (since teardown will be set to false). See the section on teardown feature, [feat/reuse branch](https://github.com/richardeschloss/nuxt-socket-io/tree/feat/reuse) and also [issue 62](https://github.com/richardeschloss/nuxt-socket-io/issues/62) for more details.
+
 ## Socket Status [↑](#nuxt-socket-io)
 Sometimes, it may be desired to check the status of the socket IO connection. Fortunately, the Socket.IO client API emits events to help understand the status:
 
 ```
 const clientEvts = [
-  'connect_error', 
+  'connect_error',
   'connect_timeout',
   'reconnect',
   'reconnect_attempt',
@@ -251,7 +276,7 @@ this.socket = this.$nuxtSocket({ channel: '/examples', emitTimeout: 1000 }) // 1
 Then, if an emitTimeout occurs, there are two possible outcomes. One is, the plugin's method will reject with an 'emitTimeout' error, and it will be up to the user to catch the error downstream:
 
 ```
-this.someEmitMethod() 
+this.someEmitMethod()
 .catch((err) => { // If method times out, catch the err
   /* Handle err */
 })
@@ -268,7 +293,7 @@ data() {
 this.someEmitMethod() // Now, when this times out, emitErrors will get updated (i.e., an error won't be thrown)
 ```
 
-Important NOTE: in order for `this.emitErrors` to get updated, the server must send it's error response back as an *object*, and set a property `emitError` with the details. 
+Important NOTE: in order for `this.emitErrors` to get updated, the server must send it's error response back as an *object*, and set a property `emitError` with the details.
 
 2. Handling non-timeout errors, such as bad requests, or anything specific to your application's backend. Again, like before, if `emitErrors` is defined, that will get set, otherwise, the emitError will get thrown.
 
@@ -287,7 +312,7 @@ mounted() {
 
 ## Debug Logging [↑](#nuxt-socket-io)
 
-Debug logging is made possible with the help of the npm module [debug](https://github.com/visionmedia/debug). Fortunately, `socket.io-client` under the hood also uses that same module and allows us to enable debug logging there too. 
+Debug logging is made possible with the help of the npm module [debug](https://github.com/visionmedia/debug). Fortunately, `socket.io-client` under the hood also uses that same module and allows us to enable debug logging there too.
 
 To enable debug logging on the nuxt-socket-io module, set the localStorage.debug variable:
 
@@ -306,7 +331,7 @@ Please remember to disable debug logging in production code! My recommendation i
 
 To prevent developers from shooting themselves in the foot, console warnings are enabled by default when not in production mode. They can be muted in a variety of ways.
 
-1. The best way to stop seeing the warnings is to resolve the issue that is being complained about. The plugin was configured a certain way in `nuxt.config` and the plugin will complain when props are not defined but should be. 
+1. The best way to stop seeing the warnings is to resolve the issue that is being complained about. The plugin was configured a certain way in `nuxt.config` and the plugin will complain when props are not defined but should be.
 
 2. Most browsers allow the filtering of logs by log level. To hide warnings, you can uncheck the "warnings" under "log level":
 ![Screenshot from 2020-02-06 12-52-14](https://user-images.githubusercontent.com/5906351/73973433-c77d3580-48df-11ea-809b-6746a93eca2b.png)
