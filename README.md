@@ -25,7 +25,7 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 1. [Installation](#installation-)
 2. [Configuration (io sockets)](#configuration-io-sockets-)
 3. [Configuration (namespaces)](#configuration-namespaces-)
-4. [Usage](#usage-in-components-or-pages-)
+4. [Usage](#usage-)
 5. [Socket Status](#socket-status-)
 6. [Error Handling](#error-handling-)
 7. [Debug Logging](#debug-logging-)
@@ -209,6 +209,8 @@ methods: {
     }
   }
 ```
+
+If it is desired to use nuxtSocket globally, which this author discourages, one way to do so is to commit an instance of nuxtSocket in Vuex, with "teardown" option set to false so that I can be re-used throughout the app. Then, you can simply dispatch Vue actions which would contain the "socket.emit" code. This an interesting approach, but just remember you will be responsible for closing your sockets and performing cleanup (since teardown will be set to false). See the section on teardown feature, [feat/reuse branch](https://github.com/richardeschloss/nuxt-socket-io/tree/feat/reuse) and also [issue 62](https://github.com/richardeschloss/nuxt-socket-io/issues/62) for more details.
 
 ## Socket Status [↑](#nuxt-socket-io)
 Sometimes, it may be desired to check the status of the socket IO connection. Fortunately, the Socket.IO client API emits events to help understand the status:
