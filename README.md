@@ -32,7 +32,8 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 8. [Console Warnings](#console-warnings-)
 9. [Auto Teardown](#auto-teardown-)
 10. [Build Setup](#build-setup-)
-11. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
+11. [Testing](#testing-)
+12. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
 
@@ -380,3 +381,81 @@ For detailed explanation on how things work, check out:
 - [Nuxt.js docs](https://nuxtjs.org).
 - [Socket.io docs](http://socket.io/docs)
 - [Vuex docs](https://vuex.vuejs.org/guide)
+
+
+## Testing [↑](#nuxt-socket-io)
+
+1a) Testing your apps that use nuxt-socket-io:
+
+The easiest way to test your components is to do so in isolation, using [vue-test-utils](https://vue-test-utils.vuejs.org/). If you treat your component as being completely separated from a backend, you can still test that works correctly by injecting the data it needs and observing the output. Fortunately, with vue-test-utils, it is extremely straightforward to mock methods and properties: just specifiy the mocks in the `mocks` property.
+
+So, for example, suppose you have the following code in your component: (this is taken directly from my chat rooms example)
+
+```
+mounted() {  // Mounted
+  this.socket = this.$nuxtSocket({ channel: '/rooms' })
+  this.getRooms()
+}
+```
+
+We want to test this block of code. Normally, the plugin would return a socket.io-client instance, and also define the `getRooms` method if it were configured as an emitter in `nuxt.config`. Our test should be written to verify this: (the example below shows ava-style assertions)
+
+```
+import Rooms from '@/pages/rooms'
+
+...
+
+let actualRooms
+const expectedRooms = [{ name: 'general' }]
+const localVue = createLocalVue()
+const called = { emit: {}, on: {} } // Create an object to register called methods
+function SocketIOClient(channel) {  // Dummy client
+  return {
+    channel,
+    emit(evt, msg, cb){
+      if (!called.emit[evt]) {
+        called.emit[evt] = []
+      }
+      called.emit[evt].push({ msg })   
+      cb()
+    },
+    on(evt, cb) {
+      if (!called.on[evt]) {
+        called.on[evt] = []
+      }
+      called.on[evt].push({ msg })   
+      cb()
+    }
+  }
+}
+const client = new SocketIOClient(channel)
+const wrapper = mount(Rooms, { 
+  localVue,
+    mocks: {
+      $nuxtSocket({ channel }) {
+        return client
+      },
+      getRooms() {
+        client.emit('getRooms', {}, () => {
+          actualRooms = expectedRooms
+        })
+      }
+    }
+})
+// Check if this.socket is a SocketIOClient()
+// We do this accessing the wrapper's properties on the view model (`wrapper.vm`)
+const { socket } = wrapper.vm
+t.is(socket.constructor.name, 'SocketIOClient')
+t.is(socket.channel, '/rooms')
+t.is(called.emit['getRooms'].length, 1)
+
+// Check if actualRooms === expectedRooms after mounting component
+expectedRooms.forEach(({ name, idx }) => {
+  t.is(name, actualRooms[idx].name)
+})
+
+```
+
+
+
+2) Testing this code:
