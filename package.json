@@ -42,6 +42,7 @@
     "components/SocketStatus.vue",
     "io/module.js",
     "io/plugin.js",
+    "test/utils.js",
     "utils"
   ],
   "dependencies": {
