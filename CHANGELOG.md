@@ -2,6 +2,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.19] - 2020-03-15
+### Added
+- Improved documentation on usage
+- Testing section in the docs; i.e., how to mock NuxtSocket, and how to inject.
+
 ## [1.0.18] - 2020-02-08
 ### Added
 - Added a safeguard against duplicate registration of Vuex listeners

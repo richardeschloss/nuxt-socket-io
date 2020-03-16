@@ -24,15 +24,16 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 
 1. [Installation](#installation-)
 2. [Configuration (io sockets)](#configuration-io-sockets-)
-3. [Configuration (namespaces)](#configuration-namespaces-) 
-4. [Usage](#usage-in-components-or-pages-)
+3. [Configuration (namespaces)](#configuration-namespaces-)
+4. [Usage](#usage-)
 5. [Socket Status](#socket-status-)
 6. [Error Handling](#error-handling-)
 7. [Debug Logging](#debug-logging-)
 8. [Console Warnings](#console-warnings-)
 9. [Auto Teardown](#auto-teardown-)
 10. [Build Setup](#build-setup-)
-11. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
+11. [Testing](#testing-)
+12. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
 
@@ -79,10 +80,10 @@ modules: [
 
 ## Configuration (Namespaces) [↑](#nuxt-socket-io)
 
-It is also possible to configure namespaces in `nuxt.config`. Each socket set can have its own configuration of namespaces and each namespace can now have emitters, listeners, and emitbacks. The configuration supports an arrow syntax in each entry to help describe the flow (with pre/post hook designation support too). 
+It is also possible to configure namespaces in `nuxt.config`. Each socket set can have its own configuration of namespaces and each namespace can now have emitters, listeners, and emitbacks. The configuration supports an arrow syntax in each entry to help describe the flow (with pre/post hook designation support too).
 
 The syntax is as follows:
-* **Emitters**: 
+* **Emitters**:
 > preEmit hook] componentMethod + msg --> componentProp [postRx hook
 
 → The `preEmit` and `postRx` hooks are optional, but if using them, the "]" and "[" characters are needed so the plugin can parse them.
@@ -95,10 +96,10 @@ The syntax is as follows:
 
 Note: as of v1.0.12, it is now also possible to call the emitter with an argument. So, if `getMessage` is called with args as `getMessage({ id: 123 })`, the args will be the message that gets sent. Args that are passed in takes priority over the referenced `msg`.
 
-* **Listeners**: 
+* **Listeners**:
 > 'preHook] listenEvent --> componentProp [postRx hook'
 
-→ Both `preHook` and `postRx` hooks are optional. Here, `preHook` is called when data is received, but *before* setting componentProp. `postRx` hook is called 
+→ Both `preHook` and `postRx` hooks are optional. Here, `preHook` is called when data is received, but *before* setting componentProp. `postRx` hook is called
 
 → If using the arrow syntax, when `listenEvent` is received, `componentProp` will get set with that event's data. If only the `listenEvent` is entered, then the plugin will try to set a property on the component of the same name. I.e., if `listenEvent` is "progressRxd", then the plugin will try to set `this.progressRxd` on the component.
 
@@ -109,9 +110,9 @@ Note: as of v1.0.12, it is now also possible to call the emitter with an argumen
 
 → `preEmitHook` and `postAck` hooks are optional. `preEmitHook` runs before emitting the event, `postAck` hook runs after receiving the acknolwedgement, if any..
 
-→ `watchProp` is the property on the component to watch using "myObj.child.grandchild" syntax. Just like you would on the component. 
+→ `watchProp` is the property on the component to watch using "myObj.child.grandchild" syntax. Just like you would on the component.
 
-→ `emitEvt` is the event name to emit back to the server when the `watchProp` changes. If `watchProp` and the arrow "<--" are omitted, then `emitEvt` will double as the `watchProp`. 
+→ `emitEvt` is the event name to emit back to the server when the `watchProp` changes. If `watchProp` and the arrow "<--" are omitted, then `emitEvt` will double as the `watchProp`.
 
 → Important NOTE: this syntax can now also work in the Vuex options for emitbacks, with ONE important difference. In Vuex (and Nuxt, specifically), the watch property path may require forward slashes "/". For example, if your stores folder has an "examples.js" file in it, with state properties "sample" and "sample2", watchProp would have to be specified as "examples/sample" and "examples/sample2". The exception to the rule is "index.js" which is treated as the stores root. I.e., "sample" in index.js would be referred to simply as "sample" and not "index/sample")
 
@@ -135,15 +136,15 @@ namespaces: {
 }
 ```
 
-1. First, let's analyze the `/index` config. 
+1. First, let's analyze the `/index` config.
 * Emitters:
 When `getMessage()` is called, the event "getMessage" will be sent with component's data `this.testMsg`. `this.testMsg` should be defined on the component, but if it isn't no message will get sent (the plugin will warn when the component data is not defined). When a response is received, `this.messageRxd` on the component will get set to that response.
 
-* Listeners: 
+* Listeners:
 When `chatMessage2` is received, `this.chatMessage2` on the component will be set. When `chatMessage3` is received, the mapped property `this.message3Rxd` will be set.
 
 2. Let's analyze the `/examples` config.
-* Emitbacks: 
+* Emitbacks:
 When `this.sample3` changes in the component, the event `sample3` will be emitted back to the server. When `this.myObj.sample4` changes in the component, the mapped event `sample4` will be emitted back.
 
 * Emitters:
@@ -152,7 +153,30 @@ When `this.getProgress()` is called, *first* `this.reset()` will be called (if i
 * Listeners:
 When event "progress" is received, `this.progress` will get set to that data.
 
-## Usage in components or pages: [↑](#nuxt-socket-io)
+## Usage: [↑](#nuxt-socket-io)
+
+In order to use nuxtSocket in your components or pages, it's a matter of instantiating it:
+
+```
+this.socket = this.$nuxtSocket({
+  // options
+})
+```
+
+The options that the plugin will use are:
+
+* name - [string] name of the socket. If omitted, the default socket will be used
+* channel - [string] the channel (a.k.a namespace) to connect to. Defaults to ''.
+* teardown - [boolean] specifies whether to enable or disable the "auto-teardown" feature (see section below). Defaults to true.
+* statusProp - [string] specifies the property in [this] component that will be used to contain the socket status. Defaults to 'socketStatus' (referring to an object).
+* emitTimeout - [number] specifies the timeout in milliseconds for an emit event, after which waiting for the emit response will be canceled. Defaults to undefined.
+* emitErrorsProp - [string] specifies the property in [this] component that will be used to contain emit errors (see section below). Defaults to 'emitErrors' (referring to this.emitErrors, an object of arrays)
+* [All other options] - all other options that are supported by socket.io-client will be passed down to socket.io client and respected. Please read their [docs](https://socket.io/docs/client-api/). But please note, if you specify *url* here, it won't be used because you already specified the IO server url in nuxt.config. The idea is, abstract out the actual url from the code. Just connect to "yourSocket" and use it. Helps make the code much easier to read and maintain. If you have an API that lives at a specific path, you can use the "path" option for this purpose (please also refer to [issue 73](https://github.com/richardeschloss/nuxt-socket-io/issues/73) to learn more).
+
+The return value is an actual socket.io-client instance that can be used just like any socket.io-client. So, `this.socket.emit` and `this.socket.on` will be defined just as you would expect.
+
+Here are some examples:
+
 
 ```
 mounted() {
@@ -187,12 +211,14 @@ methods: {
   }
 ```
 
+If it is desired to use nuxtSocket globally, which this author discourages, one way to do so is to commit an instance of nuxtSocket in Vuex, with "teardown" option set to false so that I can be re-used throughout the app. Then, you can simply dispatch Vue actions which would contain the "socket.emit" code. This an interesting approach, but just remember you will be responsible for closing your sockets and performing cleanup (since teardown will be set to false). See the section on teardown feature, [feat/reuse branch](https://github.com/richardeschloss/nuxt-socket-io/tree/feat/reuse) and also [issue 62](https://github.com/richardeschloss/nuxt-socket-io/issues/62) for more details.
+
 ## Socket Status [↑](#nuxt-socket-io)
 Sometimes, it may be desired to check the status of the socket IO connection. Fortunately, the Socket.IO client API emits events to help understand the status:
 
 ```
 const clientEvts = [
-  'connect_error', 
+  'connect_error',
   'connect_timeout',
   'reconnect',
   'reconnect_attempt',
@@ -251,7 +277,7 @@ this.socket = this.$nuxtSocket({ channel: '/examples', emitTimeout: 1000 }) // 1
 Then, if an emitTimeout occurs, there are two possible outcomes. One is, the plugin's method will reject with an 'emitTimeout' error, and it will be up to the user to catch the error downstream:
 
 ```
-this.someEmitMethod() 
+this.someEmitMethod()
 .catch((err) => { // If method times out, catch the err
   /* Handle err */
 })
@@ -268,7 +294,7 @@ data() {
 this.someEmitMethod() // Now, when this times out, emitErrors will get updated (i.e., an error won't be thrown)
 ```
 
-Important NOTE: in order for `this.emitErrors` to get updated, the server must send it's error response back as an *object*, and set a property `emitError` with the details. 
+Important NOTE: in order for `this.emitErrors` to get updated, the server must send it's error response back as an *object*, and set a property `emitError` with the details.
 
 2. Handling non-timeout errors, such as bad requests, or anything specific to your application's backend. Again, like before, if `emitErrors` is defined, that will get set, otherwise, the emitError will get thrown.
 
@@ -287,7 +313,7 @@ mounted() {
 
 ## Debug Logging [↑](#nuxt-socket-io)
 
-Debug logging is made possible with the help of the npm module [debug](https://github.com/visionmedia/debug). Fortunately, `socket.io-client` under the hood also uses that same module and allows us to enable debug logging there too. 
+Debug logging is made possible with the help of the npm module [debug](https://github.com/visionmedia/debug). Fortunately, `socket.io-client` under the hood also uses that same module and allows us to enable debug logging there too.
 
 To enable debug logging on the nuxt-socket-io module, set the localStorage.debug variable:
 
@@ -306,7 +332,7 @@ Please remember to disable debug logging in production code! My recommendation i
 
 To prevent developers from shooting themselves in the foot, console warnings are enabled by default when not in production mode. They can be muted in a variety of ways.
 
-1. The best way to stop seeing the warnings is to resolve the issue that is being complained about. The plugin was configured a certain way in `nuxt.config` and the plugin will complain when props are not defined but should be. 
+1. The best way to stop seeing the warnings is to resolve the issue that is being complained about. The plugin was configured a certain way in `nuxt.config` and the plugin will complain when props are not defined but should be.
 
 2. Most browsers allow the filtering of logs by log level. To hide warnings, you can uncheck the "warnings" under "log level":
 ![Screenshot from 2020-02-06 12-52-14](https://user-images.githubusercontent.com/5906351/73973433-c77d3580-48df-11ea-809b-6746a93eca2b.png)
@@ -355,3 +381,163 @@ For detailed explanation on how things work, check out:
 - [Nuxt.js docs](https://nuxtjs.org).
 - [Socket.io docs](http://socket.io/docs)
 - [Vuex docs](https://vuex.vuejs.org/guide)
+
+
+## Testing [↑](#nuxt-socket-io)
+
+1a) Testing your apps that use nuxt-socket-io: (full-mock approach)
+
+The easiest way to test your components is to do so in isolation, using [vue-test-utils](https://vue-test-utils.vuejs.org/). If you treat your component as being completely separated from a backend, you can still test that works correctly by injecting the data it needs and observing the output. Fortunately, with vue-test-utils, it is extremely straightforward to mock methods and properties: just specifiy the mocks in the `mocks` property.
+
+So, for example, suppose you have the following code in your component: (this is taken directly from my chat rooms example)
+
+```
+mounted() {  // Mounted
+  this.socket = this.$nuxtSocket({ channel: '/rooms' })
+  this.getRooms()
+}
+```
+
+We want to test this block of code. Normally, the plugin would return a socket.io-client instance, and also define the `getRooms` method if it were configured as an emitter in `nuxt.config`. The `getRooms` method would be expected to emit an event "getRooms". Our test should be written to verify this: (the example below shows ava-style assertions)
+
+```
+import Rooms from '@/pages/rooms'
+
+...
+
+let actualRooms
+const expectedRooms = [{ name: 'general' }]
+const localVue = createLocalVue()
+const called = { emit: {}, on: {} } // Create an object to register called methods
+function SocketIOClient(channel) {  // Dummy client
+  return {
+    channel,
+    emit(evt, msg, cb){
+      if (!called.emit[evt]) {
+        called.emit[evt] = []
+      }
+      called.emit[evt].push({ msg })   
+      cb()
+    },
+    on(evt, cb) {
+      if (!called.on[evt]) {
+        called.on[evt] = []
+      }
+      called.on[evt].push({ msg })   
+      cb()
+    }
+  }
+}
+const client = new SocketIOClient(channel)
+const wrapper = mount(Rooms, { 
+  localVue,
+    mocks: {
+      $nuxtSocket({ channel }) {
+        return client
+      },
+      getRooms() {
+        client.emit('getRooms', {}, () => {
+          actualRooms = expectedRooms
+        })
+      }
+    }
+})
+// Check if this.socket is a SocketIOClient()
+// We do this accessing the wrapper's properties on the view model (`wrapper.vm`)
+const { socket } = wrapper.vm
+t.is(socket.constructor.name, 'SocketIOClient')
+t.is(socket.channel, '/rooms')
+t.is(called.emit['getRooms'].length, 1)
+
+// Check if actualRooms === expectedRooms after mounting component
+expectedRooms.forEach(({ name, idx }) => {
+  t.is(name, actualRooms[idx].name)
+})
+
+```
+
+Running the test in isolation like this has its benefits. It doesn't require an external sources to verify that it works. When the page is mounted, the methods we expected to be called get called. This allows this test to run very quickly, as we don't need to wait for servers to start up. If running the tests in watch-mode, this can greatly accelerate development (if using a test-driven approach).
+
+However, testing like this can also have a downside of requiring the developer to "mock the planet" just to test one component. It's not that obvious from the above example, but if the component were to contain many more emitters or listeners, this much mocking can turn out to be a drag. The next section describes an alternative approach. The trade-off is: while the developer will have a test that runs more slowly (due to setup times), it may end up being much less test code that runs.
+
+
+1b) Testing your apps that use nuxt-socket-io: (compile and inject the real plugin)
+
+It may be likely that you want to actually inject the NuxtSocket plugin and re-use IO configs in your tests, perhaps using a socket that consumes data from a test provider. If so, you will need to first compile the plugin and then import it. Currently, this repo has a compile method in "test/utils.js" (which I will try to properly deploy in the next release (and someday in [nuxt-test-utils](https://github.com/richardeschloss/nuxt-test-utils)), but if you need it asap please download [here](https://github.com/richardeschloss/nuxt-socket-io/blob/master/test/utils.js), patience requested :) ):
+
+The plugin can be compiled like this:
+
+```
+import { compilePlugin, injectPlugin } from 'nuxt-socket-io/test/utils' // or @/test/utils, if using local copy
+// import { compilePlugin, injectPlugin } from 'nuxt-test-utils' // <-- someday, it will be this instead... hopefully... :)
+
+import config from '@/nuxt.config' // Read in nuxt config so we can pass the io opts to the plugin
+
+const { io } = config
+
+compilePlugin({
+  src: pResolve('./node_modules/nuxt-socket-io/io/plugin.js'), 
+  tmpFile: pResolve('/tmp/plugin.compiled.js'),
+  options: io,
+  overwrite: true // If you change the options, you'll have to overwrite the compiled plugin
+})
+```
+
+If Vuex options were also specified in the nuxt config, you may also want to use the configured store which is easy to import:
+
+```
+import { state as indexState, mutations, actions } from '@/store/index'
+import {
+  state as examplesState,
+  mutations as examplesMutations
+} from '@/store/examples'
+
+const vuexModules = { // Only needed if using nested stores (i.e., "vuex modules")
+  examples: {
+    namespaced: true,
+    state: examplesState(),
+    mutations: examplesMutations
+  }
+}
+```
+
+The store can then be defined:
+```
+let store = new Vuex.Store({
+  state,
+  mutations,
+  actions,
+  modules: vuexModules
+})
+```
+
+...And then the store and compiled plugin can be injected into the component that would need it:
+```
+const wrapper = shallowMount(YourComponent, {
+  store, // Vuex store
+  localVue,
+  stubs: {
+    'nuxt-child': true // needed if you have DOM elements that need to be stubbed
+  },
+  mocks: {
+    // ...mocks here...
+    // inject the plugin so that this.$nuxtSocket will be defined:
+    $nuxtSocket: await injectPlugin({}, Plugin)
+  }
+})
+```
+
+Now, you're test will have an actual nuxtSocket instance defined that you can use with a real IO server dedicated for testing purposes.
+
+Again, you may have noticed a bit of extra work here, and the abuse of the term "mock" here, since a real compiled plugin is being used. While this makes the component less isolated from external factors, it can help cover more ground when testing, in a single test, so it's up to the developer to decide what trade-offs are worth making.
+
+
+2) Running tests in this repository:
+
+When in doubt, always look at the ".gitlab-ci.yml" file, which will always contain the latest commands for driving the tests. This repository uses the Ava test framework because it's awesome and fast. "npm test" will first run the "specs" tests and then the "e2e" tests, both for coverage. 
+
+* "specs" testing: tests the module and the plugin, and is configured by "specs.config.js" and will first run the specs.setup.js. The setup first compiles the plugin, and then initializes an IO server, which comes in handy for testing real IO events sent by the client. The "specs.config" file also specifies the files to run for tests. When trying to troubleshoot a single test, it's useful to run "npm run test:specs:watch" will simply run tests on file changes. Since recompiling the plugin will always change the file tree, it may be desirable to compile the plugin to a folder outside the workspace (i.e., "/tmp") or to disable the overwriting of the compiled plugin (overwrite: false). 
+
+* "e2e" testing: tests the components and pages, but the only test that gets run by the CI/CD system is for the IOStatus.vue component, since that gets packaged with the distribution. Like the specs testing, the e2e config compiles the plugin, only if the compiled plugin doesn't already exist (because the specs tests may have compiled it already). The e2e.setup.js starts IO server(s) and creates a browser environment with JSDOM support, so that we can work with a DOM (when components get mounted, they get mounted to the DOM, and we need a means for querying DOM attributes on elements). "vue" extensions are registered so that ".vue" makes sense to babel, which transpiles our tests.
+
+If changes are to be made to either "specs.config" or "e2e.config" to isolate a given file for testing, the developer needs to remember to revert the changes back so all files get tested again by the CI system.
