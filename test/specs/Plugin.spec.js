@@ -706,25 +706,28 @@ test('Namespace config (emitbacks)', async (t) => {
       'sample3 [handleDone',
       'noMethod] sample4 <-- myObj.sample4 [handleX',
       'myObj.sample5',
-      'preEmit] sample5'
+      'preEmit] sample5',
+      'preEmitValid] hello [postEmitHook',
+      'preEmitValid] echoHello <-- hello2 [postEmitHook'
     ]
   }
-  const called = { preEmit: false }
+  const called = { preEmit: 0, postEmitHook: 0 }
 
   const context = {
+    hello: false,
+    hello2: false,
     sample3: 100,
     myObj: {
       sample4: 50
     },
     sample5: 421,
-    $watch(label, cb) {
-      t.true(emitEvts.includes(label))
-      cb(newData[label])
-      if (label === 'sample5') {
-        t.true(called.preEmit)
-      }
+    preEmit: () => called.preEmit++,
+    preEmitValid({ data }) {
+      return data === 'yes'
     },
-    preEmit: () => (called.preEmit = true),
+    postEmitHook() {
+      called.postEmitHook++
+    },
     handleDone({ msg }) {
       t.is(msg, 'rxd sample ' + newData.sample3)
     }
@@ -733,13 +736,23 @@ test('Namespace config (emitbacks)', async (t) => {
   const newData = {
     sample3: context.sample3 + 1,
     'myObj.sample4': context.myObj.sample4 + 1,
-    sample5: 111
+    sample5: 111,
+    hello: 'no',
+    hello2: 'yes'
   }
   const emitEvts = Object.keys(newData)
+  context.$watch = (label, cb) => {
+    t.true(emitEvts.includes(label))
+    cb(newData[label])
+    if (label === 'sample5') {
+      t.is(called.preEmit, 1)
+    }
+  }
 
   await testNamespace({ t, context, namespace, channel: '/examples' })
   return new Promise((resolve) => {
     setTimeout(() => {
+      t.is(called.postEmitHook, 1)
       resolve()
     }, 1000)
   })

@@ -38,13 +38,14 @@ function camelCase(str) {
 
 function propExists(obj, path) {
   const exists = path.split('.').reduce((out, prop) => {
-    if (out && out[prop]) {
+    if (out !== undefined && out[prop] !== undefined) {
       return out[prop]
     } else {
-      return false
+      return
     }
   }, obj)
-  return !!exists
+  
+  return exists !== undefined
 }
 
 function parseEntry(entry, entryType) {
@@ -162,8 +163,12 @@ const register = {
       if (propExists(ctx, mapTo)) {
         debug('registered local emitBack', { mapTo })
         ctx.$watch(mapTo, async function(data, oldData) {
-          debug('local data changed. Emitting back:', { evt, mapTo, data })
-          await runHook(ctx, pre, { data, oldData })
+          debug('local data changed', data)
+          const preResult = await runHook(ctx, pre, { data, oldData })
+          if (preResult === false) {
+            return Promise.resolve()
+          }
+          debug('Emitting back:', { evt, mapTo, data })
           return new Promise((resolve) => {
             socket.emit(evt, { data }, (resp) => {
               runHook(ctx, post, resp)
@@ -203,7 +208,7 @@ const register = {
         },
         async (data) => {
           debug('emitBack data changed. Emitting back', { evt, data, mapTo })
-          await runHook(ctx, pre)
+          await runHook(ctx, pre) // TBD: pass data to pre-hook... (same idea... emit if valid)
           socket.emit(evt, { data }, (resp) => {
             runHook(ctx, post, resp)
           })
