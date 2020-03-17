@@ -17,6 +17,9 @@ function Svc() {
       notify({ evt, data })
       return Promise.resolve({ evt, data })
     },
+    echoHello({ notify, evt, data }) {
+      return Promise.resolve({ evt, data })
+    },
     echoError({ evt, data }) {
       return Promise.reject(new Error('ExampleError'))
     },

@@ -113,7 +113,7 @@ function assignResp(ctx, prop, resp) {
 
 async function runHook(ctx, prop, data) {
   if (prop !== undefined) {
-    if (ctx[prop]) await ctx[prop](data)
+    if (ctx[prop]) return await ctx[prop](data)
     else warn(`method ${prop} not defined`)
   }
 }
@@ -215,9 +215,14 @@ const register = {
     entries.forEach((entry) => {
       const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(entry, 'emitter')
       ctx[emitEvt] = async function(args) {
-        const msg = args || assignMsg(ctx, msgLabel)
+        const msg = args !== undefined
+          ? args
+          : assignMsg(ctx, msgLabel)
         debug('Emit evt', { emitEvt, msg })
-        await runHook(ctx, pre)
+        const preResult = await runHook(ctx, pre, msg)
+        if (preResult === false) {
+          return Promise.resolve()
+        }
         return new Promise((resolve, reject) => {
           const timerObj = {}
           socket.emit(emitEvt, msg, (resp) => {

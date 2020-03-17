@@ -533,7 +533,11 @@ test('Namespace config (emitters)', async (t) => {
     myArray: [],
     someArray: [3, 1, 2],
     myObj: {},
-    echoResp: {}
+    echoResp: {},
+    preEmitVal(arg) {
+      return arg
+    },
+    hello: false
   }
   const callees = Callees({ t, callItems, context })
   const namespace = {
@@ -545,7 +549,8 @@ test('Namespace config (emitters)', async (t) => {
       'noMethod] receiveArray2 + undefProp --> undefProp2 [noMethod2',
       'receiveString2 + someString2',
       'echoBack --> echoResp',
-      'receiveUndef'
+      'receiveUndef',
+      'preEmitVal] echoHello --> hello'
     ],
     listeners: ['preProgress] progress [postProgress']
   }
@@ -557,6 +562,11 @@ test('Namespace config (emitters)', async (t) => {
     teardown: false
   })
   callees.called()
+  context.hello = false
+  await context.echoHello(false)
+  t.false(context.hello)
+  await context.echoHello({ data: 'hello' })
+  t.is(context.hello.data, 'hello')
   const argsAsMsg = { data: 'some data!!' }
   await context.echoBack(argsAsMsg)
   t.is(argsAsMsg.data, context.echoResp.data)

@@ -2,6 +2,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.20] - 2020-03-17
+### Added
+- Pre-emit hook validation feature; if validation fails, emit event won't be sent.
+
+### Fixed
+- Before, emitter "args" would not be used if they were set to `false`. A more proper check has replaced the old one.
+
 ## [1.0.19] - 2020-03-15
 ### Added
 - Improved documentation on usage
