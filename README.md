@@ -86,7 +86,7 @@ The syntax is as follows:
 * **Emitters**:
 > preEmit hook] componentMethod + msg --> componentProp [postRx hook
 
-→ The `preEmit` and `postRx` hooks are optional, but if using them, the "]" and "[" characters are needed so the plugin can parse them.
+→ The `preEmit` and `postRx` hooks are optional, but if using them, the "]" and "[" characters are needed so the plugin can parse them. As of v1.0.20, if the preEmit hook returns `false`, it will be treated as a *validation failure* and the emit event will not get sent.
 
 → The `msg` is optional, but if using, must use the '+' character
 
