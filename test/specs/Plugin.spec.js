@@ -370,7 +370,7 @@ test('Socket plugin (vuex options missing actions)', async (t) => {
   await testVuexOpts({ t, vuexOpts })
 })
 
-test.only('Socket plugin (vuex opts ok)', async (t) => {
+test('Socket plugin (vuex opts ok)', async (t) => {
   const callItems = ['pre1', 'post1', 'preEmit', 'postAck']
   const callCnt = {
     storeWatch: 0,
