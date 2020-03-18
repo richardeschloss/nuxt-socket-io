@@ -163,7 +163,7 @@ const register = {
       if (propExists(ctx, mapTo)) {
         debug('registered local emitBack', { mapTo })
         ctx.$watch(mapTo, async function(data, oldData) {
-          debug('local data changed', data)
+          debug('local data changed', evt, data)
           const preResult = await runHook(ctx, pre, { data, oldData })
           if (preResult === false) {
             return Promise.resolve()
@@ -206,9 +206,13 @@ const register = {
           debug('emitBack registered', { mapTo })
           return watchProp
         },
-        async (data) => {
-          debug('emitBack data changed. Emitting back', { evt, data, mapTo })
-          await runHook(ctx, pre) // TBD: pass data to pre-hook... (same idea... emit if valid)
+        async (data, oldData) => {
+          debug('vuex emitBack data changed', { emitBack: evt, data })
+          const preResult = await runHook(ctx, pre, { data, oldData })
+          if (preResult === false) {
+            return Promise.resolve()
+          }
+          debug('Emitting back:', { evt, mapTo, data })
           socket.emit(evt, { data }, (resp) => {
             runHook(ctx, post, resp)
           })

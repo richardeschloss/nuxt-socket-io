@@ -370,10 +370,25 @@ test('Socket plugin (vuex options missing actions)', async (t) => {
   await testVuexOpts({ t, vuexOpts })
 })
 
-test('Socket plugin (vuex opts ok)', async (t) => {
+test.only('Socket plugin (vuex opts ok)', async (t) => {
   const callItems = ['pre1', 'post1', 'preEmit', 'postAck']
-  const callCnt = { storeWatch: 0, storeCommit: 0, storeDispatch: 0 }
-  const context = {}
+  const callCnt = {
+    storeWatch: 0,
+    storeCommit: 0,
+    storeDispatch: 0,
+    postEmitHook: 0
+  }
+  const context = {
+    postEmitHook(args) {
+      callCnt.postEmitHook++
+    },
+    preEmitVal(args) {
+      return true
+    },
+    preEmitValFail() {
+      return false
+    }
+  }
   const callees = Callees({ t, context, callItems })
   const vuexOpts = {
     actions: [
@@ -386,7 +401,9 @@ test('Socket plugin (vuex opts ok)', async (t) => {
       'noPre] examples/sample [noPost',
       { 'examples/sample2': 'sample2' },
       'preEmit] sample2b <-- examples/sample2b [postAck',
-      'titleFromUser' // defined in store/index.js (for issue #35)
+      'titleFromUser', // defined in store/index.js (for issue #35)
+      'preEmitVal] echoHello <-- examples/hello [postEmitHook',
+      'preEmitValFail] echoHello <-- examples/helloFail [postEmitHook'
     ]
   }
   const testUrl = 'http://localhost:3000/examples'
@@ -396,6 +413,7 @@ test('Socket plugin (vuex opts ok)', async (t) => {
       callees.called()
       t.is(callCnt.storeCommit, vuexOpts.mutations.length)
       t.is(callCnt.storeDispatch, vuexOpts.actions.length)
+      t.is(callCnt.postEmitHook, 1)
       resolve()
     }, 1000)
   })
