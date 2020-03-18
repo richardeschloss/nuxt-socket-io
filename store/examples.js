@@ -1,4 +1,6 @@
 export const state = () => ({
+  hello: false,
+  helloFail: false,
   progress: 0,
   sample: 341,
   sample2: 243,

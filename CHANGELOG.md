@@ -2,6 +2,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.21] - 2020-03-17
+### Added
+- Pre-emit hook validation feature for emitbacks; if validation fails, emit event won't be sent.
+
+### Fixed
+- propExists method in the plugin. Properly checks to see if the property is defined.
+
 ## [1.0.20] - 2020-03-17
 ### Added
 - Pre-emit hook validation feature; if validation fails, emit event won't be sent.

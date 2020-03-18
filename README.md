@@ -86,7 +86,7 @@ The syntax is as follows:
 * **Emitters**:
 > preEmit hook] componentMethod + msg --> componentProp [postRx hook
 
-→ The `preEmit` and `postRx` hooks are optional, but if using them, the "]" and "[" characters are needed so the plugin can parse them. As of v1.0.20, if the preEmit hook returns `false`, it will be treated as a *validation failure* and the emit event will not get sent.
+→ The `preEmit` and `postRx` hooks are optional, but if using them, the "]" and "[" characters are needed so the plugin can parse them. As of v1.0.20, if the preEmit hook returns `false`, it will be treated as a *validation failure* and the emit event will not get sent. Also, the preEmit hook will get the same "msg" data that will get sent with the emit event, in case it needs to be modified.
 
 → The `msg` is optional, but if using, must use the '+' character
 
@@ -108,7 +108,7 @@ Note: as of v1.0.12, it is now also possible to call the emitter with an argumen
 * **Emitbacks**:
 > 'preEmitHook] emitEvt <-- watchProp [postAck hook'
 
-→ `preEmitHook` and `postAck` hooks are optional. `preEmitHook` runs before emitting the event, `postAck` hook runs after receiving the acknolwedgement, if any..
+→ `preEmitHook` and `postAck` hooks are optional. `preEmitHook` runs before emitting the event, `postAck` hook runs after receiving the acknolwedgement, if any. As of v1.0.21, if the preEmit hook returns `false`, it will be treated as a *validation failure* and the emit event will not get sent. Also, the preEmit hook will get the same "msg" data that will get sent with the emit event, in case it needs to be modified.
 
 → `watchProp` is the property on the component to watch using "myObj.child.grandchild" syntax. Just like you would on the component.
 
