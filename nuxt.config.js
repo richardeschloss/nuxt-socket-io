@@ -141,7 +141,8 @@ module.exports = {
               'leftChannel [updateChannelInfo',
               'chatMessage [appendChats'
             ]
-          }
+          },
+          '/dynamic': { dynamicApi: true }
         }
       },
       { name: 'goodSocket', url: 'http://localhost:3000' },
@@ -168,9 +169,9 @@ module.exports = {
      ** You can extend webpack config here
      */
     extend(config, ctx) {},
-    parallel: false,
-    cache: false,
-    hardSource: false
+    parallel: true, // false,
+    cache: true, // false,
+    hardSource: true // false
   },
   globals: {
     loadingTimeout: 5000

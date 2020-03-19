@@ -19,13 +19,13 @@ function API() {
 
   const schemas = Object.freeze({
     getItems: {
-      out: []
+      resp: []
     },
     getItem: {
-      params: {
-        id: ''
+      msg: {
+        id: 'tbd'
       },
-      out: Schemas.Item
+      resp: Schemas.Item
     }
   })
 

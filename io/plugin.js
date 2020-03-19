@@ -127,7 +127,65 @@ function propByPath(obj, path) {
   }, obj)
 }
 
+const apis = {}
+
 const register = {
+  apiMethods({ ctx, socket, api }) {
+    // ioData check
+    api.methods.forEach((fn) => {
+      ctx.ioData[fn] = {}
+      ctx.ioApi[fn] = (args) => {
+        return new Promise((resolve) => {
+          ctx.ioData[fn].resp = [{
+            id: 2123
+          }]
+          // console.log("RESP?", ctx.ioApi[fn].resp)
+          const evt = fn
+          const msg = args !== undefined ? args : ctx.ioData[fn].msg
+          console.log('emitting', evt, msg)
+        
+          socket.emit(evt, msg, (resp) => {
+            // ctx.update()
+            // resolve()
+            console.log({ evt, resp })
+            // Object.assign(ctx.ioApi[fn].resp, resp)
+            ctx.ioData[fn].resp[0].id = 1122
+            ctx.items = resp
+            // ctx.ioApi[fn].resp = [{
+            //   id: 123
+            // }] //resp
+            console.log('resolve!', resp, ctx.ioData)
+            resolve(resp)
+          })
+        })
+      }
+      ctx.ioData[fn].msg = { ...api.schemas[fn].msg }
+      ctx.ioData[fn].resp = [] // { ...api.schemas[fn].resp }
+      console.log('created method for', fn)
+    })
+    ctx.ioApi.getItems() // TBD
+  },
+  api({ ctx, socket, namespace }) {
+    return new Promise((resolve) => {
+      socket.emit('api', {}, (api) => {
+        if (api.version === undefined) {
+          warn(`api version not defined for ${namespace}`)
+          return
+        }
+        if (apis[namespace] && apis[namespace].version >= api.version) {
+          warn(`already have latest api version for namespace ${namespace} (${api.version})`)
+          return
+        }
+        apis[namespace] = Object.assign({ methods: [], schemas: {} }, api)
+        console.log('API rxd!', apis[namespace])
+        assignResp(ctx, 'ioApi', apis[namespace])
+        if (ctx.ioApi) {
+          register.apiMethods({ ctx, socket, api })
+        }
+        resolve()
+      })
+    })
+  },
   emitErrors({ ctx, err, emitEvt, emitErrorsProp }) {
     if (ctx[emitErrorsProp][emitEvt] === undefined) {
       ctx[emitErrorsProp][emitEvt] = []
@@ -310,8 +368,8 @@ const register = {
       useSocket.registeredVuexListeners.push(evt)
     })
   },
-  namespace({ ctx, namespaceCfg, socket, emitTimeout, emitErrorsProp }) {
-    const { emitters = [], listeners = [], emitBacks = [] } = namespaceCfg
+  namespace({ ctx, namespace, namespaceCfg, socket, emitTimeout, emitErrorsProp }) {
+    const { emitters = [], listeners = [], emitBacks = [], dynamicApi = false } = namespaceCfg
     const sets = { emitters, listeners, emitBacks }
     Object.entries(sets).forEach(([setName, entries]) => {
       if (entries.constructor.name === 'Array') {
@@ -322,6 +380,10 @@ const register = {
         )
       }
     })
+
+    if (dynamicApi) {
+      register.api({ ctx, socket, namespace })
+    }
   },
   vuexOpts({ ctx, vuexOpts, useSocket, socket, store }) {
     const { mutations = [], actions = [], emitBacks = [] } = vuexOpts
@@ -466,6 +528,7 @@ function nuxtSocket(ioOpts) {
     if (namespaceCfg) {
       register.namespace({
         ctx: this,
+        namespace: channel,
         namespaceCfg,
         socket,
         emitTimeout,
