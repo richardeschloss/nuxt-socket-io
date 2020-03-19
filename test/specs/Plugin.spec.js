@@ -161,7 +161,7 @@ async function testNamespace({
 
   return new Promise((resolve, reject) => {
     if (emitters.length === 0 || listeners.constructor.name !== 'Array') {
-      resolve()
+      resolve(socket)
     }
     let doneCnt = 0
     emitters.forEach((entry) => {
@@ -1040,6 +1040,27 @@ test('Channel (emitters and listeners, warnings off)', (t) => {
           sockets[1].close()
         }
       }, 1000)
+    })
+  })
+})
+
+test.only('Dynamic api', async (t) => {
+  console.log('DYNAMIC')
+  const context = {
+    api: {}
+  }
+  const socket = await testNamespace({
+    channel: '/dynamic',
+    context,
+    namespace: {},
+    t
+  })
+  return new Promise((resolve) => {
+    socket.emit('api', {}, (api) => {
+      console.log('api', api)
+      context.api = api
+      t.pass()
+      resolve()
     })
   })
 })
