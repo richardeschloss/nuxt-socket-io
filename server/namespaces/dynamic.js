@@ -23,7 +23,7 @@ function API() {
     },
     getItem: {
       msg: {
-        id: 'tbd'
+        id: ''
       },
       resp: Schemas.Item
     }
@@ -35,6 +35,7 @@ function API() {
       return Promise.resolve([{ id: 'item1' }, { id: 'item2' }])
     },
     getItem({ notify, ...data }) {
+      console.log('received msg', data)
       return Promise.resolve({ msg: 'ok2' })
     }
   })

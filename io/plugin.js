@@ -130,44 +130,33 @@ function propByPath(obj, path) {
 const apis = {}
 
 const register = {
-  apiMethods({ ctx, socket, api }) {
-    // ioData check
+  apiMethods({ ctx, socket, namespace, api }) {
     api.methods.forEach((fn) => {
-      ctx.ioData[fn] = {}
+      const { msg: msgT, resp: respT } = api.schemas[fn]
+      ctx.$set(ctx.ioData, fn, {
+        msg: msgT || {},
+        resp: respT || {}
+      })
+      
       ctx.ioApi[fn] = (args) => {
         return new Promise((resolve) => {
-          ctx.ioData[fn].resp = [{
-            id: 2123
-          }]
-          // console.log("RESP?", ctx.ioApi[fn].resp)
           const evt = fn
           const msg = args !== undefined ? args : ctx.ioData[fn].msg
-          console.log('emitting', evt, msg)
-        
+          debug(`[ioApi]:${namespace} Emitting ${evt} with ${msg}`)
           socket.emit(evt, msg, (resp) => {
-            // ctx.update()
-            // resolve()
-            console.log({ evt, resp })
-            // Object.assign(ctx.ioApi[fn].resp, resp)
-            ctx.ioData[fn].resp[0].id = 1122
-            ctx.items = resp
-            // ctx.ioApi[fn].resp = [{
-            //   id: 123
-            // }] //resp
-            console.log('resolve!', resp, ctx.ioData)
+            debug(`[ioApi]:${namespace} rxd data`, { evt, resp })
+            ctx.$set(ctx.ioData[fn], 'resp', resp)
             resolve(resp)
           })
         })
       }
-      ctx.ioData[fn].msg = { ...api.schemas[fn].msg }
-      ctx.ioData[fn].resp = [] // { ...api.schemas[fn].resp }
-      console.log('created method for', fn)
+      debug(`[ioApi]:${namespace} Created method for ${fn}`)
     })
-    ctx.ioApi.getItems() // TBD
   },
-  api({ ctx, socket, namespace }) {
+  api({ ctx, socket, namespace }) { // TBD: also register notifiers/listeners
     return new Promise((resolve) => {
       socket.emit('api', {}, (api) => {
+        socket.ioApi = api
         if (api.version === undefined) {
           warn(`api version not defined for ${namespace}`)
           return
@@ -176,12 +165,10 @@ const register = {
           warn(`already have latest api version for namespace ${namespace} (${api.version})`)
           return
         }
-        apis[namespace] = Object.assign({ methods: [], schemas: {} }, api)
-        console.log('API rxd!', apis[namespace])
-        assignResp(ctx, 'ioApi', apis[namespace])
-        if (ctx.ioApi) {
-          register.apiMethods({ ctx, socket, api })
-        }
+        ctx.ioApi = {}
+        apis[namespace] = Object.assign({ methods: [], schemas: {}}, api)        
+        Object.assign(ctx.ioApi, apis[namespace])
+        register.apiMethods({ ctx, socket, namespace, api })
         resolve()
       })
     })

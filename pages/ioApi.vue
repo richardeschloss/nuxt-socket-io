@@ -1,21 +1,24 @@
 <template>
   <div class="container">
-    <h2>Dynamic API Examples</h2>
-    <div>API: {{ ioApi }}</div>
+    <h2 id="hdr">Dynamic API Examples</h2>
     <div>Data: {{ ioData }}</div>
-    <!-- <div>API data: {{ apiData }}</div>
-    <div>Just items: {{ items }}</div>
-    <button @click="ioApi.getItems()">Get Items</button> -->
-    <div v-if="ioData.getItem">
-      <input v-model="ioData.getItem.msg.id" type="text" />
+    <button @click="ioApi.getItems()">Get Items</button>
+    <button @click="ioApi.getItem()">Get Item 1</button>
+    <div
+      v-if="
+        ioData.getItems &&
+          ioData.getItems.resp &&
+          ioData.getItems.resp.length > 0
+      "
+    >
+      RESP id: <input v-model="ioData.getItems.resp[0].id" type="text" />
+      <br />
+      Val:
+      <div id="idVal" v-text="ioData.getItems.resp[0].id"></div>
+      <br />
+      Item1 id:
+      <input v-model="ioData.getItem.msg.id" />
     </div>
-    <div>ITEMS: {{ ioData.getItems ? ioData.getItems.resp : '' }}</div>
-    <div>alt items: {{ items }}</div>
-    <!-- <div v-text="ioAPI"></div> -->
-    <!-- <div v-if="items">ITEMS: {{ JSON.stringify(items) }}</div> -->
-    <!-- <ul>
-      <li v-for="item in items" :key="item">{{ item }}</li>
-    </ul> -->
   </div>
 </template>
 
@@ -23,20 +26,8 @@
 export default {
   data() {
     return {
-      ioApi: {},
-      ioData: {},
-      items: []
+      ioData: {}
     }
-  },
-  computed: {
-    // items() {
-    //   console.log('data changed!')
-    //   if (this.ioApi.getItems) {
-    //     return this.ioApi.getItems.resp
-    //   } else {
-    //     return []
-    //   }
-    // }
   },
   mounted() {
     this.socket = this.$nuxtSocket({
