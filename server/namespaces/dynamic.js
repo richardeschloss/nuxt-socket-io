@@ -19,10 +19,13 @@ function API() {
 
   const schemas = Object.freeze({
     getItems: {
+      evts: {
+        progress: 0
+      },
       resp: []
     },
     getItem: {
-      msg: {
+      msgIn: {
         id: ''
       },
       resp: Schemas.Item
@@ -32,6 +35,10 @@ function API() {
   const methods = Object.freeze({
     getItems({ notify, ...data }) {
       console.log('data!', data)
+      notify({
+        evt: 'progress',
+        data: 0.32
+      })
       return Promise.resolve([{ id: 'item1' }, { id: 'item2' }])
     },
     getItem({ notify, ...data }) {

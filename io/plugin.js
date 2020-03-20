@@ -130,6 +130,17 @@ function propByPath(obj, path) {
 const apis = {}
 
 const register = {
+  apiEvents({ ctx, socket, namespace, api }) {
+    api.methods.forEach((fn) => {
+      const { evts = {} } = api.schemas[fn]
+      Object.entries(evts).forEach(([evt, initVal]) => {
+        ctx.$set(ctx.ioData[fn], evt, initVal)
+        socket.on(evt, (data) => {
+          ctx.ioData[fn][evt] = data
+        })
+      })
+    })
+  },
   apiMethods({ ctx, socket, namespace, api }) {
     api.methods.forEach((fn) => {
       const { msg: msgT, resp: respT } = api.schemas[fn]
@@ -155,6 +166,7 @@ const register = {
   },
   api({ ctx, socket, namespace }) { // TBD: also register notifiers/listeners
     return new Promise((resolve) => {
+      ctx.ioApi = {}
       socket.emit('api', {}, (api) => {
         socket.ioApi = api
         if (api.version === undefined) {
@@ -163,12 +175,13 @@ const register = {
         }
         if (apis[namespace] && apis[namespace].version >= api.version) {
           warn(`already have latest api version for namespace ${namespace} (${api.version})`)
-          return
+        } else {
+          apis[namespace] = Object.assign({ methods: [], schemas: {}}, api)        
         }
-        ctx.ioApi = {}
-        apis[namespace] = Object.assign({ methods: [], schemas: {}}, api)        
+        
         Object.assign(ctx.ioApi, apis[namespace])
         register.apiMethods({ ctx, socket, namespace, api })
+        register.apiEvents({ ctx, socket, namespace, api })
         resolve()
       })
     })

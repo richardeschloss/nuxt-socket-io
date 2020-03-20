@@ -18,6 +18,8 @@
       <br />
       Item1 id:
       <input v-model="ioData.getItem.msg.id" />
+      Items progress:
+      {{ ioData.getItems.progress }}
     </div>
   </div>
 </template>
