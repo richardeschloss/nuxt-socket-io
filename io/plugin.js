@@ -131,8 +131,8 @@ const apis = {}
 
 const register = {
   apiEvents({ ctx, socket, namespace, api }) {
-    api.methods.forEach((fn) => {
-      const { evts = {} } = api.schemas[fn]
+    Object.entries(api.methods).forEach(([fn, schema]) => {
+      const { evts = {} } = schema
       Object.entries(evts).forEach(([evt, initVal]) => {
         ctx.$set(ctx.ioData[fn], evt, initVal)
         socket.on(evt, (data) => {
@@ -142,11 +142,13 @@ const register = {
     })
   },
   apiMethods({ ctx, socket, namespace, api }) {
-    api.methods.forEach((fn) => {
-      const { msg: msgT, resp: respT } = api.schemas[fn]
-      ctx.$set(ctx.ioData, fn, {
+    Object.entries(api.methods).forEach(([fn, schema]) => {
+      const { msg: msgT, resp: respT } = schema
+      ctx.$set(ctx.ioData, fn, { // TBD, only set if not already set
         msg: msgT || {},
-        resp: respT || {}
+        resp: resp.constructor.name === 'Array'
+          ? []
+          : {}
       })
       
       ctx.ioApi[fn] = (args) => {
@@ -167,8 +169,8 @@ const register = {
   api({ ctx, socket, namespace }) { // TBD: also register notifiers/listeners
     return new Promise((resolve) => {
       ctx.ioApi = {}
-      socket.emit('api', {}, (api) => {
-        socket.ioApi = api
+      socket.emit('getAPI', {}, (api) => {
+        debug('api', api)
         if (api.version === undefined) {
           warn(`api version not defined for ${namespace}`)
           return
@@ -176,7 +178,7 @@ const register = {
         if (apis[namespace] && apis[namespace].version >= api.version) {
           warn(`already have latest api version for namespace ${namespace} (${api.version})`)
         } else {
-          apis[namespace] = Object.assign({ methods: [], schemas: {}}, api)        
+          apis[namespace] = Object.assign({ methods: {} }, api)        
         }
         
         Object.assign(ctx.ioApi, apis[namespace])
@@ -184,6 +186,7 @@ const register = {
         register.apiEvents({ ctx, socket, namespace, api })
         resolve()
       })
+      // TBD: emitTimeout...
     })
   },
   emitErrors({ ctx, err, emitEvt, emitErrorsProp }) {
@@ -383,6 +386,10 @@ const register = {
 
     if (dynamicApi) {
       register.api({ ctx, socket, namespace })
+      // TBD: respond with my api when asked (as listener?)
+      /* socket.on('api', () => {
+        // Give api to server
+      })*/
     }
   },
   vuexOpts({ ctx, vuexOpts, useSocket, socket, store }) {
