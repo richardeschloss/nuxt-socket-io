@@ -20,6 +20,13 @@
 </template>
 
 <script>
+const ChatMessage = {
+  date: new Date(),
+  from: '',
+  to: '',
+  text: ''
+}
+
 export default {
   data() {
     return {
@@ -28,7 +35,25 @@ export default {
   },
   mounted() {
     this.socket = this.$nuxtSocket({
-      channel: '/dynamic'
+      channel: '/dynamic',
+      clientAPI: {
+        version: 1.31,
+        nodeType: 'client',
+        evts: {
+          warnings: {
+            lostSignal: false,
+            battery: 0
+          }
+        },
+        methods: {
+          sendMessage: {
+            evts: {
+              sending: false
+            },
+            resp: ChatMessage
+          }
+        }
+      }
     })
   }
 }
