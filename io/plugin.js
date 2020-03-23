@@ -127,19 +127,51 @@ function propByPath(obj, path) {
   }, obj)
 }
 
-const apis = {}
-/*
-apis {
-  [socketName]: { // 'home', 'dflt', 'server1'
-    [namespace]: { // 'dynamic'
-      // server's api (at dynamic nsp)
-    }, 
-    [namespace]: { // '/'
-      // server's api (at root nsp)
+const apiCache = (() => {
+  /*
+  apis {
+    [socketName]: { // 'home', 'dflt', 'server1'
+      [namespace]: { // 'dynamic'
+        // server's api (at dynamic nsp)
+      }, 
+      [namespace]: { // '/'
+        // server's api (at root nsp)
+      }
     }
   }
-}
-*/
+  */
+  const apis = {}
+  return Object.freeze({
+    get({ apiCacheProp, name, namespace }) {
+      if (apiCacheProp === undefined) {
+        return {}
+      }
+
+      Object.assign(apis, JSON.parse(localStorage.getItem(apiCacheProp)) || {})
+      if (apis[name] === undefined || apis[name][namespace] === undefined) {
+        return {}
+      }
+
+      return apis[name][namespace]
+    },
+    set({ apiCacheProp, name, namespace, api }) {
+      if (apiCacheProp === undefined) {
+        return
+      }
+
+      if (apis[name] === undefined) {
+        apis[name] = {}  
+      }
+
+      if (apis[name][namespace] === undefined) {
+        apis[name][namespace] = {}  
+      }
+
+      apis[name][namespace] = api
+      localStorage.setItem(apiCacheProp, JSON.stringify(apis))
+    }
+  })
+})()
 
 function getAPI({ ctx, socket, version = 'latest', emitErrorsProp, emitTimeout }) {
   const emitEvt = 'getAPI'
@@ -235,26 +267,36 @@ const register = {
             resolve(resp)
           })
         })
+        // TBD: register timeout
       }
     })
   },
 
-  async serverAPI({ // TBD: 'api' // TBD: cache
+  async serverAPI({ // TBD: 'api'
     ctx, 
     socket, 
     useSocket, 
     namespace, 
+    apiCacheProp,
     apiVersion,
-    clientAPI, 
     ioApiProp,
     ioDataProp,
     emitErrorsProp, 
-    emitTimeout 
+    emitTimeout,
+    clientAPI // TBD
   }) {
-    console.log('register api for', useSocket, namespace)
+    debug('register api for', useSocket, namespace)
     const { name } = useSocket
-    const api = await getAPI({ ctx, socket, version: apiVersion, emitErrorsProp, emitTimeout })
-    console.log('serverApi rxd', api)
+    const api = apiCache.get({ apiCacheProp, name, namespace })
+
+    if (apiVersion === 'latest' 
+     || api.version === undefined 
+     || parseFloat(apiVersion) > parseFloat(api.version)) {
+      Object.assign(api, await getAPI({ ctx, socket, version: apiVersion, emitErrorsProp, emitTimeout }))
+      apiCache.set({ apiCacheProp, name, namespace, api })
+      debug(`api for ${name}${namespace} cached to localStorage: ${apiCacheProp}`)
+    } 
+    
     if (ctx[ioApiProp] === undefined) {
       warn(`[nuxt-socket-io]: ${ioApiProp} needs to be defined in the current context (vue will complain)`)
     }
@@ -599,6 +641,7 @@ function nuxtSocket(ioOpts) {
     apiVersion,
     ioApiProp = 'ioApi',
     ioDataProp = 'ioData',
+    apiCacheProp, // = ioApiProp,
     clientAPI = {},
     ...connectOpts
   } = ioOpts
@@ -674,12 +717,12 @@ function nuxtSocket(ioOpts) {
     }
   }
 
-  console.log('apiVersion', apiVersion)
   if (apiVersion) {
     register.serverAPI({ 
       apiVersion,
       ioApiProp,
       ioDataProp,
+      apiCacheProp,
       ctx: this, 
       socket, 
       namespace: channel, 
