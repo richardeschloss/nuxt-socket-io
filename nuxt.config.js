@@ -141,8 +141,7 @@ module.exports = {
               'leftChannel [updateChannelInfo',
               'chatMessage [appendChats'
             ]
-          },
-          '/dynamic': { dynamicApi: true }
+          }
         }
       },
       { name: 'goodSocket', url: 'http://localhost:3000' },

@@ -1,42 +1,40 @@
-const Schemas = {
-  Item: {
-    id: '',
-    item: '',
-    desc: ''
-  }
+/* Schemas */
+const Item = {
+  id: '',
+  name: '',
+  desc: ''
 }
 
-const { Item } = Schemas
-
+/* API */
 const api = {
   version: 1.02,
-  nodeType: 'server',
   evts: {
     msgRxd: {},
-    progress: {
-      evt: '',
-      val: 0
-    }
+    progress: 0
   },
   methods: {
     getItems: {
       evts: {
         progress: 0
       },
-      resp: [Schemas.Item]
+      resp: [Item]
     },
     getItem: {
       msg: {
         id: ''
       },
-      resp: Schemas.Item
+      resp: Item
     }
   }
 }
 
+/* SVC */
 function Svc(socket) {
   return Object.freeze({
-    getAPI: () => Promise.resolve(api),
+    getAPI({ version }) {
+      console.log('getAPI', version)
+      return Promise.resolve(api)
+    },
 
     /* Methods */
     getItems({ notify }) {

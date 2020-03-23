@@ -128,6 +128,42 @@ function propByPath(obj, path) {
 }
 
 const apis = {}
+/*
+apis {
+  [socketName]: { // 'home', 'dflt', 'server1'
+    [namespace]: { // 'dynamic'
+      // server's api (at dynamic nsp)
+    }, 
+    [namespace]: { // '/'
+      // server's api (at root nsp)
+    }
+  }
+}
+*/
+
+function getAPI({ ctx, socket, version = 'latest', emitErrorsProp, emitTimeout }) {
+  const emitEvt = 'getAPI'
+  const timerObj = {}
+  return new Promise((resolve, reject) => {
+    socket.emit(emitEvt, { version }, (api) => {
+      clearTimeout(timerObj.timer)
+      resolve(api)
+    })
+    if (emitTimeout) {
+      register
+        .emitTimeout({
+          ctx,
+          emitEvt,
+          emitErrorsProp,
+          emitTimeout,
+          timerObj
+        })
+        .then(resolve)
+        .catch(reject)
+      debug('Emit timeout registered for evt', { emitEvt, emitTimeout })
+    }  
+  })
+}
 
 const register = {
   apiEvents({ ctx, socket, namespace, api }) {
@@ -166,15 +202,106 @@ const register = {
       debug(`[ioApi]:${namespace} Created method for ${fn}`)
     })
   },
-  api({ ctx, socket, namespace }) { // TBD: also register notifiers/listeners
+  serverApiMethods({
+    ctx, 
+    socket,
+    api, 
+    ioApiProp,
+    ioDataProp,
+    name,
+    namespace,
+    emitErrorsProp, 
+    emitTimeout // TBD: implement
+  }) {
+    Object.entries(api.methods).forEach(([fn, schema]) => {
+      const { msg: msgT, resp: respT } = schema
+      if (ctx[ioDataProp][fn] === undefined) {
+        ctx.$set(ctx[ioDataProp], fn, {
+          msg: { ...msgT },
+          resp: respT.constructor.name === 'Array'
+            ? []
+            : {}
+        })
+      }
+      
+      ctx[ioApiProp][fn] = (args) => {
+        return new Promise((resolve) => {
+          const evt = fn
+          const msg = args !== undefined ? args : ctx.ioData[fn].msg
+          debug(`${ioApiProp}:${name}/${namespace}: Emitting ${evt} with ${msg}`)
+          socket.emit(evt, msg, (resp) => {
+            debug(`[ioApi]:${namespace} rxd data`, { evt, resp })
+            ctx[ioDataProp][fn].resp = resp
+            resolve(resp)
+          })
+        })
+      }
+    })
+  },
+
+  async serverAPI({ // TBD: 'api' // TBD: cache
+    ctx, 
+    socket, 
+    useSocket, 
+    namespace, 
+    apiVersion,
+    clientAPI, 
+    ioApiProp,
+    ioDataProp,
+    emitErrorsProp, 
+    emitTimeout 
+  }) {
+    console.log('register api for', useSocket, namespace)
+    const { name } = useSocket
+    const api = await getAPI({ ctx, socket, version: apiVersion, emitErrorsProp, emitTimeout })
+    console.log('serverApi rxd', api)
+    if (ctx[ioApiProp] === undefined) {
+      warn(`[nuxt-socket-io]: ${ioApiProp} needs to be defined in the current context (vue will complain)`)
+    }
+    ctx.$set(ctx, ioApiProp, api)
+
+    if (api.methods !== undefined) {
+      register.serverApiMethods({
+        ctx, 
+        socket,
+        api, 
+        name: useSocket.name,
+        namespace,
+        ioApiProp,
+        ioDataProp,
+        emitErrorsProp, 
+        emitTimeout
+      })
+      debug(
+        `Attached methods for ${useSocket.name}/${namespace} to ${ioApiProp}`, 
+        Object.keys(api.methods)
+      )
+    }
+
+    ctx[ioApiProp].ready = true
+    console.log('ioApi', ctx[ioApiProp])    
+  },
+  apix({ ctx, socket, namespace, clientAPI, emitErrorsProp, emitTimeout }) {
+    debug('clientAPI', clientAPI)
+    /* 
+    // TBD: respond with my api when asked (as listener?)
+    /* socket.on('getAPI', () => {
+      // Give api to server
+    })
+    */
     return new Promise((resolve) => {
       ctx.ioApi = {}
+      // ctx.$set(ctx, 'ioApi', {})
+      // ctx.$set(ctx, 'ioData', {})
       socket.emit('getAPI', {}, (api) => {
         debug('api', api)
         if (api.version === undefined) {
           warn(`api version not defined for ${namespace}`)
           return
         }
+
+        // if (api.nodeType === ctx.)
+
         if (apis[namespace] && apis[namespace].version >= api.version) {
           warn(`already have latest api version for namespace ${namespace} (${api.version})`)
         } else {
@@ -182,11 +309,10 @@ const register = {
         }
         
         Object.assign(ctx.ioApi, apis[namespace])
-        register.apiMethods({ ctx, socket, namespace, api })
-        register.apiEvents({ ctx, socket, namespace, api })
+        // register.apiMethods({ ctx, socket, namespace, api })
+        // register.apiEvents({ ctx, socket, namespace, api })
         resolve()
       })
-      // TBD: emitTimeout...
     })
   },
   emitErrors({ ctx, err, emitEvt, emitErrorsProp }) {
@@ -371,8 +497,8 @@ const register = {
       useSocket.registeredVuexListeners.push(evt)
     })
   },
-  namespace({ ctx, namespace, namespaceCfg, socket, emitTimeout, emitErrorsProp }) {
-    const { emitters = [], listeners = [], emitBacks = [], dynamicApi = false } = namespaceCfg
+  namespace({ ctx, namespaceCfg, socket, emitTimeout, emitErrorsProp }) {
+    const { emitters = [], listeners = [], emitBacks = [] } = namespaceCfg
     const sets = { emitters, listeners, emitBacks }
     Object.entries(sets).forEach(([setName, entries]) => {
       if (entries.constructor.name === 'Array') {
@@ -383,14 +509,6 @@ const register = {
         )
       }
     })
-
-    if (dynamicApi) {
-      register.api({ ctx, socket, namespace })
-      // TBD: respond with my api when asked (as listener?)
-      /* socket.on('api', () => {
-        // Give api to server
-      })*/
-    }
   },
   vuexOpts({ ctx, vuexOpts, useSocket, socket, store }) {
     const { mutations = [], actions = [], emitBacks = [] } = vuexOpts
@@ -478,6 +596,10 @@ function nuxtSocket(ioOpts) {
     teardown = true,
     emitTimeout,
     emitErrorsProp = 'emitErrors',
+    apiVersion,
+    ioApiProp = 'ioApi',
+    ioDataProp = 'ioData',
+    clientAPI = {},
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
@@ -510,6 +632,10 @@ function nuxtSocket(ioOpts) {
     useSocket = sockets[0]
   }
 
+  if (!useSocket.name) {
+    useSocket.name = 'dflt'
+  }
+
   if (!useSocket.url) {
     throw new Error('URL must be defined for nuxtSocket')
   }
@@ -538,11 +664,30 @@ function nuxtSocket(ioOpts) {
         namespace: channel,
         namespaceCfg,
         socket,
+        useSocket,
         emitTimeout,
-        emitErrorsProp
+        emitErrorsProp,
+        apiVersion,
+        clientAPI
       })
       debug('namespaces configured for socket', { name: useSocket.name, channel, namespaceCfg })
     }
+  }
+
+  console.log('apiVersion', apiVersion)
+  if (apiVersion) {
+    register.serverAPI({ 
+      apiVersion,
+      ioApiProp,
+      ioDataProp,
+      ctx: this, 
+      socket, 
+      namespace: channel, 
+      useSocket, 
+      emitTimeout, 
+      emitErrorsProp, 
+      clientAPI 
+    })
   }
 
   if (vuexOpts) {
