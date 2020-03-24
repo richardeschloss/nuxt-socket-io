@@ -209,31 +209,6 @@ const register = {
       })
     })
   },
-  apiMethods({ ctx, socket, namespace, api }) {
-    Object.entries(api.methods).forEach(([fn, schema]) => {
-      const { msg: msgT, resp: respT } = schema
-      ctx.$set(ctx.ioData, fn, { // TBD, only set if not already set
-        msg: msgT || {},
-        resp: resp.constructor.name === 'Array'
-          ? []
-          : {}
-      })
-      
-      ctx.ioApi[fn] = (args) => {
-        return new Promise((resolve) => {
-          const evt = fn
-          const msg = args !== undefined ? args : ctx.ioData[fn].msg
-          debug(`[ioApi]:${namespace} Emitting ${evt} with ${msg}`)
-          socket.emit(evt, msg, (resp) => {
-            debug(`[ioApi]:${namespace} rxd data`, { evt, resp })
-            ctx.$set(ctx.ioData[fn], 'resp', resp)
-            resolve(resp)
-          })
-        })
-      }
-      debug(`[ioApi]:${namespace} Created method for ${fn}`)
-    })
-  },
   serverApiMethods({
     ctx, 
     socket,
@@ -243,35 +218,78 @@ const register = {
     name,
     namespace,
     emitErrorsProp, 
-    emitTimeout // TBD: implement
+    emitTimeout
   }) {
     Object.entries(api.methods).forEach(([fn, schema]) => {
       const { msg: msgT, resp: respT } = schema
       if (ctx[ioDataProp][fn] === undefined) {
-        ctx.$set(ctx[ioDataProp], fn, {
-          msg: { ...msgT },
-          resp: respT.constructor.name === 'Array'
-            ? []
-            : {}
-        })
+        ctx.$set(ctx[ioDataProp], fn, {})
+        if (msgT !== undefined) {
+          ctx.$set(ctx[ioDataProp][fn], 'msg', { ...msgT })
+        }
+
+        if (respT !== undefined) {
+          ctx.$set(ctx[ioDataProp][fn], 'resp', respT.constructor.name === 'Array' ? [] : {})
+        }
       }
       
       ctx[ioApiProp][fn] = (args) => {
-        return new Promise((resolve) => {
-          const evt = fn
+        return new Promise((resolve, reject) => {
+          const timerObj = {}
+          const emitEvt = fn
           const msg = args !== undefined ? args : ctx.ioData[fn].msg
-          debug(`${ioApiProp}:${name}/${namespace}: Emitting ${evt} with ${msg}`)
-          socket.emit(evt, msg, (resp) => {
-            debug(`[ioApi]:${namespace} rxd data`, { evt, resp })
-            ctx[ioDataProp][fn].resp = resp
-            resolve(resp)
+          debug(`${ioApiProp}:${name}/${namespace}: Emitting ${emitEvt} with ${msg}`)
+          socket.emit(emitEvt, msg, (resp) => {
+            clearTimeout(timerObj.timer)
+            debug(`[ioApi]:${namespace} rxd data`, { emitEvt, resp })
+            const { emitError, ...errorDetails } = resp || {}
+            if (emitError !== undefined) {
+              const err = {
+                message: emitError,
+                emitEvt,
+                errorDetails,
+                timestamp: Date.now()
+              }
+              debug('Emit error occurred', err)
+              if (typeof ctx[emitErrorsProp] === 'object') {
+                register.emitErrors({
+                  ctx,
+                  err,
+                  emitEvt,
+                  emitErrorsProp
+                })
+                resolve()
+              } else {
+                reject(err)
+              }
+            } else {
+              ctx[ioDataProp][fn].resp = resp
+              resolve(resp)
+            }
           })
+
+          if (respT === undefined) {
+            debug(`resp not defined on schema for ${fn}. Resolving.`)
+            resolve()
+          }
+
+          if (emitTimeout) {
+            register
+              .emitTimeout({
+                ctx,
+                emitEvt,
+                emitErrorsProp,
+                emitTimeout,
+                timerObj
+              })
+              .then(resolve)
+              .catch(reject)
+            debug('Emit timeout registered for evt', { emitEvt, emitTimeout })
+          }  
         })
-        // TBD: register timeout
       }
     })
   },
-
   async serverAPI({ // TBD: 'api'
     ctx, 
     socket, 
@@ -322,40 +340,6 @@ const register = {
 
     ctx[ioApiProp].ready = true
     console.log('ioApi', ctx[ioApiProp])    
-  },
-  apix({ ctx, socket, namespace, clientAPI, emitErrorsProp, emitTimeout }) {
-    debug('clientAPI', clientAPI)
-    /* 
-    // TBD: respond with my api when asked (as listener?)
-    /* socket.on('getAPI', () => {
-      // Give api to server
-    })
-    */
-    return new Promise((resolve) => {
-      ctx.ioApi = {}
-      // ctx.$set(ctx, 'ioApi', {})
-      // ctx.$set(ctx, 'ioData', {})
-      socket.emit('getAPI', {}, (api) => {
-        debug('api', api)
-        if (api.version === undefined) {
-          warn(`api version not defined for ${namespace}`)
-          return
-        }
-
-        // if (api.nodeType === ctx.)
-
-        if (apis[namespace] && apis[namespace].version >= api.version) {
-          warn(`already have latest api version for namespace ${namespace} (${api.version})`)
-        } else {
-          apis[namespace] = Object.assign({ methods: {} }, api)        
-        }
-        
-        Object.assign(ctx.ioApi, apis[namespace])
-        // register.apiMethods({ ctx, socket, namespace, api })
-        // register.apiEvents({ ctx, socket, namespace, api })
-        resolve()
-      })
-    })
   },
   emitErrors({ ctx, err, emitEvt, emitErrorsProp }) {
     if (ctx[emitErrorsProp][emitEvt] === undefined) {
