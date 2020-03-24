@@ -198,15 +198,40 @@ function getAPI({ ctx, socket, version = 'latest', emitErrorsProp, emitTimeout }
 }
 
 const register = {
-  apiEvents({ ctx, socket, namespace, api }) {
-    Object.entries(api.methods).forEach(([fn, schema]) => {
-      const { evts = {} } = schema
-      Object.entries(evts).forEach(([evt, initVal]) => {
-        ctx.$set(ctx.ioData[fn], evt, initVal)
-        socket.on(evt, (data) => {
-          ctx.ioData[fn][evt] = data
-        })
+  serverApiEvents({ ctx, socket, namespace, api, ioDataProp, apiIgnoreEvts }) {
+    const { evts } = api
+    Object.entries(evts).forEach(([evt, entry]) => {
+      const { ack } = entry
+      if (apiIgnoreEvts.includes(evt)) {
+        debug(`Event ${evt} is in ignore list ("apiIgnoreEvts"), not registering.`)
+        return
+      }
+
+      if (socket.hasListeners(evt)) {
+        warn(`evt ${evt} already has a listener registered`)
+      }
+
+      socket.on(evt, (msg, cb) => {
+        const { method, data } = msg
+        if (method !== undefined) {
+          if (ctx[ioDataProp][method] === undefined) {
+            ctx.$set(ctx[ioDataProp], method, {})
+          }
+
+          ctx.$set(ctx[ioDataProp][method], evt, data)
+        } else {
+          ctx.$set(ctx[ioDataProp], evt, data)
+        }
+        
+        if (cb) {
+          if (ack !== undefined) {
+            cb({ ack: 'ok' })
+          } else {
+            cb()
+          }
+        }
       })
+      debug(`Registered listener for ${evt} on ${namespace}`)
     })
   },
   serverApiMethods({
@@ -297,6 +322,7 @@ const register = {
     namespace, 
     apiCacheProp,
     apiVersion,
+    apiIgnoreEvts,
     ioApiProp,
     ioDataProp,
     emitErrorsProp, 
@@ -313,6 +339,8 @@ const register = {
       Object.assign(api, await getAPI({ ctx, socket, version: apiVersion, emitErrorsProp, emitTimeout }))
       apiCache.set({ apiCacheProp, name, namespace, api })
       debug(`api for ${name}${namespace} cached to localStorage: ${apiCacheProp}`)
+      // TBD: in docs, devs might need to let users know info is cached (privacy policy, etc)
+      // "we use cache to provide improved user experience..."
     } 
     
     if (ctx[ioApiProp] === undefined) {
@@ -336,6 +364,11 @@ const register = {
         `Attached methods for ${useSocket.name}/${namespace} to ${ioApiProp}`, 
         Object.keys(api.methods)
       )
+    }
+
+    if (api.evts !== undefined) {
+      console.log('register evts', api.evts)
+      register.serverApiEvents({ ctx, socket, namespace, api, ioDataProp, apiIgnoreEvts })
     }
 
     ctx[ioApiProp].ready = true
@@ -625,7 +658,8 @@ function nuxtSocket(ioOpts) {
     apiVersion,
     ioApiProp = 'ioApi',
     ioDataProp = 'ioData',
-    apiCacheProp, // = ioApiProp,
+    apiCacheProp, 
+    apiIgnoreEvts = [],
     clientAPI = {},
     ...connectOpts
   } = ioOpts
@@ -704,6 +738,7 @@ function nuxtSocket(ioOpts) {
   if (apiVersion) {
     register.serverAPI({ 
       apiVersion,
+      apiIgnoreEvts,
       ioApiProp,
       ioDataProp,
       apiCacheProp,

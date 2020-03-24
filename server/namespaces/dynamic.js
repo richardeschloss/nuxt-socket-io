@@ -9,14 +9,21 @@ const Item = {
 const api = {
   version: 1.02,
   evts: {
-    msgRxd: {},
-    progress: 0
+    itemRxd: {
+      method: '',
+      data: {}
+    },
+    progress: {
+      method: '',
+      data: 0
+    },
+    msgRxd: {
+      data: '',
+      ack: ''
+    }
   },
   methods: {
     getItems: {
-      evts: {
-        progress: 0
-      },
       resp: [Item]
     },
     getItem: {
@@ -37,32 +44,32 @@ function Svc(socket) {
     },
 
     /* Methods */
-    getItems({ notify }) {
-      notify({
-        evt: 'progress',
-        data: 0.32
+    getItems() {
+      return new Promise((resolve) => {
+        const items = Array(4)
+        let idx = 0
+        const timer = setInterval(() => {
+          items[idx] = {
+            id: `item${idx}`,
+            name: `Some Item ${idx}`,
+            desc: `Some description ${idx}`
+          }
+          socket.emit('itemRxd', { method: 'getItems', data: items[idx] })
+          socket.emit('progress', {
+            method: 'getItems',
+            data: ++idx / items.length
+          })
+          if (idx >= items.length) {
+            clearInterval(timer)
+            resolve(items)
+          }
+        }, 500)
       })
-      const items = [
-        {
-          id: 'item1',
-          name: 'Some Item (1)',
-          desc: 'Some description (1)'
-        },
-        {
-          id: 'item2',
-          name: 'Some Item (2)',
-          desc: 'Some description (2)'
-        }
-      ]
-      return Promise.resolve(items)
     },
     getItem({ notify, id }) {
       console.log('received msg', id)
-      notify({
-        evt: 'msgRxd',
-        data: {
-          id
-        }
+      socket.emit('msgRxd', { data: id }, (resp) => {
+        console.log('ack received', resp)
       })
       const ItemOut = Object.assign(
         { ...Item },

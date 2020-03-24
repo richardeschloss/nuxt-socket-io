@@ -12,11 +12,18 @@
         <br />
         <button @click="ioApi.getItems()">Get Items</button>
         <br />
+        Events:
+        <ol>
+          <li>Progress: <span v-text="ioData.getItems.progress" /></li>
+          <li>Last Item Rxd: <span v-text="ioData.getItems.itemRxd" /></li>
+        </ol>
+        <br />
         Items:
         <div style="white-space:pre-wrap;" v-text="ioData.getItems.resp" />
         <br />
         <input v-model="ioData.getItem.msg.id" placeholder="Item id" />
         <button @click="ioApi.getItem()">Get Item</button>
+        Events: Msg Rxd: <span v-text="ioData.msgRxd" />
         <div style="white-space:pre-wrap;" v-text="ioData.getItem.resp" />
       </span>
     </div>
