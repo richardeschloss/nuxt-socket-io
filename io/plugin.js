@@ -201,7 +201,7 @@ const register = {
   serverApiEvents({ ctx, socket, namespace, api, ioDataProp, apiIgnoreEvts }) {
     const { evts } = api
     Object.entries(evts).forEach(([evt, entry]) => {
-      const { ack } = entry
+      const { methods = [], data: dataT, ack } = entry
       if (apiIgnoreEvts.includes(evt)) {
         debug(`Event ${evt} is in ignore list ("apiIgnoreEvts"), not registering.`)
         return
@@ -211,6 +211,14 @@ const register = {
         warn(`evt ${evt} already has a listener registered`)
       }
 
+      methods.forEach((method) => {
+        if (ctx[ioDataProp][method] === undefined) {
+          ctx.$set(ctx[ioDataProp], method, {})
+        }
+
+        ctx.$set(ctx[ioDataProp][method], evt, dataT.constructor.name === 'Array' ? [] : {})
+      })
+      
       socket.on(evt, (msg, cb) => {
         const { method, data } = msg
         if (method !== undefined) {

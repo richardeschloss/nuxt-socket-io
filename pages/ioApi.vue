@@ -13,10 +13,7 @@
         <button @click="ioApi.getItems()">Get Items</button>
         <br />
         Events:
-        <ol>
-          <li>Progress: <span v-text="ioData.getItems.progress" /></li>
-          <li>Last Item Rxd: <span v-text="ioData.getItems.itemRxd" /></li>
-        </ol>
+        <div style="white-space:pre-wrap;" v-text="ioData.getItems.itemRxd" />
         <br />
         Items:
         <div style="white-space:pre-wrap;" v-text="ioData.getItems.resp" />

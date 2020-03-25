@@ -10,15 +10,17 @@ const api = {
   version: 1.02,
   evts: {
     itemRxd: {
-      method: '',
-      data: {}
-    },
-    progress: {
-      method: '',
-      data: 0
+      methods: ['getItems'],
+      data: {
+        progress: 0,
+        item: {}
+      }
     },
     msgRxd: {
-      data: '',
+      data: {
+        date: new Date(),
+        msg: ''
+      },
       ack: ''
     }
   },
@@ -45,19 +47,22 @@ function Svc(socket) {
 
     /* Methods */
     getItems() {
+      const items = Array(4)
+      let idx = 0
       return new Promise((resolve) => {
-        const items = Array(4)
-        let idx = 0
         const timer = setInterval(() => {
           items[idx] = {
             id: `item${idx}`,
             name: `Some Item ${idx}`,
             desc: `Some description ${idx}`
           }
-          socket.emit('itemRxd', { method: 'getItems', data: items[idx] })
-          socket.emit('progress', {
+          const item = items[idx]
+          socket.emit('itemRxd', {
             method: 'getItems',
-            data: ++idx / items.length
+            data: {
+              progress: ++idx / items.length,
+              item
+            }
           })
           if (idx >= items.length) {
             clearInterval(timer)
@@ -68,7 +73,11 @@ function Svc(socket) {
     },
     getItem({ notify, id }) {
       console.log('received msg', id)
-      socket.emit('msgRxd', { data: id }, (resp) => {
+      const data = {
+        date: new Date(),
+        msg: id
+      }
+      socket.emit('msgRxd', { data }, (resp) => {
         console.log('ack received', resp)
       })
       const ItemOut = Object.assign(
