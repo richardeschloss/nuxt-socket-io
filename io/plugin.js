@@ -577,6 +577,70 @@ const register = {
       }
     })
   },
+  vuexModule({ store }) {
+    store.registerModule(
+      '$nuxtSocket',
+      {
+        namespaced: true,
+        state: {
+          ioApis: {},
+          sockets: {},
+          emitTimeouts: {}
+        },
+        mutations: {
+          SET_API(state, { label, api }) {
+            state.ioApis[label] = api
+          },
+
+          SET_SOCKET(state, { label, socket }) {
+            state.sockets[label] = socket
+          },
+
+          SET_EMIT_TIMEOUT(state, { label, emitTimeout }) {
+            state.emitTimeouts[label] = emitTimeout
+          }
+        },
+        actions: {
+          emit({ state }, { label, socket, evt, msg, emitTimeout }) {
+            debug('$nuxtSocket vuex action "emit" dispatched', label, evt)
+            return new Promise((resolve, reject) => {
+              const _socket = socket || state.sockets[label]
+              const _emitTimeout = emitTimeout !== undefined 
+                ? emitTimeout
+                : state.emitTimeouts[label]
+              
+              if (_socket === undefined) {
+                reject(new Error(
+                  'socket instance required. Please provide a valid socket label or socket instance'
+                ))
+              }
+              debug(`Emitting ${evt} with msg: ${msg}`)
+              let timer
+              _socket.emit(evt, msg, (resp) => {
+                clearTimeout(timer)
+                resolve(resp)
+              })
+              if (_emitTimeout) {
+                timer = setTimeout(() => {
+                  const errHints = [
+                    `1) Is ${evt} supported on the backend?`,
+                    `2) Is emitTimeout ${evt} ms too small?`
+                  ].join('\r\n')
+
+                  reject(new Error(
+                    `emitTimeout occurred emitting ${evt}\r\n` +
+                    `hint: ${errHints}\r\n` + 
+                    `timestamp: ${(new Date).toLocaleString()}`
+                  ))
+                }, _emitTimeout)
+              }
+            })
+          }
+        }
+      },
+      { preserveState: false }
+    )
+  },
   vuexOpts({ ctx, vuexOpts, useSocket, socket, store }) {
     const { mutations = [], actions = [], emitBacks = [] } = vuexOpts
     const sets = { mutations, actions, emitBacks }
@@ -668,6 +732,8 @@ function nuxtSocket(ioOpts) {
     ioDataProp = 'ioData',
     apiCacheProp, 
     apiIgnoreEvts = [],
+    persist,
+    // vuexOpts: vuexOptsOverride, // TBD
     clientAPI = {},
     ...connectOpts
   } = ioOpts
@@ -722,8 +788,29 @@ function nuxtSocket(ioOpts) {
 
   const { vuex: vuexOpts, namespaces } = useSocket
 
-  const socket = io(connectUrl, connectOpts)
-  consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
+  let socket
+
+  if (persist) {
+    if (!store.state.$nuxtSocket) {
+      debug('vuex store $nuxtSocket does not exist....registering it')
+      register.vuexModule({ store })
+    }
+
+    const label = `${useSocket.name}${channel}`
+    if (store.state.$nuxtSocket.sockets[label]) {
+      debug(`resuing persisted socket ${label}`)
+      socket = store.state.$nuxtSocket.sockets[label]
+    } else {
+      debug(`socket ${label} does not exist, creating and connecting to it..`)
+      socket = io(connectUrl, connectOpts)
+      consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
+      store.commit('$nuxtSocket/SET_SOCKET', { label, socket })
+      store.commit('$nuxtSocket/SET_EMIT_TIMEOUT', { label, emitTimeout })
+    }
+  } else {
+    socket = io(connectUrl, connectOpts)
+    consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
+  }
 
   if (namespaces) {
     const namespaceCfg = namespaces[channel]
