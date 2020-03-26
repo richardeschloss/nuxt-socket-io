@@ -95,6 +95,10 @@ module.exports = {
         }
       },
       {
+        name: 'evolving',
+        url: 'http://localhost:3000'
+      },
+      {
         name: 'home',
         url: 'http://localhost:3000',
         default: process.env.DEPLOY !== 'GH_PAGES',
