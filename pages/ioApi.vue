@@ -47,7 +47,6 @@ export default {
     this.socket = this.$nuxtSocket({
       channel: '/dynamic',
       apiVersion: 'latest', // TBD: 'ioPeer': true
-      apiCacheProp: 'ioApis',
       clientAPI: {
         version: 1.31,
         nodeType: 'client',

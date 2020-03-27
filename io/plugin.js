@@ -179,12 +179,11 @@ const register = {
   serverApiMethods({
     ctx,
     socket,
+    store,
     api,
     label,
     ioApiProp,
-    ioDataProp,
-    emitErrorsProp,
-    emitTimeout
+    ioDataProp
   }) {
     Object.entries(api.methods).forEach(([fn, schema]) => {
       const { msg: msgT, resp: respT } = schema
@@ -204,58 +203,17 @@ const register = {
       }
 
       ctx[ioApiProp][fn] = (args) => {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
           const timerObj = {}
           const emitEvt = fn
           const msg = args !== undefined ? args : { ...ctx[ioDataProp][fn].msg }
           debug(`${ioApiProp}:${label}: Emitting ${emitEvt} with ${msg}`)
-          socket.emit(emitEvt, msg, (resp) => {
-            clearTimeout(timerObj.timer)
-            debug(`[ioApi]:${label} rxd data`, { emitEvt, resp })
-            const { emitError, ...errorDetails } = resp || {}
-            if (emitError !== undefined) {
-              const err = {
-                message: emitError,
-                emitEvt,
-                errorDetails,
-                timestamp: Date.now()
-              }
-              debug('Emit error occurred', err)
-              if (typeof ctx[emitErrorsProp] === 'object') {
-                register.emitErrors({
-                  ctx,
-                  err,
-                  emitEvt,
-                  emitErrorsProp
-                })
-                resolve()
-              } else {
-                reject(err)
-              }
-            } else {
-              ctx[ioDataProp][fn].resp = resp
-              resolve(resp)
-            }
-          })
-
+          const resp = await store.dispatch('$nuxtSocket/emit', { label, socket, evt: emitEvt, msg })
           if (respT === undefined) {
-            debug(`resp not defined on schema for ${fn}. Resolving.`)
-            resolve()
-          }
-
-          if (emitTimeout) {
-            register
-              .emitTimeout({
-                ctx,
-                emitEvt,
-                emitErrorsProp,
-                emitTimeout,
-                timerObj
-              })
-              .then(resolve)
-              .catch(reject)
-            debug('Emit timeout registered for evt', { emitEvt, emitTimeout })
-          }
+            warn(`resp not defined on schema for ${fn}. Assigning response as "any" object to ${ioDataProp}`)
+          } 
+          ctx[ioDataProp][fn].resp = resp
+          resolve(resp)
         })
       }
     })
@@ -270,21 +228,9 @@ const register = {
     apiIgnoreEvts,
     ioApiProp,
     ioDataProp,
-    emitErrorsProp,
-    emitTimeout,
     clientAPI // TBD
   }) {
     debug('register api for', label)
-    if (ctx.getAPI === undefined) {
-      register.emitters({
-        ctx,
-        socket,
-        entries: ['getAPI'],
-        emitTimeout,
-        emitErrorsProp
-      })
-    }
-
     const api = store.state.$nuxtSocket.ioApis[label] || {}
 
     if (
@@ -292,7 +238,13 @@ const register = {
       api.version === undefined ||
       parseFloat(apiVersion) > parseFloat(api.version)
     ) {
-      Object.assign(api, await ctx.getAPI({ version: apiVersion }))
+      const fetchedApi = await store.dispatch('$nuxtSocket/emit', { 
+        label, 
+        socket, 
+        evt: 'getAPI',
+        msg: { version: apiVersion }
+      })
+      Object.assign(api, fetchedApi)
       store.commit('$nuxtSocket/SET_API', { label, api })
       debug(`api for ${label} committed to vuex`, api)
     }
@@ -308,12 +260,11 @@ const register = {
       register.serverApiMethods({
         ctx,
         socket,
+        store,
         api,
         label,
         ioApiProp,
-        ioDataProp,
-        emitErrorsProp,
-        emitTimeout
+        ioDataProp
       })
       debug(
         `Attached methods for ${label} to ${ioApiProp}`,
@@ -730,7 +681,6 @@ function nuxtSocket(ioOpts) {
     apiVersion,
     ioApiProp = 'ioApi',
     ioDataProp = 'ioData',
-    apiCacheProp,
     apiIgnoreEvts = [],
     persist,
     // vuexOpts: vuexOptsOverride, // TBD
@@ -795,6 +745,10 @@ function nuxtSocket(ioOpts) {
     register.vuexModule({ store })
   }
 
+  if (emitTimeout) {
+    store.commit('$nuxtSocket/SET_EMIT_TIMEOUT', { label, emitTimeout })
+  }
+
   if (persist) {
     if (store.state.$nuxtSocket.sockets[label]) {
       debug(`resuing persisted socket ${label}`)
@@ -807,7 +761,6 @@ function nuxtSocket(ioOpts) {
       socket = io(connectUrl, connectOpts)
       consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
       store.commit('$nuxtSocket/SET_SOCKET', { label, socket })
-      store.commit('$nuxtSocket/SET_EMIT_TIMEOUT', { label, emitTimeout })
     }
   } else {
     socket = io(connectUrl, connectOpts)
@@ -844,11 +797,8 @@ function nuxtSocket(ioOpts) {
       apiIgnoreEvts,
       ioApiProp,
       ioDataProp,
-      apiCacheProp,
       ctx: this,
       socket,
-      namespace: channel,
-      useSocket,
       emitTimeout,
       emitErrorsProp,
       clientAPI
