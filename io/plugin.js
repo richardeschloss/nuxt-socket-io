@@ -207,7 +207,7 @@ const register = {
         return new Promise((resolve, reject) => {
           const timerObj = {}
           const emitEvt = fn
-          const msg = args !== undefined ? args : ctx.ioData[fn].msg
+          const msg = args !== undefined ? args : { ...ctx[ioDataProp][fn].msg }
           debug(`${ioApiProp}:${label}: Emitting ${emitEvt} with ${msg}`)
           socket.emit(emitEvt, msg, (resp) => {
             clearTimeout(timerObj.timer)
