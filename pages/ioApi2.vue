@@ -18,6 +18,7 @@ export default {
     this.socket = this.$nuxtSocket({
       name: 'evolving',
       channel: '/dynamic',
+      apiVersion: 'latest',
       teardown: false,
       persist: true
     })
