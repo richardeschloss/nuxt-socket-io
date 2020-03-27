@@ -585,7 +585,7 @@ const register = {
         state: {
           ioApis: {},
           sockets: {},
-          emitErrors: {},
+          emitErrors: {}, // TBD: in docs, this is fixed (we can't change once in vuex)
           emitTimeouts: {}
         },
         mutations: {
@@ -630,8 +630,26 @@ const register = {
               debug(`Emitting ${evt} with msg: ${msg}`)
               let timer
               _socket.emit(evt, msg, (resp) => {
+                debug('Emitter response rxd', { evt, resp })
                 clearTimeout(timer)
-                resolve(resp)
+                const { emitError, ...errorDetails } = resp || {}
+                if (emitError !== undefined) {
+                  const err = {
+                    message: emitError,
+                    emitEvt: evt,
+                    errorDetails,
+                    timestamp: Date.now()
+                  }
+                  debug('Emit error occurred', err)
+                  if (label !== undefined && label !== '') {
+                    commit('SET_EMIT_ERRORS', { label, emitEvt: evt, err })
+                    resolve()
+                  } else {
+                    reject(new Error(JSON.stringify(err, null, '\t')))
+                  }
+                } else {
+                  resolve(resp)
+                }
               })
               if (_emitTimeout) {
                 timer = setTimeout(() => {
@@ -645,9 +663,10 @@ const register = {
                     ].join('\r\n'),
                     timestamp: Date.now()
                   }
-                  if (label && label !== '') {
+                  if (label !== undefined && label !== '') {
                     commit('SET_EMIT_ERRORS', { label, emitEvt: evt, err })
-                    console.error(`[nuxt-socket-io]: ${label} Emit error occurred and logged to vuex `, err)
+                    debug(`[nuxt-socket-io]: ${label} Emit error occurred and logged to vuex `, err)
+                    resolve()
                   } else {
                     reject(new Error(JSON.stringify(err, null, '\t')))
                   }
