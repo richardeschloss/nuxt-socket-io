@@ -327,7 +327,9 @@ const register = {
     ctx, 
     socket, 
     useSocket, 
-    namespace, 
+    namespace,
+    store, 
+    label, 
     apiCacheProp,
     apiVersion,
     apiIgnoreEvts,
@@ -337,18 +339,16 @@ const register = {
     emitTimeout,
     clientAPI // TBD
   }) {
-    debug('register api for', useSocket, namespace)
+    debug('register api for', label)
     const { name } = useSocket
-    const api = apiCache.get({ apiCacheProp, name, namespace })
+    const api = store.state.$nuxtSocket.ioApis[label] || {}
 
     if (apiVersion === 'latest' 
      || api.version === undefined 
      || parseFloat(apiVersion) > parseFloat(api.version)) {
       Object.assign(api, await getAPI({ ctx, socket, version: apiVersion, emitErrorsProp, emitTimeout }))
-      apiCache.set({ apiCacheProp, name, namespace, api })
-      debug(`api for ${name}${namespace} cached to localStorage: ${apiCacheProp}`)
-      // TBD: in docs, devs might need to let users know info is cached (privacy policy, etc)
-      // "we use cache to provide improved user experience..."
+      store.commit('$nuxtSocket/SET_API', { label, api })
+      debug(`api for ${label} committed to vuex`)
     } 
     
     if (ctx[ioApiProp] === undefined) {
@@ -827,6 +827,7 @@ function nuxtSocket(ioOpts) {
   const { vuex: vuexOpts, namespaces } = useSocket
 
   let socket
+  const label = `${useSocket.name}${channel}`
 
   if (!store.state.$nuxtSocket) {
     debug('vuex store $nuxtSocket does not exist....registering it')
@@ -834,7 +835,6 @@ function nuxtSocket(ioOpts) {
   }
 
   if (persist) {
-    const label = `${useSocket.name}${channel}`
     if (store.state.$nuxtSocket.sockets[label]) {
       debug(`resuing persisted socket ${label}`)
       socket = store.state.$nuxtSocket.sockets[label]
@@ -873,6 +873,8 @@ function nuxtSocket(ioOpts) {
 
   if (apiVersion) {
     register.serverAPI({ 
+      store,
+      label,
       apiVersion,
       apiIgnoreEvts,
       ioApiProp,
