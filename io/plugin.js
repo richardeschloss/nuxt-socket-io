@@ -40,11 +40,9 @@ function propExists(obj, path) {
   const exists = path.split('.').reduce((out, prop) => {
     if (out !== undefined && out[prop] !== undefined) {
       return out[prop]
-    } else {
-      return
-    }
+    } 
   }, obj)
-  
+
   return exists !== undefined
 }
 
@@ -127,83 +125,15 @@ function propByPath(obj, path) {
   }, obj)
 }
 
-const apiCache = (() => {
-  /*
-  apis {
-    [socketName]: { // 'home', 'dflt', 'server1'
-      [namespace]: { // 'dynamic'
-        // server's api (at dynamic nsp)
-      }, 
-      [namespace]: { // '/'
-        // server's api (at root nsp)
-      }
-    }
-  }
-  */
-  const apis = {}
-  return Object.freeze({
-    get({ apiCacheProp, name, namespace }) {
-      if (apiCacheProp === undefined) {
-        return {}
-      }
-
-      Object.assign(apis, JSON.parse(localStorage.getItem(apiCacheProp)) || {})
-      if (apis[name] === undefined || apis[name][namespace] === undefined) {
-        return {}
-      }
-
-      return apis[name][namespace]
-    },
-    set({ apiCacheProp, name, namespace, api }) {
-      if (apiCacheProp === undefined) {
-        return
-      }
-
-      if (apis[name] === undefined) {
-        apis[name] = {}  
-      }
-
-      if (apis[name][namespace] === undefined) {
-        apis[name][namespace] = {}  
-      }
-
-      apis[name][namespace] = api
-      localStorage.setItem(apiCacheProp, JSON.stringify(apis))
-    }
-  })
-})()
-
-function getAPI({ ctx, socket, version = 'latest', emitErrorsProp, emitTimeout }) {
-  const emitEvt = 'getAPI'
-  const timerObj = {}
-  return new Promise((resolve, reject) => {
-    socket.emit(emitEvt, { version }, (api) => {
-      clearTimeout(timerObj.timer)
-      resolve(api)
-    })
-    if (emitTimeout) {
-      register
-        .emitTimeout({
-          ctx,
-          emitEvt,
-          emitErrorsProp,
-          emitTimeout,
-          timerObj
-        })
-        .then(resolve)
-        .catch(reject)
-      debug('Emit timeout registered for evt', { emitEvt, emitTimeout })
-    }  
-  })
-}
-
 const register = {
-  serverApiEvents({ ctx, socket, namespace, api, ioDataProp, apiIgnoreEvts }) {
+  serverApiEvents({ ctx, socket, api, label, ioDataProp, apiIgnoreEvts }) {
     const { evts } = api
     Object.entries(evts).forEach(([evt, entry]) => {
       const { methods = [], data: dataT, ack } = entry
       if (apiIgnoreEvts.includes(evt)) {
-        debug(`Event ${evt} is in ignore list ("apiIgnoreEvts"), not registering.`)
+        debug(
+          `Event ${evt} is in ignore list ("apiIgnoreEvts"), not registering.`
+        )
         return
       }
 
@@ -216,9 +146,13 @@ const register = {
           ctx.$set(ctx[ioDataProp], method, {})
         }
 
-        ctx.$set(ctx[ioDataProp][method], evt, dataT.constructor.name === 'Array' ? [] : {})
+        ctx.$set(
+          ctx[ioDataProp][method],
+          evt,
+          dataT.constructor.name === 'Array' ? [] : {}
+        )
       })
-      
+
       socket.on(evt, (msg, cb) => {
         const { method, data } = msg
         if (method !== undefined) {
@@ -230,7 +164,7 @@ const register = {
         } else {
           ctx.$set(ctx[ioDataProp], evt, data)
         }
-        
+
         if (cb) {
           if (ack !== undefined) {
             cb({ ack: 'ok' })
@@ -239,18 +173,17 @@ const register = {
           }
         }
       })
-      debug(`Registered listener for ${evt} on ${namespace}`)
+      debug(`Registered listener for ${evt} on ${label}`)
     })
   },
   serverApiMethods({
-    ctx, 
+    ctx,
     socket,
-    api, 
+    api,
+    label,
     ioApiProp,
     ioDataProp,
-    name,
-    namespace,
-    emitErrorsProp, 
+    emitErrorsProp,
     emitTimeout
   }) {
     Object.entries(api.methods).forEach(([fn, schema]) => {
@@ -262,19 +195,23 @@ const register = {
         }
 
         if (respT !== undefined) {
-          ctx.$set(ctx[ioDataProp][fn], 'resp', respT.constructor.name === 'Array' ? [] : {})
+          ctx.$set(
+            ctx[ioDataProp][fn],
+            'resp',
+            respT.constructor.name === 'Array' ? [] : {}
+          )
         }
       }
-      
+
       ctx[ioApiProp][fn] = (args) => {
         return new Promise((resolve, reject) => {
           const timerObj = {}
           const emitEvt = fn
           const msg = args !== undefined ? args : ctx.ioData[fn].msg
-          debug(`${ioApiProp}:${name}/${namespace}: Emitting ${emitEvt} with ${msg}`)
+          debug(`${ioApiProp}:${label}: Emitting ${emitEvt} with ${msg}`)
           socket.emit(emitEvt, msg, (resp) => {
             clearTimeout(timerObj.timer)
-            debug(`[ioApi]:${namespace} rxd data`, { emitEvt, resp })
+            debug(`[ioApi]:${label} rxd data`, { emitEvt, resp })
             const { emitError, ...errorDetails } = resp || {}
             if (emitError !== undefined) {
               const err = {
@@ -318,69 +255,86 @@ const register = {
               .then(resolve)
               .catch(reject)
             debug('Emit timeout registered for evt', { emitEvt, emitTimeout })
-          }  
+          }
         })
       }
     })
   },
-  async serverAPI({ // TBD: 'api'
-    ctx, 
-    socket, 
-    useSocket, 
-    namespace,
-    store, 
-    label, 
-    apiCacheProp,
+  async serverAPI({
+    // TBD: 'api'
+    ctx,
+    socket,
+    store,
+    label,
     apiVersion,
     apiIgnoreEvts,
     ioApiProp,
     ioDataProp,
-    emitErrorsProp, 
+    emitErrorsProp,
     emitTimeout,
     clientAPI // TBD
   }) {
     debug('register api for', label)
-    const { name } = useSocket
+    if (ctx.getAPI === undefined) {
+      register.emitters({
+        ctx,
+        socket,
+        entries: ['getAPI'],
+        emitTimeout,
+        emitErrorsProp
+      })
+    }
+
     const api = store.state.$nuxtSocket.ioApis[label] || {}
 
-    if (apiVersion === 'latest' 
-     || api.version === undefined 
-     || parseFloat(apiVersion) > parseFloat(api.version)) {
-      Object.assign(api, await getAPI({ ctx, socket, version: apiVersion, emitErrorsProp, emitTimeout }))
+    if (
+      apiVersion === 'latest' ||
+      api.version === undefined ||
+      parseFloat(apiVersion) > parseFloat(api.version)
+    ) {
+      Object.assign(api, await ctx.getAPI({ version: apiVersion }))
       store.commit('$nuxtSocket/SET_API', { label, api })
-      debug(`api for ${label} committed to vuex`)
-    } 
-    
+      debug(`api for ${label} committed to vuex`, api)
+    }
+
     if (ctx[ioApiProp] === undefined) {
-      warn(`[nuxt-socket-io]: ${ioApiProp} needs to be defined in the current context (vue will complain)`)
+      warn(
+        `[nuxt-socket-io]: ${ioApiProp} needs to be defined in the current context (vue requirement)`
+      )
     }
     ctx.$set(ctx, ioApiProp, api)
 
     if (api.methods !== undefined) {
       register.serverApiMethods({
-        ctx, 
+        ctx,
         socket,
-        api, 
-        name: useSocket.name,
-        namespace,
+        api,
+        label,
         ioApiProp,
         ioDataProp,
-        emitErrorsProp, 
+        emitErrorsProp,
         emitTimeout
       })
       debug(
-        `Attached methods for ${useSocket.name}/${namespace} to ${ioApiProp}`, 
+        `Attached methods for ${label} to ${ioApiProp}`,
         Object.keys(api.methods)
       )
     }
 
     if (api.evts !== undefined) {
-      console.log('register evts', api.evts)
-      register.serverApiEvents({ ctx, socket, namespace, api, ioDataProp, apiIgnoreEvts })
+      register.serverApiEvents({
+        ctx,
+        socket,
+        api,
+        label,
+        ioDataProp,
+        apiIgnoreEvts
+      })
+      debug(`registered evts for ${label} to ${ioApiProp}`)
     }
 
     ctx[ioApiProp].ready = true
-    console.log('ioApi', ctx[ioApiProp])    
+    debug('ioApi', ctx[ioApiProp])
   },
   emitErrors({ ctx, err, emitEvt, emitErrorsProp }) {
     if (ctx[emitErrorsProp][emitEvt] === undefined) {
@@ -476,11 +430,12 @@ const register = {
   },
   emitters({ ctx, socket, entries, emitTimeout, emitErrorsProp }) {
     entries.forEach((entry) => {
-      const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(entry, 'emitter')
+      const { pre, post, mapTo, emitEvt, msgLabel } = parseEntry(
+        entry,
+        'emitter'
+      )
       ctx[emitEvt] = async function(args) {
-        const msg = args !== undefined
-          ? args
-          : assignMsg(ctx, msgLabel)
+        const msg = args !== undefined ? args : assignMsg(ctx, msgLabel)
         debug('Emit evt', { emitEvt, msg })
         const preResult = await runHook(ctx, pre, msg)
         if (preResult === false) {
@@ -556,7 +511,7 @@ const register = {
         storeFn(mapTo, resp)
         runHook(ctx, post, resp)
       }
-      
+
       if (useSocket.registeredVuexListeners.includes(evt)) return
 
       socket.on(evt, vuexListenerEvt)
@@ -585,7 +540,7 @@ const register = {
         state: {
           ioApis: {},
           sockets: {},
-          emitErrors: {}, // TBD: in docs, this is fixed (we can't change once in vuex)
+          emitErrors: {}, // TBD: in docs, mention this is fixed (we can't change once in vuex)
           emitTimeouts: {}
         },
         mutations: {
@@ -618,14 +573,17 @@ const register = {
             debug('$nuxtSocket vuex action "emit" dispatched', label, evt)
             return new Promise((resolve, reject) => {
               const _socket = socket || state.sockets[label]
-              const _emitTimeout = emitTimeout !== undefined 
-                ? emitTimeout
-                : state.emitTimeouts[label]
-              
+              const _emitTimeout =
+                emitTimeout !== undefined
+                  ? emitTimeout
+                  : state.emitTimeouts[label]
+
               if (_socket === undefined) {
-                reject(new Error(
-                  'socket instance required. Please provide a valid socket label or socket instance'
-                ))
+                reject(
+                  new Error(
+                    'socket instance required. Please provide a valid socket label or socket instance'
+                  )
+                )
               }
               debug(`Emitting ${evt} with msg: ${msg}`)
               let timer
@@ -665,7 +623,10 @@ const register = {
                   }
                   if (label !== undefined && label !== '') {
                     commit('SET_EMIT_ERRORS', { label, emitEvt: evt, err })
-                    debug(`[nuxt-socket-io]: ${label} Emit error occurred and logged to vuex `, err)
+                    debug(
+                      `[nuxt-socket-io]: ${label} Emit error occurred and logged to vuex `,
+                      err
+                    )
                     resolve()
                   } else {
                     reject(new Error(JSON.stringify(err, null, '\t')))
@@ -701,9 +662,7 @@ const register = {
           register.emitBacksVuex({ ctx, store, useSocket, socket, entries })
         }
       } else {
-        warn(
-          `[nuxt-socket-io]: vuexOption ${setName} needs to be an array`
-        )
+        warn(`[nuxt-socket-io]: vuexOption ${setName} needs to be an array`)
       }
     })
   },
@@ -742,7 +701,10 @@ const register = {
     if (!ctx.registeredTeardown) {
       debug('teardown enabled for socket', { name: useSocket.name })
       ctx.$destroy = function() {
-        debug('component destroyed, closing socket(s)', { name: useSocket.name, url: useSocket.url })
+        debug('component destroyed, closing socket(s)', {
+          name: useSocket.name,
+          url: useSocket.url
+        })
         useSocket.registeredVuexListeners = []
         ctx.$emit('closeSockets')
         ctx.onComponentDestroy()
@@ -768,7 +730,7 @@ function nuxtSocket(ioOpts) {
     apiVersion,
     ioApiProp = 'ioApi',
     ioDataProp = 'ioData',
-    apiCacheProp, 
+    apiCacheProp,
     apiIgnoreEvts = [],
     persist,
     // vuexOpts: vuexOptsOverride, // TBD
@@ -779,9 +741,8 @@ function nuxtSocket(ioOpts) {
   const { sockets, warnings = true } = pluginOptions
   const { $store: store } = this
 
-  warn = warnings && process.env.NODE_ENV !== 'production'
-    ? console.warn
-    : () => {}
+  warn =
+    warnings && process.env.NODE_ENV !== 'production' ? console.warn : () => {}
 
   if (
     !sockets ||
@@ -867,12 +828,16 @@ function nuxtSocket(ioOpts) {
         apiVersion,
         clientAPI
       })
-      debug('namespaces configured for socket', { name: useSocket.name, channel, namespaceCfg })
+      debug('namespaces configured for socket', {
+        name: useSocket.name,
+        channel,
+        namespaceCfg
+      })
     }
   }
 
   if (apiVersion) {
-    register.serverAPI({ 
+    register.serverAPI({
       store,
       label,
       apiVersion,
@@ -880,13 +845,13 @@ function nuxtSocket(ioOpts) {
       ioApiProp,
       ioDataProp,
       apiCacheProp,
-      ctx: this, 
-      socket, 
-      namespace: channel, 
-      useSocket, 
-      emitTimeout, 
-      emitErrorsProp, 
-      clientAPI 
+      ctx: this,
+      socket,
+      namespace: channel,
+      useSocket,
+      emitTimeout,
+      emitErrorsProp,
+      clientAPI
     })
   }
 
@@ -906,7 +871,10 @@ function nuxtSocket(ioOpts) {
     typeof this.socketStatus === 'object'
   ) {
     register.socketStatus({ ctx: this, socket, connectUrl, statusProp })
-    debug('socketStatus registered for socket', { name: useSocket.name, url: connectUrl })
+    debug('socketStatus registered for socket', {
+      name: useSocket.name,
+      url: connectUrl
+    })
   }
 
   if (teardown) {
