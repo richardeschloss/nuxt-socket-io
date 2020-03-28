@@ -1,4 +1,11 @@
 /* Schemas */
+const ChatMsg = {
+  date: new Date(),
+  from: '',
+  to: '',
+  text: ''
+}
+
 const Item = {
   id: '',
   name: '',
@@ -37,11 +44,34 @@ const api = {
   }
 }
 
+const clientCloneApi = {
+  version: 1.31,
+  evts: {
+    warnings: {
+      data: {
+        lostSignal: false,
+        battery: 0
+      }
+    }
+  },
+  methods: {
+    receiveMsg: {
+      msg: ChatMsg,
+      resp: {
+        status: ''
+      }
+    }
+  }
+}
+
 /* SVC */
 function Svc(socket) {
   return Object.freeze({
     getAPI({ version }) {
       console.log('getAPI', version)
+      socket.emit('getAPI', { version: 'latest' }, (clientApi) => {
+        console.log('clientApi', clientApi)
+      })
       return Promise.resolve(api)
     },
 

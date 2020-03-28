@@ -28,11 +28,32 @@
 </template>
 
 <script>
-const ChatMessage = {
+const ChatMsg = {
   date: new Date(),
   from: '',
   to: '',
   text: ''
+}
+
+const clientAPI = {
+  label: 'ioApi_page',
+  version: 1.31,
+  evts: {
+    warnings: {
+      data: {
+        lostSignal: false,
+        battery: 0
+      }
+    }
+  },
+  methods: {
+    receiveMsg: {
+      msg: ChatMsg,
+      resp: {
+        status: ''
+      }
+    }
+  }
 }
 
 export default {
@@ -47,25 +68,13 @@ export default {
     this.socket = this.$nuxtSocket({
       channel: '/dynamic',
       apiVersion: 'latest', // TBD: 'ioPeer': true
-      clientAPI: {
-        version: 1.31,
-        nodeType: 'client',
-        evts: {
-          warnings: {
-            lostSignal: false,
-            battery: 0
-          }
-        },
-        methods: {
-          receiveMessage: {
-            msg: ChatMessage,
-            resp: {
-              status: ''
-            }
-          }
-        }
-      }
+      clientAPI
     })
+  },
+  methods: {
+    receiveMsg(msg) {
+      console.log('receiveMsg', msg)
+    }
   }
 }
 </script>

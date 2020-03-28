@@ -126,6 +126,13 @@ function propByPath(obj, path) {
 }
 
 const register = {
+  async clientAPI({ store, socket, clientAPI }){
+    store.commit('$nuxtSocket/SET_CLIENT_API', clientAPI)
+    socket.on('getAPI', ({ version }, cb) => {
+      console.log('getAPI (client)', version)
+      cb(clientAPI)
+    })
+  },
   serverApiEvents({ ctx, socket, api, label, ioDataProp, apiIgnoreEvts }) {
     const { evts } = api
     Object.entries(evts).forEach(([evt, entry]) => {
@@ -219,7 +226,6 @@ const register = {
     })
   },
   async serverAPI({
-    // TBD: 'api'
     ctx,
     socket,
     store,
@@ -227,8 +233,7 @@ const register = {
     apiVersion,
     apiIgnoreEvts,
     ioApiProp,
-    ioDataProp,
-    clientAPI // TBD
+    ioDataProp
   }) {
     debug('register api for', label)
     const api = store.state.$nuxtSocket.ioApis[label] || {}
@@ -489,6 +494,7 @@ const register = {
       {
         namespaced: true,
         state: {
+          clientApis: {},
           ioApis: {},
           sockets: {},
           emitErrors: {}, // TBD: in docs, mention this is fixed (we can't change once in vuex)
@@ -497,6 +503,10 @@ const register = {
         mutations: {
           SET_API(state, { label, api }) {
             state.ioApis[label] = api
+          },
+
+          SET_CLIENT_API(state, { label, ...api }) {
+            state.clientApis[label] = api
           },
 
           SET_SOCKET(state, { label, socket }) {
@@ -801,6 +811,14 @@ function nuxtSocket(ioOpts) {
       socket,
       emitTimeout,
       emitErrorsProp,
+      clientAPI
+    })
+  }
+
+  if (clientAPI) {
+    register.clientAPI({
+      store,
+      socket,
       clientAPI
     })
   }
