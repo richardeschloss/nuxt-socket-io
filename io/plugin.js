@@ -126,12 +126,44 @@ function propByPath(obj, path) {
 }
 
 const register = {
-  async clientAPI({ store, socket, clientAPI }){
-    store.commit('$nuxtSocket/SET_CLIENT_API', clientAPI)
-    socket.on('getAPI', ({ version }, cb) => {
-      console.log('getAPI (client)', version)
-      cb(clientAPI)
+  clientApiMethods({ ctx, socket, api }) {
+    const { methods } = api
+    const evts = Object.assign({}, methods, { getAPI: {} })
+    console.log(evts)
+    Object.entries(evts).forEach(([evt, schema]) => {
+      console.log('evt', evt)
+      if (socket.hasListeners(evt)) {
+        warn(`evt ${evt} already has a listener registered`)
+      }
+
+      socket.on(evt, async (msg, cb) => {
+        if (evt === 'getAPI') {
+          if (cb) cb(api)
+        } else if (ctx[evt] !== undefined) {
+          const resp = await ctx[evt](msg)
+          if (cb) cb(resp)
+        } else {
+          const err = {
+            emitErr: 'notImplemented',
+            msg: 'Client has not yet implemented method (yet)'
+          }
+          if (cb) cb(err)
+        } 
+      })
+
+      debug(`registered client api method ${evt}`)      
+      if (evt !== 'getAPI' && ctx[evt] === undefined) {
+        warn(`client api method ${evt} has not been defined. \
+            Either update the client api or define the method so it can be used by callers`)
+      }
     })
+  },
+  async clientAPI({ ctx, store, socket, clientAPI }){
+    if (clientAPI.methods) {
+      register.clientApiMethods({ ctx, socket, api: clientAPI })
+    }
+    clientAPI.ready = true
+    store.commit('$nuxtSocket/SET_CLIENT_API', clientAPI)
   },
   serverApiEvents({ ctx, socket, api, label, ioDataProp, apiIgnoreEvts }) {
     const { evts } = api
@@ -246,12 +278,14 @@ const register = {
       msg: serverAPI.data || {}
     })
     
+    /* TBD */
     const isPeer = (clientAPI.label === fetchedApi.label) 
       && (parseFloat(clientAPI.version) === parseFloat(fetchedApi.version))
     if (isPeer) {
       debug('working with peer') // TBD
       return      
     }
+    /* --- */
 
     if (parseFloat(api.version) !== parseFloat(fetchedApi.version)) {
       Object.assign(api, fetchedApi)
@@ -821,6 +855,7 @@ function nuxtSocket(ioOpts) {
 
   if (clientAPI) {
     register.clientAPI({
+      ctx: this,
       store,
       socket,
       clientAPI

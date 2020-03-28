@@ -95,6 +95,15 @@ export default {
   methods: {
     receiveMsg(msg) {
       console.log('receiveMsg', msg)
+      this.socket.emit('warnings', {
+        data: {
+          lostSignal: false,
+          battery: 15
+        }
+      })
+      return Promise.resolve({
+        status: 'ok'
+      })
     }
   }
 }

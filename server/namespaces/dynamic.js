@@ -72,6 +72,21 @@ function Svc(socket) {
       console.log('getAPI', data)
       socket.emit('getAPI', {}, (clientApi) => {
         console.log('clientApi', clientApi)
+        socket.emit(
+          'receiveMsg',
+          {
+            date: new Date(),
+            from: 'server1',
+            to: 'client1',
+            text: 'Hi client from server!'
+          },
+          (resp) => {
+            console.log('receiveMsg response', resp)
+          }
+        )
+        socket.on('warnings', (msg) => {
+          console.log('warnings from client', msg)
+        })
       })
       return Promise.resolve(api)
     },
