@@ -60,16 +60,37 @@ export default {
   data() {
     return {
       ioApi: {},
-      ioData: {}
+      ioData: {},
+      peerApi: {},
+      peerData: {}
     }
   },
   computed: {},
   mounted() {
     this.socket = this.$nuxtSocket({
       channel: '/dynamic',
-      apiVersion: 'latest', // TBD: 'ioPeer': true
+      serverAPI: {
+        evt: 'getAPI',
+        data: {
+          from: 'ioApi_page'
+        }
+      },
       clientAPI
     })
+
+    /*
+    this.socket2 = this.$nuxtSocket({
+      channel: '/dynamic',
+      ioApiProp: 'peerApi',
+      ioDataProp: 'peerData',
+      serverAPI: {
+        evt: 'getPeerAPI',
+        data: {
+          from: 'ioApi_page'
+        }
+      },
+      clientAPI
+    }) */
   },
   methods: {
     receiveMsg(msg) {

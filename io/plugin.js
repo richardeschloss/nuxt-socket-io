@@ -230,28 +230,33 @@ const register = {
     socket,
     store,
     label,
-    apiVersion,
     apiIgnoreEvts,
     ioApiProp,
-    ioDataProp
+    ioDataProp,
+    serverAPI,
+    clientAPI = {}
   }) {
-    debug('register api for', label)
-    const api = store.state.$nuxtSocket.ioApis[label] || {}
+    let apiLabel = serverAPI.label || label
+    console.log('register api for', apiLabel)
+    const api = store.state.$nuxtSocket.ioApis[apiLabel] || {}
+    const fetchedApi = await store.dispatch('$nuxtSocket/emit', { 
+      label: apiLabel, 
+      socket, 
+      evt: serverAPI.evt || 'getAPI',
+      msg: serverAPI.data || {}
+    })
+    
+    const isPeer = (clientAPI.label === fetchedApi.label) 
+      && (parseFloat(clientAPI.version) === parseFloat(fetchedApi.version))
+    if (isPeer) {
+      debug('working with peer') // TBD
+      return      
+    }
 
-    if (
-      apiVersion === 'latest' ||
-      api.version === undefined ||
-      parseFloat(apiVersion) > parseFloat(api.version)
-    ) {
-      const fetchedApi = await store.dispatch('$nuxtSocket/emit', { 
-        label, 
-        socket, 
-        evt: 'getAPI',
-        msg: { version: apiVersion }
-      })
+    if (parseFloat(api.version) !== parseFloat(fetchedApi.version)) {
       Object.assign(api, fetchedApi)
-      store.commit('$nuxtSocket/SET_API', { label, api })
-      debug(`api for ${label} committed to vuex`, api)
+      store.commit('$nuxtSocket/SET_API', { label: apiLabel, api })
+      debug(`api for ${apiLabel} committed to vuex`, api)
     }
 
     if (ctx[ioApiProp] === undefined) {
@@ -688,13 +693,12 @@ function nuxtSocket(ioOpts) {
     teardown = true,
     emitTimeout,
     emitErrorsProp = 'emitErrors',
-    apiVersion,
     ioApiProp = 'ioApi',
     ioDataProp = 'ioData',
     apiIgnoreEvts = [],
     persist,
-    // vuexOpts: vuexOptsOverride, // TBD
-    clientAPI = {},
+    serverAPI,
+    clientAPI,
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
@@ -799,11 +803,10 @@ function nuxtSocket(ioOpts) {
     }
   }
 
-  if (apiVersion) {
+  if (serverAPI) {
     register.serverAPI({
       store,
       label,
-      apiVersion,
       apiIgnoreEvts,
       ioApiProp,
       ioDataProp,
@@ -811,7 +814,8 @@ function nuxtSocket(ioOpts) {
       socket,
       emitTimeout,
       emitErrorsProp,
-      clientAPI
+      serverAPI,
+      clientAPI // TBD
     })
   }
 

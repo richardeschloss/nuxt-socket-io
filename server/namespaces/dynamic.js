@@ -44,7 +44,8 @@ const api = {
   }
 }
 
-const clientCloneApi = {
+const peerAPI = {
+  label: 'ioApi_page',
   version: 1.31,
   evts: {
     warnings: {
@@ -67,12 +68,17 @@ const clientCloneApi = {
 /* SVC */
 function Svc(socket) {
   return Object.freeze({
-    getAPI({ version }) {
-      console.log('getAPI', version)
-      socket.emit('getAPI', { version: 'latest' }, (clientApi) => {
+    getAPI(data) {
+      console.log('getAPI', data)
+      socket.emit('getAPI', {}, (clientApi) => {
         console.log('clientApi', clientApi)
       })
       return Promise.resolve(api)
+    },
+
+    getPeerAPI(data) {
+      console.log('getPeerAPI', data)
+      return Promise.resolve(peerAPI)
     },
 
     /* Methods */
