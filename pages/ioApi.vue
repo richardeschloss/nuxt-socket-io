@@ -24,6 +24,32 @@
         <div style="white-space:pre-wrap;" v-text="ioData.getItem.resp" />
       </span>
     </div>
+    <br />
+    <h3>Peer-to-Peer Examples</h3>
+    <div v-if="peerApi.ready" style="border: 1px solid; width:100%;">
+      <span style="width: 40%; display:inline-block;">
+        <label>Peer/Client API (for "home" socket on "/p2p" channel)</label>
+        <div style="white-space:pre-wrap;" v-text="peerApi"></div>
+      </span>
+      <span style="width: 50%; display:inline-block; vertical-align:top;">
+        <label>Actions Pane</label>
+        <br />
+        <button
+          @click="
+            peerApi.receiveMsg({
+              from: 'me',
+              to: 'peer',
+              date: new Date(),
+              text: 'Hi peer!'
+            })
+          "
+        >
+          Tell Peer to Receive message
+        </button>
+        <br />
+        Peer's Response: <span v-text="peerData.receiveMsg.resp"></span>
+      </span>
+    </div>
   </div>
 </template>
 
@@ -78,24 +104,19 @@ export default {
       clientAPI
     })
 
-    /*
     this.socket2 = this.$nuxtSocket({
-      channel: '/dynamic',
+      channel: '/p2p',
       ioApiProp: 'peerApi',
       ioDataProp: 'peerData',
-      serverAPI: {
-        evt: 'getPeerAPI',
-        data: {
-          from: 'ioApi_page'
-        }
-      },
+      serverAPI: {},
       clientAPI
-    }) */
+    })
   },
   methods: {
     receiveMsg(msg) {
       console.log('receiveMsg', msg)
       this.socket.emit('warnings', {
+        // TBD: this.ioApi.warnings({ data: }) // TBD
         data: {
           lostSignal: false,
           battery: 15

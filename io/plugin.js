@@ -162,6 +162,7 @@ const register = {
     if (clientAPI.methods) {
       register.clientApiMethods({ ctx, socket, api: clientAPI })
     }
+
     clientAPI.ready = true
     store.commit('$nuxtSocket/SET_CLIENT_API', clientAPI)
   },
@@ -278,19 +279,20 @@ const register = {
       msg: serverAPI.data || {}
     })
     
-    /* TBD */
     const isPeer = (clientAPI.label === fetchedApi.label) 
       && (parseFloat(clientAPI.version) === parseFloat(fetchedApi.version))
     if (isPeer) {
-      debug('working with peer') // TBD
-      return      
-    }
-    /* --- */
-
-    if (parseFloat(api.version) !== parseFloat(fetchedApi.version)) {
-      Object.assign(api, fetchedApi)
+      debug(apiLabel, 'working with peer') // TBD
+      Object.assign(api, clientAPI)
       store.commit('$nuxtSocket/SET_API', { label: apiLabel, api })
       debug(`api for ${apiLabel} committed to vuex`, api)
+    } else {
+      debug(apiLabel, 'not a peer')
+      if (parseFloat(api.version) !== parseFloat(fetchedApi.version)) {
+        Object.assign(api, fetchedApi)
+        store.commit('$nuxtSocket/SET_API', { label: apiLabel, api })
+        debug(`api for ${apiLabel} committed to vuex`, api)
+      }
     }
 
     if (ctx[ioApiProp] === undefined) {
@@ -729,6 +731,8 @@ function nuxtSocket(ioOpts) {
     emitErrorsProp = 'emitErrors',
     ioApiProp = 'ioApi',
     ioDataProp = 'ioData',
+    peerApiProp = 'peerApi',
+    peerDataProp = 'peerData',
     apiIgnoreEvts = [],
     persist,
     serverAPI,
@@ -825,9 +829,7 @@ function nuxtSocket(ioOpts) {
         socket,
         useSocket,
         emitTimeout,
-        emitErrorsProp,
-        apiVersion,
-        clientAPI
+        emitErrorsProp
       })
       debug('namespaces configured for socket', {
         name: useSocket.name,

@@ -1,11 +1,4 @@
 /* Schemas */
-const ChatMsg = {
-  date: new Date(),
-  from: '',
-  to: '',
-  text: ''
-}
-
 const Item = {
   id: '',
   name: '',
@@ -44,27 +37,6 @@ const api = {
   }
 }
 
-const peerAPI = {
-  label: 'ioApi_page',
-  version: 1.31,
-  evts: {
-    warnings: {
-      data: {
-        lostSignal: false,
-        battery: 0
-      }
-    }
-  },
-  methods: {
-    receiveMsg: {
-      msg: ChatMsg,
-      resp: {
-        status: ''
-      }
-    }
-  }
-}
-
 /* SVC */
 function Svc(socket) {
   return Object.freeze({
@@ -89,11 +61,6 @@ function Svc(socket) {
         })
       })
       return Promise.resolve(api)
-    },
-
-    getPeerAPI(data) {
-      console.log('getPeerAPI', data)
-      return Promise.resolve(peerAPI)
     },
 
     /* Methods */
