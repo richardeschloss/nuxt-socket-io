@@ -7,9 +7,6 @@ import { compileAndImportPlugin } from '@/test/utils'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
 
 const { io } = config
-const state = indexState()
-state.examples = examplesState()
-state.examples.__ob__ = ''
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
 
@@ -67,6 +64,7 @@ function Callees({ t, callItems = [], context }) {
 
 function loadPlugin({
   t,
+  state,
   context = {},
   ioOpts = {},
   plugin = Plugin,
@@ -81,6 +79,14 @@ function loadPlugin({
     context.$on = function(evt, cb) {}
   }
 
+  if (!state) {
+    state = indexState()
+    state.examples = examplesState()
+    state.examples.__ob__ = ''
+  }
+
+  const mutations = {}
+
   return new Promise((resolve, reject) => {
     context.$store = {
       registerModule(moduleName, storeCfg, options) {
@@ -92,7 +98,7 @@ function loadPlugin({
         context.$store.mutations.$nuxtSocket = Object.assign({}, mutations)
       },
       state,
-      mutations: {},
+      mutations,
       commit(label, msg) {
         callCnt.storeCommit++
         if (label.includes('$nuxtSocket')) {
@@ -256,9 +262,10 @@ test('$nuxtSocket vuex module registration', async (t) => {
 
   pOptions.set(testCfg)
   const context = {}
+  const state = {}
   const callCnt = { registerModule: 0 }
-  await loadPlugin({ t, context, callCnt })
-  await loadPlugin({ t, context, callCnt })
+  await loadPlugin({ t, context, state, callCnt })
+  await loadPlugin({ t, context, state, callCnt })
   t.is(callCnt.registerModule, 1)
 })
 
@@ -274,12 +281,15 @@ test('socket persistence (enabled)', async (t) => {
 
   pOptions.set(testCfg)
   const context = {}
+  const state = {}
   const ioOpts = { persist: true, teardown: false, channel: '/dynamic' }
   const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
-  const socket1 = await loadPlugin({ t, context, ioOpts })
+  const socket1 = await loadPlugin({ t, context, ioOpts, state })
   return new Promise((resolve) => {
-    socket1.on('connect', () => {
+    socket1.on('connect', async () => {
       t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
+      const socket2 = await loadPlugin({ t, context, ioOpts, state })
+      t.is(socket1.id, socket2.id)
       resolve()
     })
   })
@@ -297,10 +307,11 @@ test('socket persistence (enabled; reconnect only if disconnected)', async (t) =
 
   pOptions.set(testCfg)
   const context = {}
+  const state = {}
   const ioOpts = { persist: true, teardown: false, channel: '/dynamic' }
   const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
-  const socket1 = await loadPlugin({ t, context, ioOpts })
-  const socket2 = await loadPlugin({ t, context, ioOpts })
+  const socket1 = await loadPlugin({ t, context, ioOpts, state })
+  const socket2 = await loadPlugin({ t, context, ioOpts, state })
   t.truthy(context.$store.state.$nuxtSocket.sockets[label])
   return new Promise((resolve) => {
     let doneCnt = 0
