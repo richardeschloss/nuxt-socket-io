@@ -126,12 +126,45 @@ function propByPath(obj, path) {
 }
 
 const register = {
+  clientApiEvents({ ctx, store, socket, api }) {
+    const { evts } = api
+    Object.entries(evts).forEach(([emitEvt, schema]) => {
+      const { data: dataT, ack: ackT } = schema
+      const fn = emitEvt + 'Emit'
+      if (ctx[emitEvt] !== undefined) {
+        if (dataT !== undefined) {
+          Object.entries(dataT).forEach(([key, val]) => {
+            ctx.$set(ctx[emitEvt], key, val)  
+          })
+          debug('Initialized data for', emitEvt, dataT)
+        }
+      }
+
+      if (ctx[fn] !== undefined) return
+
+      ctx[fn] = ({ label: apiLabel, ack: apiAck, ...args }) => {
+        return new Promise(async (resolve, reject) => {
+          const timerObj = {}
+          const ack = apiAck || ackT
+          const label = apiLabel || api.label
+          const msg = Object.keys(args).length > 0 ? args : { ...ctx[emitEvt] }
+          if (ack) {
+            const ackd = await store.dispatch('$nuxtSocket/emit', { label, socket, evt: emitEvt, msg })
+            resolve(ackd)
+          } else {
+            store.dispatch('$nuxtSocket/emit', { label, socket, evt: emitEvt, msg, noAck: true })
+            resolve()
+          }
+        })
+      }
+      debug('Registered clientAPI method', fn)
+    })
+    
+  },  
   clientApiMethods({ ctx, socket, api }) {
     const { methods } = api
     const evts = Object.assign({}, methods, { getAPI: {} })
-    console.log(evts)
     Object.entries(evts).forEach(([evt, schema]) => {
-      console.log('evt', evt)
       if (socket.hasListeners(evt)) {
         warn(`evt ${evt} already has a listener registered`)
       }
@@ -143,11 +176,12 @@ const register = {
           const resp = await ctx[evt](msg)
           if (cb) cb(resp)
         } else {
-          const err = {
-            emitErr: 'notImplemented',
-            msg: 'Client has not yet implemented method (yet)'
+          if (cb) {
+            cb({
+              emitErr: 'notImplemented',
+              msg: 'Client has not yet implemented method (yet)'
+            })
           }
-          if (cb) cb(err)
         } 
       })
 
@@ -163,8 +197,12 @@ const register = {
       register.clientApiMethods({ ctx, socket, api: clientAPI })
     }
 
-    clientAPI.ready = true
+    if (clientAPI.evts) {
+      register.clientApiEvents({ ctx, store, socket, api: clientAPI })
+    }
+
     store.commit('$nuxtSocket/SET_CLIENT_API', clientAPI)
+    debug('clientAPI registered', clientAPI)
   },
   serverApiEvents({ ctx, socket, api, label, ioDataProp, apiIgnoreEvts }) {
     const { evts } = api
@@ -270,7 +308,7 @@ const register = {
     clientAPI = {}
   }) {
     let apiLabel = serverAPI.label || label
-    console.log('register api for', apiLabel)
+    debug('register api for', apiLabel)
     const api = store.state.$nuxtSocket.ioApis[apiLabel] || {}
     const fetchedApi = await store.dispatch('$nuxtSocket/emit', { 
       label: apiLabel, 
@@ -282,16 +320,15 @@ const register = {
     const isPeer = (clientAPI.label === fetchedApi.label) 
       && (parseFloat(clientAPI.version) === parseFloat(fetchedApi.version))
     if (isPeer) {
-      debug(apiLabel, 'working with peer') // TBD
       Object.assign(api, clientAPI)
       store.commit('$nuxtSocket/SET_API', { label: apiLabel, api })
-      debug(`api for ${apiLabel} committed to vuex`, api)
+      debug(`api for ${apiLabel} registered`, api)
     } else {
       debug(apiLabel, 'not a peer')
       if (parseFloat(api.version) !== parseFloat(fetchedApi.version)) {
         Object.assign(api, fetchedApi)
         store.commit('$nuxtSocket/SET_API', { label: apiLabel, api })
-        debug(`api for ${apiLabel} committed to vuex`, api)
+        debug(`api for ${apiLabel} registered`, api)
       }
     }
 
@@ -571,7 +608,7 @@ const register = {
           }
         },
         actions: {
-          emit({ state, commit }, { label, socket, evt, msg, emitTimeout }) {
+          emit({ state, commit }, { label, socket, evt, msg, emitTimeout, noAck }) {
             debug('$nuxtSocket vuex action "emit" dispatched', label, evt)
             return new Promise((resolve, reject) => {
               const _socket = socket || state.sockets[label]
@@ -611,6 +648,11 @@ const register = {
                   resolve(resp)
                 }
               })
+
+              if (noAck) {
+                resolve()
+              }
+              
               if (_emitTimeout) {
                 timer = setTimeout(() => {
                   const err = {

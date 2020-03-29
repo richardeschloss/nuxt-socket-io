@@ -22,6 +22,14 @@
         <button @click="ioApi.getItem()">Get Item</button>
         Events: Msg Rxd: <span v-text="ioData.msgRxd" />
         <div style="white-space:pre-wrap;" v-text="ioData.getItem.resp" />
+        <br />
+        Warnings:
+        <div>
+          <input v-model.number="warnings.battery" type="number" />
+        </div>
+        <button @click="warningsEmit({ label: 'home/dynamic' })">
+          Emit Warnings
+        </button>
       </span>
     </div>
     <br />
@@ -88,10 +96,12 @@ export default {
       ioApi: {},
       ioData: {},
       peerApi: {},
-      peerData: {}
+      peerData: {},
+
+      /* Client Data */
+      warnings: {}
     }
   },
-  computed: {},
   mounted() {
     this.socket = this.$nuxtSocket({
       channel: '/dynamic',
@@ -114,14 +124,6 @@ export default {
   },
   methods: {
     receiveMsg(msg) {
-      console.log('receiveMsg', msg)
-      this.socket.emit('warnings', {
-        // TBD: this.ioApi.warnings({ data: }) // TBD
-        data: {
-          lostSignal: false,
-          battery: 15
-        }
-      })
       return Promise.resolve({
         status: 'ok'
       })
