@@ -70,7 +70,12 @@ function loadPlugin({
   context = {},
   ioOpts = {},
   plugin = Plugin,
-  callCnt = { storeWatch: 0, storeCommit: 0, storeDispatch: 0 }
+  callCnt = {
+    storeWatch: 0,
+    storeCommit: 0,
+    storeDispatch: 0,
+    registerModule: 0
+  }
 }) {
   if (!context.$on) {
     context.$on = function(evt, cb) {}
@@ -78,8 +83,26 @@ function loadPlugin({
 
   return new Promise((resolve, reject) => {
     context.$store = {
-      commit: (msg) => {
+      registerModule(moduleName, storeCfg, options) {
+        const { namespaced, state, mutations } = storeCfg
+        callCnt.registerModule++
+        t.true(namespaced)
+        t.is(moduleName, '$nuxtSocket')
+        context.$store.state.$nuxtSocket = Object.assign({}, state)
+        context.$store.mutations.$nuxtSocket = Object.assign({}, mutations)
+      },
+      state,
+      mutations: {},
+      commit(label, msg) {
         callCnt.storeCommit++
+        if (label.includes('$nuxtSocket')) {
+          const state = context.$store.state.$nuxtSocket
+          const mutations = context.$store.mutations.$nuxtSocket
+          const fn = label.split('/')[1]
+          if (mutations[fn]) {
+            mutations[fn](state, msg)
+          }
+        }
       },
       dispatch: (msg) => {
         callCnt.storeDispatch++
@@ -221,6 +244,96 @@ async function testVuexOpts({
   })
   return socket
 }
+
+test('$nuxtSocket vuex module registration', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const callCnt = { registerModule: 0 }
+  await loadPlugin({ t, context, callCnt })
+  await loadPlugin({ t, context, callCnt })
+  t.is(callCnt.registerModule, 1)
+})
+
+test('socket persistence (enabled)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const ioOpts = { persist: true, teardown: false, channel: '/dynamic' }
+  const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
+  const socket1 = await loadPlugin({ t, context, ioOpts })
+  return new Promise((resolve) => {
+    socket1.on('connect', () => {
+      t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
+      resolve()
+    })
+  })
+})
+
+test('socket persistence (enabled; reconnect only if disconnected)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const ioOpts = { persist: true, teardown: false, channel: '/dynamic' }
+  const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
+  const socket1 = await loadPlugin({ t, context, ioOpts })
+  const socket2 = await loadPlugin({ t, context, ioOpts })
+  t.truthy(context.$store.state.$nuxtSocket.sockets[label])
+  return new Promise((resolve) => {
+    let doneCnt = 0
+    function onConnect() {
+      doneCnt++
+      if (doneCnt === 2) {
+        t.true(socket1.id !== socket2.id)
+        t.pass()
+        resolve()
+      }
+    }
+    socket1.on('connect', onConnect)
+    socket2.on('connect', onConnect)
+  })
+})
+
+test('socket persistence (disabled)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const ioOpts = { persist: false, channel: '/dynamic' }
+  await loadPlugin({ t, context, ioOpts })
+  const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
+  t.falsy(context.$store.state.$nuxtSocket.sockets[label])
+})
 
 test('Socket plugin (empty options)', async (t) => {
   const testCfg = { sockets: [] }
@@ -1044,7 +1157,9 @@ test('Channel (emitters and listeners, warnings off)', (t) => {
   })
 })
 
-test.only('Dynamic api', async (t) => {
+/* --- */
+
+test.skip('Dynamic api', async (t) => {
   console.log('DYNAMIC')
   const context = {
     api: {}
@@ -1064,6 +1179,8 @@ test.only('Dynamic api', async (t) => {
     })
   })
 })
+
+/* --- */
 
 test('Teardown (enabled)', async (t) => {
   let componentDestroyCnt = 0

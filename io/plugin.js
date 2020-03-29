@@ -848,6 +848,7 @@ function nuxtSocket(ioOpts) {
       debug(`resuing persisted socket ${label}`)
       socket = store.state.$nuxtSocket.sockets[label]
       if (socket.disconnected) {
+        debug('persisted socket disconnected, reconnecting...')
         socket = io(connectUrl, connectOpts)
       }
     } else {
