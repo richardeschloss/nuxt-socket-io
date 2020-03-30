@@ -307,6 +307,14 @@ const register = {
     serverAPI,
     clientAPI = {}
   }) {
+    if (ctx[ioApiProp] === undefined) {
+      consola.error(
+        `[nuxt-socket-io]: ${ioApiProp} needs to be defined in the current context for ` +
+        `serverAPI registration (vue requirement)`
+      )
+      return
+    }
+
     let apiLabel = serverAPI.label || label
     debug('register api for', apiLabel)
     const api = store.state.$nuxtSocket.ioApis[apiLabel] || {}
@@ -331,11 +339,6 @@ const register = {
       }
     }
 
-    if (ctx[ioApiProp] === undefined) {
-      warn(
-        `[nuxt-socket-io]: ${ioApiProp} needs to be defined in the current context (vue requirement)`
-      )
-    }
     ctx.$set(ctx, ioApiProp, api)
 
     if (api.methods !== undefined) {

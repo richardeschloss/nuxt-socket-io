@@ -76,6 +76,8 @@ function $set(obj, prop, val) {
 function loadPlugin({
   t,
   state,
+  mutations = {},
+  actions = {},
   context = {},
   ioOpts = {},
   plugin = Plugin,
@@ -96,9 +98,6 @@ function loadPlugin({
     state.examples.__ob__ = ''
   }
 
-  const mutations = {}
-  const actions = {}
-
   return new Promise((resolve, reject) => {
     context.$set = $set
     context.$store = {
@@ -116,6 +115,10 @@ function loadPlugin({
       actions,
       commit(label, msg) {
         callCnt.storeCommit++
+        if (callCnt['storeCommit_' + label] !== undefined) {
+          callCnt['storeCommit_' + label]++
+        }
+
         if (label.includes('$nuxtSocket')) {
           const state = context.$store.state.$nuxtSocket
           const mutations = context.$store.mutations.$nuxtSocket
@@ -127,6 +130,9 @@ function loadPlugin({
       },
       async dispatch(label, msg) {
         callCnt.storeDispatch++
+        if (callCnt['storeDispatch_' + label] !== undefined) {
+          callCnt['storeDispatch_' + label]++
+        }
         if (label.includes('$nuxtSocket')) {
           const { commit } = context.$store
           const state = context.$store.state.$nuxtSocket
@@ -279,6 +285,7 @@ async function testVuexOpts({
   return socket
 }
 
+/* --- */
 test('$nuxtSocket vuex module registration', async (t) => {
   const testCfg = {
     sockets: [
@@ -400,7 +407,6 @@ test('socket persistence (disabled)', async (t) => {
   t.falsy(context.$store.state.$nuxtSocket.sockets[label])
 })
 
-/* --- */
 test('Api registration (server)', async (t) => {
   const testCfg = {
     sockets: [
@@ -410,27 +416,95 @@ test('Api registration (server)', async (t) => {
       }
     ]
   }
+  
   pOptions.set(testCfg)
-  return new Promise(async (resolve) => {
-    const handler = {
-      set(obj, prop, val) {
-        $set(obj, prop, val)
-        if (prop === 'ready') {
-          t.true(val)
-          resolve()
-        }
-        return true
+  const callCnt = {
+    'storeCommit_$nuxtSocket/SET_API': 0
+  }
+  const state = {}
+  const actions = {}
+  const context = {
+    ioApi: {},
+    ioData: {}
+  }
+  const ioOpts = {
+    channel: '/dynamic',
+    serverAPI: {}
+  }
+  
+  await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  return new Promise((resolve, reject) => {
+    setTimeout(async () => {
+      t.true(context.ioApi.ready)
+      console.log('Attempt to re-use api...')
+      await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+      t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
+      resolve()
+    }, 500)
+  })
+})
+
+test('Api registration (server, ioApi not defined)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
       }
-    }
-    const context = {
-      ioApi: new Proxy({}, handler),
-      ioData: {}
-    }
-    const ioOpts = {
-      channel: '/dynamic',
-      serverAPI: {}
-    }
-    await loadPlugin({ t, context, ioOpts }) 
+    ]
+  }
+  pOptions.set(testCfg)
+  const context = {}
+  const ioApiProp = 'ioApi'
+  const ioOpts = {
+    channel: '/dynamic',
+    serverAPI: {}
+  }
+
+  await loadPlugin({ t, context, ioOpts })
+  return new Promise((resolve) => {
+    setTimeout(async () => {
+      t.falsy(context.ioApi)
+      resolve()
+    }, 500)
+  })
+
+  
+})
+
+test('Api registration (server, methods and evts not defined)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+  
+  pOptions.set(testCfg)
+  const callCnt = {
+    'storeCommit_$nuxtSocket/SET_API': 0
+  }
+  const state = {}
+  const actions = {}
+  const context = {
+    ioApi: {},
+    ioData: {}
+  }
+  const ioOpts = {
+    channel: '/p2p',
+    serverAPI: {}
+  }
+  
+  await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  return new Promise((resolve, reject) => {
+    setTimeout(async () => {
+      t.falsy(context.ioApi.evts)
+      t.falsy(context.ioApi.methods)
+      t.true(context.ioApi.ready)
+      resolve()
+    }, 500)
   })
 })
 
