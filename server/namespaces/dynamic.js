@@ -33,7 +33,8 @@ const api = {
         id: ''
       },
       resp: Item
-    }
+    },
+    noResp: {}
   }
 }
 
@@ -107,6 +108,9 @@ function Svc(socket) {
         }
       )
       return Promise.resolve(ItemOut)
+    },
+    noResp({ }) {
+      return Promise.resolve({})
     }
   })
 }

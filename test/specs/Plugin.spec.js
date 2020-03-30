@@ -461,15 +461,32 @@ test('Api registration (server)', async (t) => {
   }
   
   await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
-  return new Promise((resolve, reject) => {
-    setTimeout(async () => {
-      t.true(context.ioApi.ready)
-      console.log('Attempt to re-use api...')
-      await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
-      t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
-      resolve()
-    }, 500)
-  })
+  function ioReady() {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        t.true(context.ioApi.ready)
+        resolve()
+      }, 500)
+    })
+  }
+
+  async function testReuse() {
+    console.log('Attempt to re-use api...')
+    await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+    await ioReady()
+    t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
+  }
+  await ioReady()
+  await testReuse()
+  const items = await context.ioApi.getItems()
+  const item1 = await context.ioApi.getItem({ id: 'abc123' })
+  Object.assign(context.ioData.getItem.msg, { id: 'something' })
+  const item2 = await context.ioApi.getItem()
+  const noResp = await context.ioApi.noResp()
+  t.true(items.length > 0)
+  t.is(item1.id, 'abc123')
+  t.is(item2.id, 'something')
+  t.true(Object.keys(noResp).length === 0)
 })
 
 test('Api registration (server, ioApi not defined)', async (t) => {
