@@ -10,8 +10,12 @@ const api = {
   version: 1.02,
   evts: {
     ignoreMe: {},
+    someList: {
+      methods: ['getList'],
+      data: []
+    },
     itemRxd: {
-      methods: ['getItems'],
+      methods: ['getItems', 'toBeAdded'],
       data: {
         progress: 0,
         item: {}
@@ -21,8 +25,7 @@ const api = {
       data: {
         date: new Date(),
         msg: ''
-      },
-      ack: ''
+      }
     }
   },
   methods: {
@@ -83,6 +86,10 @@ function Svc(socket) {
               progress: ++idx / items.length,
               item
             }
+          })
+          socket.emit('itemRxd', {
+            method: 'toBeDone',
+            data: {}
           })
           if (idx >= items.length) {
             clearInterval(timer)

@@ -207,7 +207,7 @@ const register = {
   serverApiEvents({ ctx, socket, api, label, ioDataProp, apiIgnoreEvts }) {
     const { evts } = api
     Object.entries(evts).forEach(([evt, entry]) => {
-      const { methods = [], data: dataT, ack } = entry
+      const { methods = [], data: dataT } = entry
       if (apiIgnoreEvts.includes(evt)) {
         debug(
           `Event ${evt} is in ignore list ("apiIgnoreEvts"), not registering.`
@@ -244,11 +244,7 @@ const register = {
         }
 
         if (cb) {
-          if (ack !== undefined) {
-            cb({ ack: 'ok' })
-          } else {
-            cb()
-          }
+          cb({ ack: 'ok' })          
         }
       })
       debug(`Registered listener for ${evt} on ${label}`)
