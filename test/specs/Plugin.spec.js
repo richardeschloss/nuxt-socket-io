@@ -10,6 +10,34 @@ const { io } = config
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
 
+const ChatMsg = {
+  date: new Date(),
+  from: '',
+  to: '',
+  text: ''
+}
+
+const clientAPI = {
+  label: 'ioApi_page',
+  version: 1.31,
+  evts: {
+    warnings: {
+      data: {
+        lostSignal: false,
+        battery: 0
+      }
+    }
+  },
+  methods: {
+    receiveMsg: {
+      msg: ChatMsg,
+      resp: {
+        status: ''
+      }
+    }
+  }
+}
+
 function parseEntry(entry, entryType) {
   let evt, mapTo, pre, body, post, emitEvt, msgLabel
   if (typeof entry === 'string') {
@@ -468,8 +496,6 @@ test('Api registration (server, ioApi not defined)', async (t) => {
       resolve()
     }, 500)
   })
-
-  
 })
 
 test('Api registration (server, methods and evts not defined)', async (t) => {
@@ -500,8 +526,53 @@ test('Api registration (server, methods and evts not defined)', async (t) => {
   await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
   return new Promise((resolve, reject) => {
     setTimeout(async () => {
+      t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
       t.falsy(context.ioApi.evts)
       t.falsy(context.ioApi.methods)
+      t.true(context.ioApi.ready)
+      resolve()
+    }, 500)
+  })
+})
+
+test('Api registration (server, methods and evts not defined, but is peer)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+  
+  pOptions.set(testCfg)
+  const callCnt = {
+    'storeCommit_$nuxtSocket/SET_API': 0
+  }
+  const state = {}
+  const actions = {}
+  const context = {
+    ioApi: {},
+    ioData: {}
+  }
+  const ioOpts = {
+    channel: '/p2p',
+    serverAPI: {},
+    clientAPI
+  }
+  
+  await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  return new Promise((resolve, reject) => {
+    setTimeout(async () => {
+      t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
+      const props = ['evts', 'methods']
+      props.forEach((prop) => {
+        const clientProps = Object.keys(clientAPI[prop])
+        const serverProps = Object.keys(context.ioApi[prop])
+        clientProps.forEach((cProp) => {
+          t.true(serverProps.includes(cProp))
+        })
+      })
       t.true(context.ioApi.ready)
       resolve()
     }, 500)
