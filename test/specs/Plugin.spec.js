@@ -62,6 +62,17 @@ function Callees({ t, callItems = [], context }) {
   return svc
 }
 
+function $set(obj, prop, val) {
+  if (obj[prop] === undefined) {
+    obj[prop] = {}
+  }
+  if (typeof val === 'object') {
+    Object.assign(obj[prop], val)
+  } else {
+    Object.assign(obj, { [prop]: val })
+  }
+}
+
 function loadPlugin({
   t,
   state,
@@ -86,19 +97,23 @@ function loadPlugin({
   }
 
   const mutations = {}
+  const actions = {}
 
   return new Promise((resolve, reject) => {
+    context.$set = $set
     context.$store = {
       registerModule(moduleName, storeCfg, options) {
-        const { namespaced, state, mutations } = storeCfg
+        const { namespaced, state, mutations, actions } = storeCfg
         callCnt.registerModule++
         t.true(namespaced)
         t.is(moduleName, '$nuxtSocket')
         context.$store.state.$nuxtSocket = Object.assign({}, state)
         context.$store.mutations.$nuxtSocket = Object.assign({}, mutations)
+        context.$store.actions.$nuxtSocket = Object.assign({}, actions)
       },
       state,
       mutations,
+      actions,
       commit(label, msg) {
         callCnt.storeCommit++
         if (label.includes('$nuxtSocket')) {
@@ -110,8 +125,21 @@ function loadPlugin({
           }
         }
       },
-      dispatch: (msg) => {
+      async dispatch(label, msg) {
         callCnt.storeDispatch++
+        if (label.includes('$nuxtSocket')) {
+          const { commit } = context.$store
+          const state = context.$store.state.$nuxtSocket
+          const actions = context.$store.actions.$nuxtSocket
+          const fn = label.split('/')[1]
+          if (actions[fn]) {
+            const resp = await actions[fn]({ state, commit }, msg)
+            .catch((err) => {
+              console.error('actions error for', label, err)
+            })
+            return resp
+          }
+        }
       },
       watch: (stateCb, dataCb) => {
         callCnt.storeWatch++
@@ -295,6 +323,32 @@ test('socket persistence (enabled)', async (t) => {
   })
 })
 
+test('socket persistence (enabled; use provided label)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const state = {}
+  const ioOpts = { persist: 'mySocket', teardown: false, channel: '/dynamic' }
+  const label = ioOpts.persist
+  const socket1 = await loadPlugin({ t, context, ioOpts, state })
+  return new Promise((resolve) => {
+    socket1.on('connect', async () => {
+      t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
+      const socket2 = await loadPlugin({ t, context, ioOpts, state })
+      t.is(socket1.id, socket2.id)
+      resolve()
+    })
+  })
+})
+
 test('socket persistence (enabled; reconnect only if disconnected)', async (t) => {
   const testCfg = {
     sockets: [
@@ -345,6 +399,42 @@ test('socket persistence (disabled)', async (t) => {
   const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
   t.falsy(context.$store.state.$nuxtSocket.sockets[label])
 })
+
+/* --- */
+test('Api registration (server)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  return new Promise(async (resolve) => {
+    const handler = {
+      set(obj, prop, val) {
+        $set(obj, prop, val)
+        if (prop === 'ready') {
+          t.true(val)
+          resolve()
+        }
+        return true
+      }
+    }
+    const context = {
+      ioApi: new Proxy({}, handler),
+      ioData: {}
+    }
+    const ioOpts = {
+      channel: '/dynamic',
+      serverAPI: {}
+    }
+    await loadPlugin({ t, context, ioOpts }) 
+  })
+})
+
+/* --- */
 
 test('Socket plugin (empty options)', async (t) => {
   const testCfg = { sockets: [] }
@@ -1167,31 +1257,6 @@ test('Channel (emitters and listeners, warnings off)', (t) => {
     })
   })
 })
-
-/* --- */
-
-test.skip('Dynamic api', async (t) => {
-  console.log('DYNAMIC')
-  const context = {
-    api: {}
-  }
-  const socket = await testNamespace({
-    channel: '/dynamic',
-    context,
-    namespace: {},
-    t
-  })
-  return new Promise((resolve) => {
-    socket.emit('api', {}, (api) => {
-      console.log('api', api)
-      context.api = api
-      t.pass()
-      resolve()
-    })
-  })
-})
-
-/* --- */
 
 test('Teardown (enabled)', async (t) => {
   let componentDestroyCnt = 0

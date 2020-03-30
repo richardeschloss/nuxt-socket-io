@@ -31,7 +31,7 @@
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore .",
     "test": "npm run test:specs:cov && npm run test:e2e:cov",
     "test:specs": "cross-env TEST=specs ava --config specs.config.js",
-    "test:specs:cov": "cross-env TEST=specs nyc ava --config specs.config.js",
+    "test:specs:cov": "cross-env TEST=specs nyc ava --timeout=10m --config specs.config.js",
     "test:specs:watch": "cross-env TEST=specs ava --config specs.config.js --color --watch",
     "test:e2e": "cross-env TEST=e2e ava --config e2e.config.js",
     "test:e2e:cov": "cross-env TEST=e2e nyc --no-clean ava --config e2e.config.js",

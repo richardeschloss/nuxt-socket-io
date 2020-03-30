@@ -324,7 +324,6 @@ const register = {
       store.commit('$nuxtSocket/SET_API', { label: apiLabel, api })
       debug(`api for ${apiLabel} registered`, api)
     } else {
-      debug(apiLabel, 'not a peer')
       if (parseFloat(api.version) !== parseFloat(fetchedApi.version)) {
         Object.assign(api, fetchedApi)
         store.commit('$nuxtSocket/SET_API', { label: apiLabel, api })
@@ -366,7 +365,7 @@ const register = {
       })
       debug(`registered evts for ${label} to ${ioApiProp}`)
     }
-
+    
     ctx[ioApiProp].ready = true
     debug('ioApi', ctx[ioApiProp])
   },
@@ -624,7 +623,7 @@ const register = {
                   )
                 )
               }
-              debug(`Emitting ${evt} with msg: ${msg}`)
+              debug(`Emitting ${evt} with msg`, msg)
               let timer
               _socket.emit(evt, msg, (resp) => {
                 debug('Emitter response rxd', { evt, resp })
@@ -654,6 +653,7 @@ const register = {
               }
               
               if (_emitTimeout) {
+                debug(`registering emitTimeout ${_emitTimeout} ms for ${evt}`)
                 timer = setTimeout(() => {
                   const err = {
                     message: 'emitTimeout',
@@ -768,7 +768,8 @@ function nuxtSocket(ioOpts) {
     name,
     channel = '',
     statusProp = 'socketStatus',
-    teardown = true,
+    persist,
+    teardown = !persist,
     emitTimeout,
     emitErrorsProp = 'emitErrors',
     ioApiProp = 'ioApi',
@@ -776,7 +777,6 @@ function nuxtSocket(ioOpts) {
     peerApiProp = 'peerApi',
     peerDataProp = 'peerData',
     apiIgnoreEvts = [],
-    persist,
     serverAPI,
     clientAPI,
     ...connectOpts
@@ -832,7 +832,9 @@ function nuxtSocket(ioOpts) {
   const { vuex: vuexOpts, namespaces } = useSocket
 
   let socket
-  const label = `${useSocket.name}${channel}`
+  const label = (persist && typeof persist === 'string') 
+    ? persist
+    : `${useSocket.name}${channel}`
 
   if (!store.state.$nuxtSocket) {
     debug('vuex store $nuxtSocket does not exist....registering it')
