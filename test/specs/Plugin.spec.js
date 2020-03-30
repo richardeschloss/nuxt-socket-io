@@ -457,10 +457,13 @@ test('Api registration (server)', async (t) => {
   }
   const ioOpts = {
     channel: '/dynamic',
-    serverAPI: {}
+    serverAPI: {},
+    apiIgnoreEvts: ['ignoreMe']
   }
   
-  await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  const socket1 = await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  console.log('creating a duplicate listener to see if plugin handles it')
+  socket1.on('itemRxd', () => {})
   function ioReady() {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -486,6 +489,13 @@ test('Api registration (server)', async (t) => {
   t.true(items.length > 0)
   t.is(item1.id, 'abc123')
   t.is(item2.id, 'something')
+  Object.keys(context.ioApi.evts).forEach((evt) => {
+    if (!ioOpts.apiIgnoreEvts.includes(evt)) {
+      t.true(socket1.hasListeners(evt))
+    } else {
+      t.false(socket1.hasListeners(evt))
+    }
+  })
   t.true(Object.keys(noResp).length === 0)
 })
 

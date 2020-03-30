@@ -9,6 +9,7 @@ const Item = {
 const api = {
   version: 1.02,
   evts: {
+    ignoreMe: {},
     itemRxd: {
       methods: ['getItems'],
       data: {
