@@ -391,6 +391,7 @@ test('$nuxtSocket vuex module (emit action; error conditions)', async (t) => {
     t.is(json.message, 'emitTimeout')
   })
 
+  state.$nuxtSocket.emitErrors['home/dynamic'].badRequest = []
   await context.$store.dispatch(
     '$nuxtSocket/emit',
     {
