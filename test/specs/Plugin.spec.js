@@ -16,6 +16,12 @@ function delay(ms) {
   })
 }
 
+function socketConnected(socket) {
+  return new Promise((resolve) => {
+    socket.on('connect', resolve)
+  })
+}
+
 const ChatMsg = {
   date: new Date(),
   from: '',
@@ -320,7 +326,6 @@ async function testVuexOpts({
   return socket
 }
 
-/* --- */
 test('$nuxtSocket vuex module registration', async (t) => {
   const testCfg = {
     sockets: [
@@ -358,62 +363,68 @@ test('$nuxtSocket vuex module (emit action; error conditions)', async (t) => {
     channel: '/dynamic',
     persist: true
   }
-  const socket = await loadPlugin({ t, context, ioOpts, state, mutations, actions })
-  await context.$store.dispatch(
-    '$nuxtSocket/emit',
-    {
-      evt: 'getAPI'
-    }
-  ).catch((err) => {
-    t.is(err.message, 'socket instance required. Please provide a valid socket label or socket instance')
+  const socket = await loadPlugin({
+    t,
+    context,
+    ioOpts,
+    state,
+    mutations,
+    actions
   })
+  await context.$store
+    .dispatch('$nuxtSocket/emit', {
+      evt: 'getAPI'
+    })
+    .catch((err) => {
+      t.is(
+        err.message,
+        'socket instance required. Please provide a valid socket label or socket instance'
+      )
+    })
 
-  await context.$store.dispatch(
-    '$nuxtSocket/emit',
-    {
+  await context.$store
+    .dispatch('$nuxtSocket/emit', {
       evt: 'getAPIxyz',
       label: 'home/dynamic',
       emitTimeout: 500
-    }
-  ).catch((err) => {
-    t.is(err.message, 'emitTimeout')
-  })
+    })
+    .catch((err) => {
+      t.is(err.message, 'emitTimeout')
+    })
 
-  await context.$store.dispatch(
-    '$nuxtSocket/emit',
-    {
+  await context.$store
+    .dispatch('$nuxtSocket/emit', {
       evt: 'getAPIxyz',
       socket,
       emitTimeout: 500
-    }
-  ).catch((err) => {
-    const json = JSON.parse(err.message)
-    t.is(json.message, 'emitTimeout')
-  })
+    })
+    .catch((err) => {
+      const json = JSON.parse(err.message)
+      t.is(json.message, 'emitTimeout')
+    })
 
   state.$nuxtSocket.emitErrors['home/dynamic'].badRequest = []
-  await context.$store.dispatch(
-    '$nuxtSocket/emit',
-    {
+  await context.$store
+    .dispatch('$nuxtSocket/emit', {
       evt: 'badRequest',
       socket
-    }
-  ).catch((err) => {
-    const json = JSON.parse(err.message)
-    t.is(json.message, 'badRequest')
+    })
+    .catch((err) => {
+      const json = JSON.parse(err.message)
+      t.is(json.message, 'badRequest')
+    })
+
+  await context.$store.dispatch('$nuxtSocket/emit', {
+    evt: 'badRequest',
+    label: 'home/dynamic'
   })
 
-  await context.$store.dispatch(
-    '$nuxtSocket/emit',
-    {
-      evt: 'badRequest',
-      label: 'home/dynamic'
-    }
-  )
-  
   t.truthy(state.$nuxtSocket.emitErrors['home/dynamic'])
-  t.true(state.$nuxtSocket.emitErrors['home/dynamic']['badRequest'].length > 0)
-  t.is(state.$nuxtSocket.emitErrors['home/dynamic']['badRequest'][0].message, 'badRequest')
+  t.true(state.$nuxtSocket.emitErrors['home/dynamic'].badRequest.length > 0)
+  t.is(
+    state.$nuxtSocket.emitErrors['home/dynamic'].badRequest[0].message,
+    'badRequest'
+  )
 })
 
 test('socket persistence (enabled)', async (t) => {
@@ -432,14 +443,10 @@ test('socket persistence (enabled)', async (t) => {
   const ioOpts = { persist: true, teardown: false, channel: '/dynamic' }
   const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
   const socket1 = await loadPlugin({ t, context, ioOpts, state })
-  return new Promise((resolve) => {
-    socket1.on('connect', async () => {
-      t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
-      const socket2 = await loadPlugin({ t, context, ioOpts, state })
-      t.is(socket1.id, socket2.id)
-      resolve()
-    })
-  })
+  await socketConnected(socket1)
+  t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
+  const socket2 = await loadPlugin({ t, context, ioOpts, state })
+  t.is(socket1.id, socket2.id)
 })
 
 test('socket persistence (enabled; use provided label)', async (t) => {
@@ -458,14 +465,10 @@ test('socket persistence (enabled; use provided label)', async (t) => {
   const ioOpts = { persist: 'mySocket', teardown: false, channel: '/dynamic' }
   const label = ioOpts.persist
   const socket1 = await loadPlugin({ t, context, ioOpts, state })
-  return new Promise((resolve) => {
-    socket1.on('connect', async () => {
-      t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
-      const socket2 = await loadPlugin({ t, context, ioOpts, state })
-      t.is(socket1.id, socket2.id)
-      resolve()
-    })
-  })
+  await socketConnected(socket1)
+  t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
+  const socket2 = await loadPlugin({ t, context, ioOpts, state })
+  t.is(socket1.id, socket2.id)
 })
 
 test('socket persistence (enabled; reconnect only if disconnected)', async (t) => {
@@ -486,19 +489,9 @@ test('socket persistence (enabled; reconnect only if disconnected)', async (t) =
   const socket1 = await loadPlugin({ t, context, ioOpts, state })
   const socket2 = await loadPlugin({ t, context, ioOpts, state })
   t.truthy(context.$store.state.$nuxtSocket.sockets[label])
-  return new Promise((resolve) => {
-    let doneCnt = 0
-    function onConnect() {
-      doneCnt++
-      if (doneCnt === 2) {
-        t.true(socket1.id !== socket2.id)
-        t.pass()
-        resolve()
-      }
-    }
-    socket1.on('connect', onConnect)
-    socket2.on('connect', onConnect)
-  })
+  await socketConnected(socket1)
+  await socketConnected(socket2)
+  t.true(socket1.id !== socket2.id)
 })
 
 test('socket persistence (disabled)', async (t) => {
@@ -528,7 +521,7 @@ test('Api registration (server)', async (t) => {
       }
     ]
   }
-  
+
   pOptions.set(testCfg)
   const callCnt = {
     'storeCommit_$nuxtSocket/SET_API': 0
@@ -544,27 +537,24 @@ test('Api registration (server)', async (t) => {
     serverAPI: {},
     apiIgnoreEvts: ['ignoreMe']
   }
-  
-  const socket1 = await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+
+  const socket1 = await loadPlugin({
+    t,
+    context,
+    ioOpts,
+    callCnt,
+    state,
+    actions
+  })
   console.log('creating a duplicate listener to see if plugin handles it')
   socket1.on('itemRxd', () => {})
-  function ioReady() {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        t.true(context.ioApi.ready)
-        resolve()
-      }, 500)
-    })
-  }
-
-  async function testReuse() {
-    console.log('Attempt to re-use api...')
-    await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
-    await ioReady()
-    t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
-  }
-  await ioReady()
-  await testReuse()
+  await delay(500)
+  t.true(context.ioApi.ready)
+  console.log('Attempt to re-use api...')
+  await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  await delay(500)
+  t.true(context.ioApi.ready)
+  t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
   const items = await context.ioApi.getItems()
   const item1 = await context.ioApi.getItem({ id: 'abc123' })
   Object.assign(context.ioData.getItem.msg, { id: 'something' })
@@ -594,19 +584,14 @@ test('Api registration (server, ioApi not defined)', async (t) => {
   }
   pOptions.set(testCfg)
   const context = {}
-  const ioApiProp = 'ioApi'
   const ioOpts = {
     channel: '/dynamic',
     serverAPI: {}
   }
 
   await loadPlugin({ t, context, ioOpts })
-  return new Promise((resolve) => {
-    setTimeout(async () => {
-      t.falsy(context.ioApi)
-      resolve()
-    }, 500)
-  })
+  await delay(500)
+  t.falsy(context.ioApi)
 })
 
 test('Api registration (server, methods and evts not defined)', async (t) => {
@@ -618,7 +603,7 @@ test('Api registration (server, methods and evts not defined)', async (t) => {
       }
     ]
   }
-  
+
   pOptions.set(testCfg)
   const callCnt = {
     'storeCommit_$nuxtSocket/SET_API': 0
@@ -633,17 +618,13 @@ test('Api registration (server, methods and evts not defined)', async (t) => {
     channel: '/p2p',
     serverAPI: {}
   }
-  
+
   await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
-  return new Promise((resolve, reject) => {
-    setTimeout(async () => {
-      t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
-      t.falsy(context.ioApi.evts)
-      t.falsy(context.ioApi.methods)
-      t.true(context.ioApi.ready)
-      resolve()
-    }, 500)
-  })
+  await delay(500)
+  t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
+  t.falsy(context.ioApi.evts)
+  t.falsy(context.ioApi.methods)
+  t.true(context.ioApi.ready)
 })
 
 test('Api registration (server, methods and evts not defined, but is peer)', async (t) => {
@@ -655,7 +636,7 @@ test('Api registration (server, methods and evts not defined, but is peer)', asy
       }
     ]
   }
-  
+
   pOptions.set(testCfg)
   const callCnt = {
     'storeCommit_$nuxtSocket/SET_API': 0
@@ -671,23 +652,19 @@ test('Api registration (server, methods and evts not defined, but is peer)', asy
     serverAPI: {},
     clientAPI
   }
-  
+
   await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
-  return new Promise((resolve, reject) => {
-    setTimeout(async () => {
-      t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
-      const props = ['evts', 'methods']
-      props.forEach((prop) => {
-        const clientProps = Object.keys(clientAPI[prop])
-        const serverProps = Object.keys(context.ioApi[prop])
-        clientProps.forEach((cProp) => {
-          t.true(serverProps.includes(cProp))
-        })
-      })
-      t.true(context.ioApi.ready)
-      resolve()
-    }, 500)
+  await delay(500)
+  t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
+  const props = ['evts', 'methods']
+  props.forEach((prop) => {
+    const clientProps = Object.keys(clientAPI[prop])
+    const serverProps = Object.keys(context.ioApi[prop])
+    clientProps.forEach((cProp) => {
+      t.true(serverProps.includes(cProp))
+    })
   })
+  t.true(context.ioApi.ready)
 })
 
 test('Api registration (client, methods and evts not defined)', async (t) => {
@@ -699,7 +676,7 @@ test('Api registration (client, methods and evts not defined)', async (t) => {
       }
     ]
   }
-  
+
   pOptions.set(testCfg)
   const callCnt = {
     'storeCommit_$nuxtSocket/SET_CLIENT_API': 0
@@ -714,7 +691,7 @@ test('Api registration (client, methods and evts not defined)', async (t) => {
 
   await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
   t.is(callCnt['storeCommit_$nuxtSocket/SET_CLIENT_API'], 1)
-  t.falsy(context.receiveMsg)  
+  t.falsy(context.receiveMsg)
 })
 
 test('Api registration (client, methods and evts defined)', async (t) => {
@@ -726,7 +703,7 @@ test('Api registration (client, methods and evts defined)', async (t) => {
       }
     ]
   }
-  
+
   pOptions.set(testCfg)
   const callCnt = {
     'storeCommit_$nuxtSocket/SET_CLIENT_API': 0,
@@ -752,12 +729,21 @@ test('Api registration (client, methods and evts defined)', async (t) => {
     clientAPI
   }
 
-  const socket = await loadPlugin({ t, context, ioOpts, callCnt, state, mutations, actions })
+  const socket = await loadPlugin({
+    t,
+    context,
+    ioOpts,
+    callCnt,
+    state,
+    mutations,
+    actions
+  })
   t.is(callCnt['storeCommit_$nuxtSocket/SET_CLIENT_API'], 1)
-  await context.$store.dispatch(
-    '$nuxtSocket/emit', 
-    { evt: 'sendEvts', msg: {}, socket }
-  )
+  await context.$store.dispatch('$nuxtSocket/emit', {
+    evt: 'sendEvts',
+    msg: {},
+    socket
+  })
   t.is(callCnt.receiveMsg, 2)
   Object.keys(clientAPI.evts.warnings.data).forEach((prop) => {
     t.true(context.warnings[prop] !== undefined)
@@ -772,11 +758,11 @@ test('Api registration (client, methods and evts defined)', async (t) => {
   t.is(resp2.battery, context.warnings.battery)
   t.is(resp3.battery, 22)
 
-  console.log('load plugin again, verify that events have already been registered')
+  console.log(
+    'load plugin again, verify that events have already been registered'
+  )
   await loadPlugin({ t, context, ioOpts, callCnt, state, mutations, actions })
 })
-
-/* --- */
 
 test('Socket plugin (empty options)', async (t) => {
   const testCfg = { sockets: [] }

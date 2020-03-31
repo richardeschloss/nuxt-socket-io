@@ -1,5 +1,3 @@
-/* Schemas */
-
 /* API */
 const api = {
   label: 'ioApi_page',

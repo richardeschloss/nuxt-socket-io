@@ -168,9 +168,9 @@ module.exports = {
      ** You can extend webpack config here
      */
     extend(config, ctx) {},
-    parallel: true, // false,
-    cache: true, // false,
-    hardSource: true // false
+    parallel: false,
+    cache: false,
+    hardSource: false
   },
   globals: {
     loadingTimeout: 5000
