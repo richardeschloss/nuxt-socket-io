@@ -119,6 +119,12 @@ function Svc(socket) {
     },
     noResp({ }) {
       return Promise.resolve({})
+    },
+    badRequest({}) {
+      return Promise.resolve({
+        emitError: 'badRequest',
+        details: 'Input does not match schema'
+      })
     }
   })
 }

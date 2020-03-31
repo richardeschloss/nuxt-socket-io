@@ -638,6 +638,10 @@ const register = {
                   }
                   debug('Emit error occurred', err)
                   if (label !== undefined && label !== '') {
+                    debug(
+                      `[nuxt-socket-io]: ${label} Emit error ${err.message} occurred and logged to vuex `,
+                      err
+                    )
                     commit('SET_EMIT_ERRORS', { label, emitEvt: evt, err })
                     resolve()
                   } else {

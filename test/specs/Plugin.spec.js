@@ -156,10 +156,11 @@ function loadPlugin({
           callCnt['storeCommit_' + label]++
         }
 
-        if (label.includes('$nuxtSocket')) {
+        if (label.includes('$nuxtSocket') || label === 'SET_EMIT_ERRORS') {
           const state = context.$store.state.$nuxtSocket
           const mutations = context.$store.mutations.$nuxtSocket
-          const fn = label.split('/')[1]
+          const props = label.split('/')
+          const fn = props.length > 1 ? props[1] : props[0]
           if (mutations[fn]) {
             mutations[fn](state, msg)
           }
@@ -177,9 +178,6 @@ function loadPlugin({
           const fn = label.split('/')[1]
           if (actions[fn]) {
             const resp = await actions[fn]({ state, commit }, msg)
-            .catch((err) => {
-              console.error('actions error for', label, err)
-            })
             return resp
           }
         }
@@ -339,6 +337,82 @@ test('$nuxtSocket vuex module registration', async (t) => {
   await loadPlugin({ t, context, state, callCnt })
   await loadPlugin({ t, context, state, callCnt })
   t.is(callCnt.registerModule, 1)
+})
+
+test('$nuxtSocket vuex module (emit action; error conditions)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const state = {}
+  const mutations = {}
+  const actions = {}
+  const ioOpts = {
+    channel: '/dynamic',
+    persist: true
+  }
+  const socket = await loadPlugin({ t, context, ioOpts, state, mutations, actions })
+  await context.$store.dispatch(
+    '$nuxtSocket/emit',
+    {
+      evt: 'getAPI'
+    }
+  ).catch((err) => {
+    t.is(err.message, 'socket instance required. Please provide a valid socket label or socket instance')
+  })
+
+  await context.$store.dispatch(
+    '$nuxtSocket/emit',
+    {
+      evt: 'getAPIxyz',
+      label: 'home/dynamic',
+      emitTimeout: 500
+    }
+  ).catch((err) => {
+    t.is(err.message, 'emitTimeout')
+  })
+
+  await context.$store.dispatch(
+    '$nuxtSocket/emit',
+    {
+      evt: 'getAPIxyz',
+      socket,
+      emitTimeout: 500
+    }
+  ).catch((err) => {
+    const json = JSON.parse(err.message)
+    t.is(json.message, 'emitTimeout')
+  })
+
+  await context.$store.dispatch(
+    '$nuxtSocket/emit',
+    {
+      evt: 'badRequest',
+      socket
+    }
+  ).catch((err) => {
+    const json = JSON.parse(err.message)
+    t.is(json.message, 'badRequest')
+  })
+
+  await context.$store.dispatch(
+    '$nuxtSocket/emit',
+    {
+      evt: 'badRequest',
+      label: 'home/dynamic'
+    }
+  )
+  
+  t.truthy(state.$nuxtSocket.emitErrors['home/dynamic'])
+  t.true(state.$nuxtSocket.emitErrors['home/dynamic']['badRequest'].length > 0)
+  t.is(state.$nuxtSocket.emitErrors['home/dynamic']['badRequest'][0].message, 'badRequest')
 })
 
 test('socket persistence (enabled)', async (t) => {
