@@ -1,3 +1,4 @@
+/* eslint-disable no-return-await */
 /*
  * Copyright 2019 Richard Schloss (https://github.com/richardeschloss/nuxt-socket-io)
  */
@@ -40,7 +41,7 @@ function propExists(obj, path) {
   const exists = path.split('.').reduce((out, prop) => {
     if (out !== undefined && out[prop] !== undefined) {
       return out[prop]
-    } 
+    }
   }, obj)
 
   return exists !== undefined
@@ -134,7 +135,7 @@ const register = {
       if (ctx[emitEvt] !== undefined) {
         if (dataT !== undefined) {
           Object.entries(dataT).forEach(([key, val]) => {
-            ctx.$set(ctx[emitEvt], key, val)  
+            ctx.$set(ctx[emitEvt], key, val)
           })
           debug('Initialized data for', emitEvt, dataT)
         }
@@ -145,22 +146,32 @@ const register = {
       ctx[fn] = (fnArgs) => {
         const { label: apiLabel, ack, ...args } = fnArgs || {}
         return new Promise(async (resolve, reject) => {
-          const timerObj = {}
           const label = apiLabel || api.label
           const msg = Object.keys(args).length > 0 ? args : { ...ctx[emitEvt] }
           msg.method = fn
           if (ack) {
-            const ackd = await store.dispatch('$nuxtSocket/emit', { label, socket, evt: emitEvt, msg })
+            const ackd = await store.dispatch('$nuxtSocket/emit', {
+              label,
+              socket,
+              evt: emitEvt,
+              msg
+            })
             resolve(ackd)
           } else {
-            store.dispatch('$nuxtSocket/emit', { label, socket, evt: emitEvt, msg, noAck: true })
+            store.dispatch('$nuxtSocket/emit', {
+              label,
+              socket,
+              evt: emitEvt,
+              msg,
+              noAck: true
+            })
             resolve()
           }
         })
       }
       debug('Registered clientAPI method', fn)
     })
-  },  
+  },
   clientApiMethods({ ctx, socket, api }) {
     const { methods } = api
     const evts = Object.assign({}, methods, { getAPI: {} })
@@ -176,24 +187,24 @@ const register = {
           msg.method = evt
           const resp = await ctx[evt](msg)
           if (cb) cb(resp)
-        } else {
-          if (cb) {
-            cb({
-              emitErr: 'notImplemented',
-              msg: `Client has not yet implemented method (${evt})`
-            })
-          }
-        } 
+        } else if (cb) {
+          cb({
+            emitErr: 'notImplemented',
+            msg: `Client has not yet implemented method (${evt})`
+          })
+        }
       })
 
-      debug(`registered client api method ${evt}`)      
+      debug(`registered client api method ${evt}`)
       if (evt !== 'getAPI' && ctx[evt] === undefined) {
-        warn(`client api method ${evt} has not been defined. ` +
-            `Either update the client api or define the method so it can be used by callers`)
+        warn(
+          `client api method ${evt} has not been defined. ` +
+            `Either update the client api or define the method so it can be used by callers`
+        )
       }
     })
   },
-  async clientAPI({ ctx, store, socket, clientAPI }){
+  clientAPI({ ctx, store, socket, clientAPI }) {
     if (clientAPI.methods) {
       register.clientApiMethods({ ctx, socket, api: clientAPI })
     }
@@ -245,21 +256,13 @@ const register = {
         }
 
         if (cb) {
-          cb({ ack: 'ok' })          
+          cb({ ack: 'ok' })
         }
       })
       debug(`Registered listener for ${evt} on ${label}`)
     })
   },
-  serverApiMethods({
-    ctx,
-    socket,
-    store,
-    api,
-    label,
-    ioApiProp,
-    ioDataProp
-  }) {
+  serverApiMethods({ ctx, socket, store, api, label, ioApiProp, ioDataProp }) {
     Object.entries(api.methods).forEach(([fn, schema]) => {
       const { msg: msgT, resp: respT } = schema
       if (ctx[ioDataProp][fn] === undefined) {
@@ -279,14 +282,20 @@ const register = {
 
       ctx[ioApiProp][fn] = (args) => {
         return new Promise(async (resolve, reject) => {
-          const timerObj = {}
           const emitEvt = fn
           const msg = args !== undefined ? args : { ...ctx[ioDataProp][fn].msg }
           debug(`${ioApiProp}:${label}: Emitting ${emitEvt} with ${msg}`)
-          const resp = await store.dispatch('$nuxtSocket/emit', { label, socket, evt: emitEvt, msg })
+          const resp = await store.dispatch('$nuxtSocket/emit', {
+            label,
+            socket,
+            evt: emitEvt,
+            msg
+          })
           if (respT === undefined) {
-            warn(`resp not defined on schema for ${fn}. Assigning response as "any" object to ${ioDataProp}`)
-          } 
+            warn(
+              `resp not defined on schema for ${fn}. Assigning response as "any" object to ${ioDataProp}`
+            )
+          }
           ctx[ioDataProp][fn].resp = resp
           resolve(resp)
         })
@@ -307,33 +316,32 @@ const register = {
     if (ctx[ioApiProp] === undefined) {
       consola.error(
         `[nuxt-socket-io]: ${ioApiProp} needs to be defined in the current context for ` +
-        `serverAPI registration (vue requirement)`
+          `serverAPI registration (vue requirement)`
       )
       return
     }
 
-    let apiLabel = serverAPI.label || label
+    const apiLabel = serverAPI.label || label
     debug('register api for', apiLabel)
     const api = store.state.$nuxtSocket.ioApis[apiLabel] || {}
-    const fetchedApi = await store.dispatch('$nuxtSocket/emit', { 
-      label: apiLabel, 
-      socket, 
+    const fetchedApi = await store.dispatch('$nuxtSocket/emit', {
+      label: apiLabel,
+      socket,
       evt: serverAPI.evt || 'getAPI',
       msg: serverAPI.data || {}
     })
-    
-    const isPeer = (clientAPI.label === fetchedApi.label) 
-      && (parseFloat(clientAPI.version) === parseFloat(fetchedApi.version))
+
+    const isPeer =
+      clientAPI.label === fetchedApi.label &&
+      parseFloat(clientAPI.version) === parseFloat(fetchedApi.version)
     if (isPeer) {
       Object.assign(api, clientAPI)
       store.commit('$nuxtSocket/SET_API', { label: apiLabel, api })
       debug(`api for ${apiLabel} registered`, api)
-    } else {
-      if (parseFloat(api.version) !== parseFloat(fetchedApi.version)) {
-        Object.assign(api, fetchedApi)
-        store.commit('$nuxtSocket/SET_API', { label: apiLabel, api })
-        debug(`api for ${apiLabel} registered`, api)
-      }
+    } else if (parseFloat(api.version) !== parseFloat(fetchedApi.version)) {
+      Object.assign(api, fetchedApi)
+      store.commit('$nuxtSocket/SET_API', { label: apiLabel, api })
+      debug(`api for ${apiLabel} registered`, api)
     }
 
     ctx.$set(ctx, ioApiProp, api)
@@ -365,7 +373,7 @@ const register = {
       })
       debug(`registered evts for ${label} to ${ioApiProp}`)
     }
-    
+
     ctx[ioApiProp].ready = true
     debug('ioApi', ctx[ioApiProp])
   },
@@ -574,7 +582,7 @@ const register = {
           clientApis: {},
           ioApis: {},
           sockets: {},
-          emitErrors: {}, // TBD: in docs, mention this is fixed (we can't change once in vuex)
+          emitErrors: {},
           emitTimeouts: {}
         },
         mutations: {
@@ -607,7 +615,10 @@ const register = {
           }
         },
         actions: {
-          emit({ state, commit }, { label, socket, evt, msg, emitTimeout, noAck }) {
+          emit(
+            { state, commit },
+            { label, socket, evt, msg, emitTimeout, noAck }
+          ) {
             debug('$nuxtSocket vuex action "emit" dispatched', label, evt)
             return new Promise((resolve, reject) => {
               const _socket = socket || state.sockets[label]
@@ -655,7 +666,7 @@ const register = {
               if (noAck) {
                 resolve()
               }
-              
+
               if (_emitTimeout) {
                 debug(`registering emitTimeout ${_emitTimeout} ms for ${evt}`)
                 timer = setTimeout(() => {
@@ -778,8 +789,6 @@ function nuxtSocket(ioOpts) {
     emitErrorsProp = 'emitErrors',
     ioApiProp = 'ioApi',
     ioDataProp = 'ioData',
-    peerApiProp = 'peerApi',
-    peerDataProp = 'peerData',
     apiIgnoreEvts = [],
     serverAPI,
     clientAPI,
@@ -836,9 +845,10 @@ function nuxtSocket(ioOpts) {
   const { vuex: vuexOpts, namespaces } = useSocket
 
   let socket
-  const label = (persist && typeof persist === 'string') 
-    ? persist
-    : `${useSocket.name}${channel}`
+  const label =
+    persist && typeof persist === 'string'
+      ? persist
+      : `${useSocket.name}${channel}`
 
   if (!store.state.$nuxtSocket) {
     debug('vuex store $nuxtSocket does not exist....registering it')
@@ -900,7 +910,7 @@ function nuxtSocket(ioOpts) {
       emitTimeout,
       emitErrorsProp,
       serverAPI,
-      clientAPI // TBD
+      clientAPI
     })
   }
 
