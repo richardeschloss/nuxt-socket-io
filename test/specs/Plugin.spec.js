@@ -7,11 +7,51 @@ import { compileAndImportPlugin } from '@/test/utils'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
 
 const { io } = config
-const state = indexState()
-state.examples = examplesState()
-state.examples.__ob__ = ''
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
+function socketConnected(socket) {
+  return new Promise((resolve) => {
+    socket.on('connect', resolve)
+  })
+}
+
+const ChatMsg = {
+  date: new Date(),
+  from: '',
+  to: '',
+  text: ''
+}
+
+const clientAPI = {
+  label: 'ioApi_page',
+  version: 1.31,
+  evts: {
+    undefApiData: {},
+    undefEvt: {},
+    warnings: {
+      data: {
+        lostSignal: false,
+        battery: 0
+      }
+    }
+  },
+  methods: {
+    undefMethod: {},
+    receiveMsg: {
+      msg: ChatMsg,
+      resp: {
+        status: ''
+      }
+    }
+  }
+}
 
 function parseEntry(entry, entryType) {
   let evt, mapTo, pre, body, post, emitEvt, msgLabel
@@ -65,24 +105,88 @@ function Callees({ t, callItems = [], context }) {
   return svc
 }
 
+function $set(obj, prop, val) {
+  if (obj[prop] === undefined) {
+    obj[prop] = {}
+  }
+  if (typeof val === 'object') {
+    Object.assign(obj[prop], val)
+  } else {
+    Object.assign(obj, { [prop]: val })
+  }
+}
+
 function loadPlugin({
   t,
+  state,
+  mutations = {},
+  actions = {},
   context = {},
   ioOpts = {},
   plugin = Plugin,
-  callCnt = { storeWatch: 0, storeCommit: 0, storeDispatch: 0 }
+  callCnt = {
+    storeWatch: 0,
+    storeCommit: 0,
+    storeDispatch: 0,
+    registerModule: 0
+  }
 }) {
   if (!context.$on) {
     context.$on = function(evt, cb) {}
   }
 
+  if (!state) {
+    state = indexState()
+    state.examples = examplesState()
+    state.examples.__ob__ = ''
+  }
+
   return new Promise((resolve, reject) => {
+    context.$set = $set
     context.$store = {
-      commit: (msg) => {
-        callCnt.storeCommit++
+      registerModule(moduleName, storeCfg, options) {
+        const { namespaced, state, mutations, actions } = storeCfg
+        callCnt.registerModule++
+        t.true(namespaced)
+        t.is(moduleName, '$nuxtSocket')
+        context.$store.state.$nuxtSocket = Object.assign({}, state)
+        context.$store.mutations.$nuxtSocket = Object.assign({}, mutations)
+        context.$store.actions.$nuxtSocket = Object.assign({}, actions)
       },
-      dispatch: (msg) => {
+      state,
+      mutations,
+      actions,
+      commit(label, msg) {
+        callCnt.storeCommit++
+        if (callCnt['storeCommit_' + label] !== undefined) {
+          callCnt['storeCommit_' + label]++
+        }
+
+        if (label.includes('$nuxtSocket') || label === 'SET_EMIT_ERRORS') {
+          const state = context.$store.state.$nuxtSocket
+          const mutations = context.$store.mutations.$nuxtSocket
+          const props = label.split('/')
+          const fn = props.length > 1 ? props[1] : props[0]
+          if (mutations[fn]) {
+            mutations[fn](state, msg)
+          }
+        }
+      },
+      async dispatch(label, msg) {
         callCnt.storeDispatch++
+        if (callCnt['storeDispatch_' + label] !== undefined) {
+          callCnt['storeDispatch_' + label]++
+        }
+        if (label.includes('$nuxtSocket')) {
+          const { commit } = context.$store
+          const state = context.$store.state.$nuxtSocket
+          const actions = context.$store.actions.$nuxtSocket
+          const fn = label.split('/')[1]
+          if (actions[fn]) {
+            const resp = await actions[fn]({ state, commit }, msg)
+            return resp
+          }
+        }
       },
       watch: (stateCb, dataCb) => {
         callCnt.storeWatch++
@@ -161,7 +265,7 @@ async function testNamespace({
 
   return new Promise((resolve, reject) => {
     if (emitters.length === 0 || listeners.constructor.name !== 'Array') {
-      resolve()
+      resolve(socket)
     }
     let doneCnt = 0
     emitters.forEach((entry) => {
@@ -221,6 +325,444 @@ async function testVuexOpts({
   })
   return socket
 }
+
+test('$nuxtSocket vuex module registration', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const state = {}
+  const callCnt = { registerModule: 0 }
+  await loadPlugin({ t, context, state, callCnt })
+  await loadPlugin({ t, context, state, callCnt })
+  t.is(callCnt.registerModule, 1)
+})
+
+test('$nuxtSocket vuex module (emit action; error conditions)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const state = {}
+  const mutations = {}
+  const actions = {}
+  const ioOpts = {
+    channel: '/dynamic',
+    persist: true
+  }
+  const socket = await loadPlugin({
+    t,
+    context,
+    ioOpts,
+    state,
+    mutations,
+    actions
+  })
+  await context.$store
+    .dispatch('$nuxtSocket/emit', {
+      evt: 'getAPI'
+    })
+    .catch((err) => {
+      t.is(
+        err.message,
+        'socket instance required. Please provide a valid socket label or socket instance'
+      )
+    })
+
+  await context.$store
+    .dispatch('$nuxtSocket/emit', {
+      evt: 'getAPIxyz',
+      label: 'home/dynamic',
+      emitTimeout: 500
+    })
+    .catch((err) => {
+      t.is(err.message, 'emitTimeout')
+    })
+
+  await context.$store
+    .dispatch('$nuxtSocket/emit', {
+      evt: 'getAPIxyz',
+      socket,
+      emitTimeout: 500
+    })
+    .catch((err) => {
+      const json = JSON.parse(err.message)
+      t.is(json.message, 'emitTimeout')
+    })
+
+  state.$nuxtSocket.emitErrors['home/dynamic'].badRequest = []
+  await context.$store
+    .dispatch('$nuxtSocket/emit', {
+      evt: 'badRequest',
+      socket
+    })
+    .catch((err) => {
+      const json = JSON.parse(err.message)
+      t.is(json.message, 'badRequest')
+    })
+
+  await context.$store.dispatch('$nuxtSocket/emit', {
+    evt: 'badRequest',
+    label: 'home/dynamic'
+  })
+
+  t.truthy(state.$nuxtSocket.emitErrors['home/dynamic'])
+  t.true(state.$nuxtSocket.emitErrors['home/dynamic'].badRequest.length > 0)
+  t.is(
+    state.$nuxtSocket.emitErrors['home/dynamic'].badRequest[0].message,
+    'badRequest'
+  )
+})
+
+test('socket persistence (enabled)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const state = {}
+  const ioOpts = { persist: true, teardown: false, channel: '/dynamic' }
+  const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
+  const socket1 = await loadPlugin({ t, context, ioOpts, state })
+  await socketConnected(socket1)
+  t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
+  const socket2 = await loadPlugin({ t, context, ioOpts, state })
+  t.is(socket1.id, socket2.id)
+})
+
+test('socket persistence (enabled; use provided label)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const state = {}
+  const ioOpts = { persist: 'mySocket', teardown: false, channel: '/dynamic' }
+  const label = ioOpts.persist
+  const socket1 = await loadPlugin({ t, context, ioOpts, state })
+  await socketConnected(socket1)
+  t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
+  const socket2 = await loadPlugin({ t, context, ioOpts, state })
+  t.is(socket1.id, socket2.id)
+})
+
+test('socket persistence (enabled; reconnect only if disconnected)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const state = {}
+  const ioOpts = { persist: true, teardown: false, channel: '/dynamic' }
+  const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
+  const socket1 = await loadPlugin({ t, context, ioOpts, state })
+  const socket2 = await loadPlugin({ t, context, ioOpts, state })
+  t.truthy(context.$store.state.$nuxtSocket.sockets[label])
+  await socketConnected(socket1)
+  await socketConnected(socket2)
+  t.true(socket1.id !== socket2.id)
+})
+
+test('socket persistence (disabled)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {}
+  const ioOpts = { persist: false, channel: '/dynamic' }
+  await loadPlugin({ t, context, ioOpts })
+  const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
+  t.falsy(context.$store.state.$nuxtSocket.sockets[label])
+})
+
+test('Api registration (server)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const callCnt = {
+    'storeCommit_$nuxtSocket/SET_API': 0
+  }
+  const state = {}
+  const actions = {}
+  const context = {
+    ioApi: {},
+    ioData: {}
+  }
+  const ioOpts = {
+    channel: '/dynamic',
+    serverAPI: {},
+    apiIgnoreEvts: ['ignoreMe']
+  }
+
+  const socket1 = await loadPlugin({
+    t,
+    context,
+    ioOpts,
+    callCnt,
+    state,
+    actions
+  })
+  console.log('creating a duplicate listener to see if plugin handles it')
+  socket1.on('itemRxd', () => {})
+  await delay(500)
+  t.true(context.ioApi.ready)
+  console.log('Attempt to re-use api...')
+  await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  await delay(500)
+  t.true(context.ioApi.ready)
+  t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
+  const items = await context.ioApi.getItems()
+  const item1 = await context.ioApi.getItem({ id: 'abc123' })
+  Object.assign(context.ioData.getItem.msg, { id: 'something' })
+  const item2 = await context.ioApi.getItem()
+  const noResp = await context.ioApi.noResp()
+  t.true(items.length > 0)
+  t.is(item1.id, 'abc123')
+  t.is(item2.id, 'something')
+  Object.keys(context.ioApi.evts).forEach((evt) => {
+    if (!ioOpts.apiIgnoreEvts.includes(evt)) {
+      t.true(socket1.hasListeners(evt))
+    } else {
+      t.false(socket1.hasListeners(evt))
+    }
+  })
+  t.true(Object.keys(noResp).length === 0)
+})
+
+test('Api registration (server, ioApi not defined)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  const context = {}
+  const ioOpts = {
+    channel: '/dynamic',
+    serverAPI: {}
+  }
+
+  await loadPlugin({ t, context, ioOpts })
+  await delay(500)
+  t.falsy(context.ioApi)
+})
+
+test('Api registration (server, methods and evts not defined)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const callCnt = {
+    'storeCommit_$nuxtSocket/SET_API': 0
+  }
+  const state = {}
+  const actions = {}
+  const context = {
+    ioApi: {},
+    ioData: {}
+  }
+  const ioOpts = {
+    channel: '/p2p',
+    serverAPI: {}
+  }
+
+  await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  await delay(500)
+  t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
+  t.falsy(context.ioApi.evts)
+  t.falsy(context.ioApi.methods)
+  t.true(context.ioApi.ready)
+})
+
+test('Api registration (server, methods and evts not defined, but is peer)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const callCnt = {
+    'storeCommit_$nuxtSocket/SET_API': 0
+  }
+  const state = {}
+  const actions = {}
+  const context = {
+    ioApi: {},
+    ioData: {}
+  }
+  const ioOpts = {
+    channel: '/p2p',
+    serverAPI: {},
+    clientAPI
+  }
+
+  await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  await delay(500)
+  t.is(callCnt['storeCommit_$nuxtSocket/SET_API'], 1)
+  const props = ['evts', 'methods']
+  props.forEach((prop) => {
+    const clientProps = Object.keys(clientAPI[prop])
+    const serverProps = Object.keys(context.ioApi[prop])
+    clientProps.forEach((cProp) => {
+      t.true(serverProps.includes(cProp))
+    })
+  })
+  t.true(context.ioApi.ready)
+})
+
+test('Api registration (client, methods and evts not defined)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const callCnt = {
+    'storeCommit_$nuxtSocket/SET_CLIENT_API': 0
+  }
+  const state = {}
+  const actions = {}
+  const context = {}
+  const ioOpts = {
+    channel: '/p2p',
+    clientAPI: {}
+  }
+
+  await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  t.is(callCnt['storeCommit_$nuxtSocket/SET_CLIENT_API'], 1)
+  t.falsy(context.receiveMsg)
+})
+
+test('Api registration (client, methods and evts defined)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const callCnt = {
+    'storeCommit_$nuxtSocket/SET_CLIENT_API': 0,
+    receiveMsg: 0
+  }
+  const state = {}
+  const mutations = {}
+  const actions = {}
+  const context = {
+    undefApiData: {},
+    warnings: {},
+    receiveMsg(msg) {
+      callCnt.receiveMsg++
+      return Promise.resolve({
+        status: 'ok'
+      })
+    }
+  }
+  const ioOpts = {
+    channel: '/p2p',
+    persist: true,
+    serverAPI: {},
+    clientAPI
+  }
+
+  const socket = await loadPlugin({
+    t,
+    context,
+    ioOpts,
+    callCnt,
+    state,
+    mutations,
+    actions
+  })
+  t.is(callCnt['storeCommit_$nuxtSocket/SET_CLIENT_API'], 1)
+  await context.$store.dispatch('$nuxtSocket/emit', {
+    evt: 'sendEvts',
+    msg: {},
+    socket
+  })
+  t.is(callCnt.receiveMsg, 2)
+  Object.keys(clientAPI.evts.warnings.data).forEach((prop) => {
+    t.true(context.warnings[prop] !== undefined)
+  })
+  context.warnings.battery = 11
+
+  const resp = await context.warningsEmit()
+  const resp2 = await context.warningsEmit({ ack: true })
+  const resp3 = await context.warningsEmit({ ack: true, battery: 22 })
+  t.falsy(resp)
+  t.truthy(resp2)
+  t.is(resp2.battery, context.warnings.battery)
+  t.is(resp3.battery, 22)
+
+  console.log(
+    'load plugin again, verify that events have already been registered'
+  )
+  await loadPlugin({ t, context, ioOpts, callCnt, state, mutations, actions })
+})
 
 test('Socket plugin (empty options)', async (t) => {
   const testCfg = { sockets: [] }
