@@ -10,6 +10,12 @@ const { io } = config
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
 
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
 const ChatMsg = {
   date: new Date(),
   from: '',
@@ -21,6 +27,8 @@ const clientAPI = {
   label: 'ioApi_page',
   version: 1.31,
   evts: {
+    undefApiData: {},
+    undefEvt: {},
     warnings: {
       data: {
         lostSignal: false,
@@ -29,6 +37,7 @@ const clientAPI = {
     }
   },
   methods: {
+    undefMethod: {},
     receiveMsg: {
       msg: ChatMsg,
       resp: {
@@ -604,6 +613,92 @@ test('Api registration (server, methods and evts not defined, but is peer)', asy
       resolve()
     }, 500)
   })
+})
+
+test('Api registration (client, methods and evts not defined)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+  
+  pOptions.set(testCfg)
+  const callCnt = {
+    'storeCommit_$nuxtSocket/SET_CLIENT_API': 0
+  }
+  const state = {}
+  const actions = {}
+  const context = {}
+  const ioOpts = {
+    channel: '/p2p',
+    clientAPI: {}
+  }
+
+  await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
+  t.is(callCnt['storeCommit_$nuxtSocket/SET_CLIENT_API'], 1)
+  t.falsy(context.receiveMsg)  
+})
+
+test('Api registration (client, methods and evts defined)', async (t) => {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+  
+  pOptions.set(testCfg)
+  const callCnt = {
+    'storeCommit_$nuxtSocket/SET_CLIENT_API': 0,
+    receiveMsg: 0
+  }
+  const state = {}
+  const mutations = {}
+  const actions = {}
+  const context = {
+    undefApiData: {},
+    warnings: {},
+    receiveMsg(msg) {
+      callCnt.receiveMsg++
+      return Promise.resolve({
+        status: 'ok'
+      })
+    }
+  }
+  const ioOpts = {
+    channel: '/p2p',
+    persist: true,
+    serverAPI: {},
+    clientAPI
+  }
+
+  const socket = await loadPlugin({ t, context, ioOpts, callCnt, state, mutations, actions })
+  t.is(callCnt['storeCommit_$nuxtSocket/SET_CLIENT_API'], 1)
+  await context.$store.dispatch(
+    '$nuxtSocket/emit', 
+    { evt: 'sendEvts', msg: {}, socket }
+  )
+  t.is(callCnt.receiveMsg, 2)
+  Object.keys(clientAPI.evts.warnings.data).forEach((prop) => {
+    t.true(context.warnings[prop] !== undefined)
+  })
+  context.warnings.battery = 11
+
+  const resp = await context.warningsEmit()
+  const resp2 = await context.warningsEmit({ ack: true })
+  const resp3 = await context.warningsEmit({ ack: true, battery: 22 })
+  t.falsy(resp)
+  t.truthy(resp2)
+  t.is(resp2.battery, context.warnings.battery)
+  t.is(resp3.battery, 22)
+
+  console.log('load plugin again, verify that events have already been registered')
+  await loadPlugin({ t, context, ioOpts, callCnt, state, mutations, actions })
 })
 
 /* --- */

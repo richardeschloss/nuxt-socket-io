@@ -129,7 +129,7 @@ const register = {
   clientApiEvents({ ctx, store, socket, api }) {
     const { evts } = api
     Object.entries(evts).forEach(([emitEvt, schema]) => {
-      const { data: dataT, ack: ackT } = schema
+      const { data: dataT } = schema
       const fn = emitEvt + 'Emit'
       if (ctx[emitEvt] !== undefined) {
         if (dataT !== undefined) {
@@ -142,12 +142,13 @@ const register = {
 
       if (ctx[fn] !== undefined) return
 
-      ctx[fn] = ({ label: apiLabel, ack: apiAck, ...args }) => {
+      ctx[fn] = (fnArgs) => {
+        const { label: apiLabel, ack, ...args } = fnArgs || {}
         return new Promise(async (resolve, reject) => {
           const timerObj = {}
-          const ack = apiAck || ackT
           const label = apiLabel || api.label
           const msg = Object.keys(args).length > 0 ? args : { ...ctx[emitEvt] }
+          msg.method = fn
           if (ack) {
             const ackd = await store.dispatch('$nuxtSocket/emit', { label, socket, evt: emitEvt, msg })
             resolve(ackd)
@@ -159,7 +160,6 @@ const register = {
       }
       debug('Registered clientAPI method', fn)
     })
-    
   },  
   clientApiMethods({ ctx, socket, api }) {
     const { methods } = api
@@ -173,13 +173,14 @@ const register = {
         if (evt === 'getAPI') {
           if (cb) cb(api)
         } else if (ctx[evt] !== undefined) {
+          msg.method = evt
           const resp = await ctx[evt](msg)
           if (cb) cb(resp)
         } else {
           if (cb) {
             cb({
               emitErr: 'notImplemented',
-              msg: 'Client has not yet implemented method (yet)'
+              msg: `Client has not yet implemented method (${evt})`
             })
           }
         } 
@@ -187,8 +188,8 @@ const register = {
 
       debug(`registered client api method ${evt}`)      
       if (evt !== 'getAPI' && ctx[evt] === undefined) {
-        warn(`client api method ${evt} has not been defined. \
-            Either update the client api or define the method so it can be used by callers`)
+        warn(`client api method ${evt} has not been defined. ` +
+            `Either update the client api or define the method so it can be used by callers`)
       }
     })
   },
@@ -581,7 +582,7 @@ const register = {
             state.ioApis[label] = api
           },
 
-          SET_CLIENT_API(state, { label, ...api }) {
+          SET_CLIENT_API(state, { label = 'clientAPI', ...api }) {
             state.clientApis[label] = api
           },
 
