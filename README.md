@@ -446,6 +446,70 @@ methods: {
 Then, when errors occur, one of the following outcomes will occur. If you provided a *label*, the error will simply get logged to either "emitTimeouts" or "emitErrors", depending on whether or not the error was timeout or non-timeout related. If you only provided a socket instance but no label, the action's promise will reject with the error, and it will be up to you to catch and handle. At any time you need to inspect the errors, the easiest way is to use Vue dev tools, and inspect vuex (and inspect the $nuxtSocket module)
 
 
+# Socket Persistence [↑](#nuxt-socket-io)
+
+As of v1.0.22, there is now a means to persist instantiated sockets, as was mentionned in the previous section, using the "persist" option. The "persist" option can be either a boolean or a string, where if it is a string, that string will be used as the label for that socket. Every other part of your app would reference that label to reuse the socket.
+
+If the value provided is a boolean and set to `true`, then the plugin will automatically create the label "[socketname][namespace]" for you. Below are examples, assuming the following nuxt config:
+
+nuxt.config:
+
+```
+io: {
+  sockets: [{
+    url: 'http://localhost:3000' // This is the default socket with name "dflt" because it's the first entry
+  }, {
+    name: 'home',
+    url: 'http://localhost:4000'
+  }]
+}
+```
+
+* If persist is set to `true`:
+```
+this.socket1 = this.$nuxtSocket({
+  persist: true // This will be persisted with label "dflt" (no name or channel specified)
+})
+
+this.socket2 = this.$nuxtSocket({
+  namespace: '/examples'
+  persist: true // This will be persisted with label "dflt/examples" (no name specified)
+})
+
+this.socket3 = this.$nuxtSocket({
+  name: 'home',
+  namespace: '/examples'
+  persist: true // This will be persisted with label "home/examples" (both name and channel specified)
+})
+```
+
+* If persist is set to a *string*:
+```
+this.mySocket = this.$nuxtSocket({
+  persist: 'mySocket' // This will be persisted with label "mySocket". It will use the default socket
+})
+```
+
+Then, at any time to re-use those sockets, you access them from Vuex using the corresponding labels:
+
+```
+var reusedSocket = this.$store.state.$nuxtSocket.mySocket // Re-use "mySocket"
+```
+
+It should be noted that by *enabling* persistence, the *teardown* feature will be disabled because it is assumed you want to re-use the socket. You will be responsible for the teardown steps where you feel it's appropriate. If you still desire the auto teardown feature, you can pass true to the "teardown" option and it will be respected.
+
+Examples:
+```
+this.socket1 = this.$nuxtSocket({
+  persist: true // Socket will be persisted, teardown disabled
+})
+
+this.socket2 = this.$nuxtSocket({
+  persist: true, // Socket will be persisted...but...
+  teardown: true // ...explicitly setting teardown will override the default behavior
+})
+```
+
 ## Build Setup [↑](#nuxt-socket-io)
 
 ```bash
