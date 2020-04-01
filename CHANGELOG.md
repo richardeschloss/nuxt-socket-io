@@ -2,6 +2,16 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.22] - 2020-03-31
+### Added
+- Registration of $nuxtSocket vuex module
+- Persistence of a given socket (using the "persist" option)
+- Registration of serverAPI methods and events, with loose peer-detection
+- Registration of clientAPI methods and events
+
+### Changed
+- Default value of "teardown" option. Previous versions had it default to true. Now it defaults to the *opposite* of the "persist" value (persist defaults to false, therefore teardown to true, just like before) 
+
 ## [1.0.21] - 2020-03-17
 ### Added
 - Pre-emit hook validation feature for emitbacks; if validation fails, emit event won't be sent.
