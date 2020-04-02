@@ -510,6 +510,77 @@ this.socket2 = this.$nuxtSocket({
 })
 ```
 
+## Dynamic API Overview [↑](#nuxt-socket-io)
+
+Before diving into the server and client API registration features, it is necessary to understand what both sides would need to do in order for these features to work. My article ["Rethinking Web APIs to be Dynamic and Run-Time Adaptable"](https://medium.com/javascript-in-plain-english/re-thinking-web-apis-to-be-dynamic-and-run-time-adaptable-a1e9fb43cc4) contains more of an introduction and perhaps may contain more complete information. 
+
+The nuxt-socket-io plugin expects both the IO client and server to use what I call "The KISS API Format" (KISS: "Keep it Stupid Simple"). It looks like this:
+
+![Alt Text](https://dev-to-uploads.s3.amazonaws.com/i/st30bm3j8fya7ye3b7zh.png)
+
+At the highest level, the format is simple: each IO node specifies it's label and version. If a given node communicating presents the same label and version as another node, it can be considered a *peer*, at which point, that node would not need any extra information. Peers already know each others abilities. Nodes that are not peers, however, *would* require more information: supported events and methods. (NOTE: the focus of this discussion is the IO model. A separate security model could possibly be implemented to help validate that IO nodes are who they say they are)
+
+If any of the nodes evolve, they must update their API, and communicate this new API with an updated version. Then, an IO node receiving this information can choose to update its API cache if it detects a version mismatch.
+
+If a label is not specified, the client will just have to rely on it's own alias to use for that API. Since the client *already knows* the domain, port, and namespace it is communicating with, it can be a straightforward manner for it to create whatever aliases it wants (e.g., `apis['localhost:8080/chatRoom']`). If a version is not specified, the client will always have to always assume a version mismatch and request the full API payload at the start of each new connection; i.e., the client won't be able to rely on or take advantage of an API cache. Therefore, while versioning is optional, it is highly recommended.
+
+Each node can have its own set of events and methods. "evts" means the node will *emit* those events, while "methods" means the node will *listen* for those events (and run its own methods of the same names, respectively).
+
+## KISS: The "evts" format
+
+Let's drill-down to the "evts" format, to see what it can look like: (again, must fit on a Post-it®)
+
+![Alt Text](https://dev-to-uploads.s3.amazonaws.com/i/xe7d35c4gtm663qbn981.png)
+
+Here, the "evts" will take the following form: A JSON *object* where the object properties are the event names, whose corresponding values are also optional JSON objects, but highly recommended. This makes it easy to write multiple events and keep things organized by event.
+
+Each event name points to a JSON object containing the following optional, but highly recommended, properties:
+  * **methods**: an *array* of strings, each string represents the method name emitting that event. This makes it easy for the receiver to organize event data by method name, in case different methods emit the same event. If omitted, the receiver would have to cache the emitted data in a more general, less organized, way.
+  * **data**: the schema that the client can expect to receive and use to validate incoming data. It is recommended that default values are used in the schema, since those values also indicate the data *type* (in Javascript, `typeof (variable)` tells us the type for primitives). This makes for simpler and more readable code, in my opinion.
+  * **ack**: a boolean indicating whether or not the emitted event expects to be acknowledged. (This may or may not be needed, to be explained in a follow up article. It may be useful to know however, if code is blocking while waiting for an ack, when an ack will never get sent).
+
+### KISS: An example using "evts" format
+
+![Alt Text](https://dev-to-uploads.s3.amazonaws.com/i/9dvf86v2p6m5qre7i3ex.png)
+
+In this example, this API has label "mainServer" and is at version 1.02. It will emit the events "itemRxd" and "msgRxd". A client can expect that the methods emitting "itemRxd" will either be "getItems", "toBeAdded" or neither. It's up to the server to still specify the method that emitted that event so that the client can organize its data correctly. When the server emits "itemRxd", the client can expect the data JSON to contain "progress", which is specified as type Number (defaulted to 0), and the "item", which is specified as type Any (and defaulted to an empty object). In this way, both the *type* and the *default value* are represented in a simple and compact way. As time goes on, the server may wish to make "item" of type "Item", instead of "Any", to help the client validate each item (ex: Item schema = { name: '', description: '', unitCost: '' }). 
+
+Here is an example:
+
+```
+function getItems(msg){
+  socket.emit(
+    'itemRxd', // event: 'itemRxd'
+    { 
+      method: 'getItems', // specify the method so the client can organize it.
+      data: { 
+        progress: 0.25 // getItems method is 25% complete, notify the client...
+        item: { name: 'milk' } 
+      }
+    }
+}
+```
+
+The other event is "msgRxd". This entry doesn't specify any method, only the schema for the data. The client can expect to receive the "date" and the "msg". Since no methods are specified, the client can expect the event to come from any or all methods on the server.
+
+## KISS: The "methods" format
+
+While the "evts" container describes the *output* of a given node, the "methods* describe the *input* to that node, and what the corresponding response can be. This is what the format can look like: 
+
+![Alt Text](https://dev-to-uploads.s3.amazonaws.com/i/t0aieqmnbjpl9pugimv4.png)
+
+The format is a JSON object, where the properties represent the supported method names. Each method name points to a corresponding JSON object, which describes:
+* **msg**: the message schema that the receiving node expects (a "msg" JSON object)
+* **resp**: the response schema the node expects to respond with, if any. If the response specifies a schema surrounded by square brackets, that specifies an Array of that schema. 
+
+One potential benefit of providing these schemas in real-time could be automatic UI creation; that is, certain types could help determine what UI elements are best suited for those types, especially if the types are primitives. For example, if a given msg schema specifies String and Number types, the String types could translate to `<input type="text" />` while Number types could translate to `<input type="number" />`. Entire form controls can probably be created on-the-fly in this manner. Likewise textual responses can probably be attached to `<div class="resp"></div>` elements. Styling could still largely be handled by CSS.
+
+### KISS: An example using "methods" format
+
+![Alt Text](https://dev-to-uploads.s3.amazonaws.com/i/n79km3by4s68ampnxasg.png)
+
+In this example, the API specifies two methods, "getItems" and "getItem". The "getItems" does not specify a "msg" schema, so "msg" can be anything (or nothing) because it will be ignored. The method will only return an Array of type "Item". The Item schema is defined as a JSON object of "id", "name", and "desc", all empty strings (type String). The "getItem" method, however, specifies a "msg" schema, a JSON object with a property "id" and format String (defaults to an empty string). When the client calls this method, the server expects that the client will provide an id of the correct type (String). It will respond with type Item.
+
 ## Build Setup [↑](#nuxt-socket-io)
 
 ```bash
