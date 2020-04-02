@@ -526,7 +526,7 @@ If a label is not specified, the client will just have to rely on it's own alias
 
 Each node can have its own set of events and methods. "evts" means the node will *emit* those events, while "methods" means the node will *listen* for those events (and run its own methods of the same names, respectively).
 
-## KISS: The "evts" format
+### KISS: The "evts" format
 
 Let's drill-down to the "evts" format, to see what it can look like: (again, must fit on a Post-it®)
 
@@ -539,7 +539,7 @@ Each event name points to a JSON object containing the following optional, but h
   * **data**: the schema that the client can expect to receive and use to validate incoming data. It is recommended that default values are used in the schema, since those values also indicate the data *type* (in Javascript, `typeof (variable)` tells us the type for primitives). This makes for simpler and more readable code, in my opinion.
   * **ack**: a boolean indicating whether or not the emitted event expects to be acknowledged. (This may or may not be needed, to be explained in a follow up article. It may be useful to know however, if code is blocking while waiting for an ack, when an ack will never get sent).
 
-### KISS: An example using "evts" format
+#### KISS: An example using "evts" format
 
 ![Alt Text](https://dev-to-uploads.s3.amazonaws.com/i/9dvf86v2p6m5qre7i3ex.png)
 
@@ -563,7 +563,7 @@ function getItems(msg){
 
 The other event is "msgRxd". This entry doesn't specify any method, only the schema for the data. The client can expect to receive the "date" and the "msg". Since no methods are specified, the client can expect the event to come from any or all methods on the server.
 
-## KISS: The "methods" format
+### KISS: The "methods" format
 
 While the "evts" container describes the *output* of a given node, the "methods* describe the *input* to that node, and what the corresponding response can be. This is what the format can look like: 
 
@@ -575,11 +575,16 @@ The format is a JSON object, where the properties represent the supported method
 
 One potential benefit of providing these schemas in real-time could be automatic UI creation; that is, certain types could help determine what UI elements are best suited for those types, especially if the types are primitives. For example, if a given msg schema specifies String and Number types, the String types could translate to `<input type="text" />` while Number types could translate to `<input type="number" />`. Entire form controls can probably be created on-the-fly in this manner. Likewise textual responses can probably be attached to `<div class="resp"></div>` elements. Styling could still largely be handled by CSS.
 
-### KISS: An example using "methods" format
+#### KISS: An example using "methods" format
 
 ![Alt Text](https://dev-to-uploads.s3.amazonaws.com/i/n79km3by4s68ampnxasg.png)
 
 In this example, the API specifies two methods, "getItems" and "getItem". The "getItems" does not specify a "msg" schema, so "msg" can be anything (or nothing) because it will be ignored. The method will only return an Array of type "Item". The Item schema is defined as a JSON object of "id", "name", and "desc", all empty strings (type String). The "getItem" method, however, specifies a "msg" schema, a JSON object with a property "id" and format String (defaults to an empty string). When the client calls this method, the server expects that the client will provide an id of the correct type (String). It will respond with type Item.
+
+## Dynamic API Registration (Server) [↑](#nuxt-socket-io)
+
+
+## Dynamic API Registration (Client) [↑](#nuxt-socket-io)
 
 ## Build Setup [↑](#nuxt-socket-io)
 
