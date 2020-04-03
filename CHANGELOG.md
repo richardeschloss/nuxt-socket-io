@@ -2,7 +2,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## [1.0.22] - 2020-03-31
+## [1.0.22] - 2020-04-03
 ### Added
 - Registration of $nuxtSocket vuex module
 - Persistence of a given socket (using the "persist" option)

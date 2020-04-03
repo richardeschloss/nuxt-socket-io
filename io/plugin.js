@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Richard Schloss (https://github.com/richardeschloss/nuxt-socket-io)
+ * Copyright 2020 Richard Schloss (https://github.com/richardeschloss/nuxt-socket-io)
  */
 
 import io from 'socket.io-client'
