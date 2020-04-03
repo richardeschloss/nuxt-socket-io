@@ -470,6 +470,7 @@ io: {
 ```
 
 * If persist is set to `true`:
+
 ```
 this.socket1 = this.$nuxtSocket({
   persist: true // This will be persisted with label "dflt" (no name or channel specified)
@@ -488,6 +489,7 @@ this.socket3 = this.$nuxtSocket({
 ```
 
 * If persist is set to a *string*:
+
 ```
 this.mySocket = this.$nuxtSocket({
   persist: 'mySocket' // This will be persisted with label "mySocket". It will use the default socket
@@ -503,6 +505,7 @@ var reusedSocket = this.$store.state.$nuxtSocket.mySocket // Re-use "mySocket"
 It should be noted that by *enabling* persistence, the *teardown* feature will be disabled because it is assumed you want to re-use the socket. You will be responsible for the teardown steps where you feel it's appropriate. If you still desire the auto teardown feature, you can pass true to the "teardown" option and it will be respected.
 
 Examples:
+
 ```
 this.socket1 = this.$nuxtSocket({
   persist: true // Socket will be persisted, teardown disabled
@@ -513,6 +516,7 @@ this.socket2 = this.$nuxtSocket({
   teardown: true // ...explicitly setting teardown will override the default behavior
 })
 ```
+
 
 ## Dynamic API Overview [↑](#nuxt-socket-io)
 
