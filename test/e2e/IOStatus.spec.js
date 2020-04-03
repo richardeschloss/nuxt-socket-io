@@ -1,5 +1,6 @@
 import test, { beforeEach } from 'ava'
 import { createLocalVue, mount } from '@vue/test-utils'
+import Vuex from 'vuex'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
 import config from '@/nuxt.config'
 import { injectPlugin } from '@/test/utils'
@@ -15,15 +16,21 @@ pOptions.set({
 })
 
 let localVue
+let store
 
 beforeEach(() => {
   localVue = createLocalVue()
+  localVue.use(Vuex)
+  store = new Vuex.Store({
+    state: {}
+  })
 })
 
 test('IO Status Page', async (t) => {
   t.timeout(5000)
   const wrapper = mount(IOStatus, {
     localVue,
+    store,
     stubs: {
       'nuxt-link': true
     },

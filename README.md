@@ -31,9 +31,13 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 7. [Debug Logging](#debug-logging-)
 8. [Console Warnings](#console-warnings-)
 9. [Auto Teardown](#auto-teardown-)
-10. [Build Setup](#build-setup-)
-11. [Testing](#testing-)
-12. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
+10. [$nuxtSocket Vuex Module](#nuxtsocket-vuex-module-)
+11. [Socket Persistence](#socket-persistence-)
+12. [Dynamic API Overview](#dynamic-api-overview-)
+13. [Dynamic API Registration](#dynamic-api-registration-)
+14. [Build Setup](#build-setup-)
+15. [Testing](#testing-)
+16. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
 
@@ -92,7 +96,7 @@ The syntax is as follows:
 
 → The `componentMethod` is auto-created by the plugin and sends the event with the same name. If the `componentMethod` is named "getMessage" it sends the event "getMessage"
 
-→ The `componentProp` is optional, but if entered, will be the property that will get set with the response, if a response comes back. This is optional too, and needs to be initially defined on the component, otherwise it won't get set. Vuejs will also complain if you try to render undefined props. If `componentProp` is omitted from the entry, the arrow "-->" can allso be omitted.
+→ The `componentProp` is optional, but if entered, will be the property that will get set with the response, if a response comes back. This is optional too, and needs to be initially defined on the component, otherwise it won't get set. Vuejs will also complain if you try to render undefined props. If `componentProp` is omitted from the entry, the arrow "-->" can also be omitted.
 
 Note: as of v1.0.12, it is now also possible to call the emitter with an argument. So, if `getMessage` is called with args as `getMessage({ id: 123 })`, the args will be the message that gets sent. Args that are passed in takes priority over the referenced `msg`.
 
@@ -357,6 +361,170 @@ const socket = this.nuxtSocket({ channel: '/index', teardown: false })
 ```
 
 You may want to disable the auto-teardown if you are planning on re-using the socket. However, it should be noted that socket.io-client under the hood will *already* try to re-use a single connection when using different namespaces for the same socket. I personally think it is easier to manage code for the different namespaces and to configure namespaces as described above; i.e., each component gets its own set of "mouths and ears". If your coding style is different and you would still insist on disabling the auto-teardown, then just rememeber it becomes your responsibility to properly removeListeners and perform cleanup.
+
+## $nuxtSocket Vuex Module [↑](#nuxt-socket-io)
+
+As of v1.0.22, the plugin will now register a namespaced Vuex module "$nuxtSocket" if it does not already exist. If planning to use the module, the name "$nuxtSocket" should be considered reserved. Disabling this is discouraged. 
+
+The module will build out the following states which can then be accessed by `$store.state.$nuxtSocket[prop]`, where prop is one of:
+
+1. `clientApis`: contains the client apis for each component See the section on client APIs for more details.
+2. `ioApis`: contains the server apis for each IO server. See the section on server APIs for more details
+3. `sockets`: contains the persisted sockets, if any. See the section on persistence for more details.
+4. `emitErrors`: contains emit errors that have occurred, organized by the socket label, and then by the emit event.
+5. `emitTimeouts`: contains emit timeouts that have occurred, organized by the socket label and then by the emit event.
+
+The mutations are used internally by the plugin and it is advised to avoid committing these mutations yourself. 
+
+The actions registered by the plugin are:
+
+1. `emit`: emits the specified event with a supplied message for a specified socket. This can be useful when you want to re-use the persisted socket throughout the app without having to re-instantiate nuxtSocket. You simply dispatch the "emit" action. 
+
+For example, in one component, you may initialize the nuxtSocket instance:
+
+comp1.vue:
+```
+mounted() {
+  this.socket = this.$nuxtSocket({
+    channel: '/myRoom',
+    persist: 'mySocket', // Persist the socket with label "mySocket"
+  })
+}
+```
+
+Inside that same component, you can dispatch the emit action like:
+```
+methods: {
+  async doStuff() {
+    await this.$store.dispatch(
+      '$nuxtSocket/emit', // Remember, "emit" is namespaced to "$nuxtSocket"
+      {
+        socket: this.socket, // action requires either the socket instance *or* the label
+        // label: 'mySocket', // Use persisted socket "mySocket"
+        evt: 'getStuff',
+        msg: { items: ['Milk', 'Sugar'] }
+      }
+    )
+  }
+}
+```
+
+Alternatively, in another component, you may wish to re-use that socket, and emit events on that connection. To do so, you would simply dispatch the emit event: (and you wouldn't need the socket instance, just the label identifier)
+
+comp2.vue: 
+```
+methods: {
+  async someFunc() {
+    await this.$store.dispatch(
+      '$nuxtSocket/emit', // Remember, "emit" is namespaced to "$nuxtSocket"
+      {
+        label: 'mySocket', // Use persisted socket "mySocket"
+        evt: 'getStuff',
+        msg: { items: ['Milk', 'Sugar'] }
+      }
+    )
+  }
+}
+```
+
+The advantages of doing it this way are: you don't have to re-instantiate the socket, you just use it. Also, the action is promisified, so you can async/await with the action (whereas the `socket.emit` method uses callbacks). And, built-into the "emit" vuex action is error handling for timeouts and other errors, in manner very similar to that described in the "Error Handling" section above.
+
+To handle emit errors, you can specify an `emitTimeout` in the `$nuxtSocket` instance options *or* in the object that gets sent to vuex action:
+
+```
+methods: {
+  async someFunc() {
+    await this.$store.dispatch(
+      '$nuxtSocket/emit', // Remember, "emit" is namespaced to "$nuxtSocket"
+      {
+        label: 'mySocket', // Use persisted socket "mySocket"
+        evt: 'getStuff',
+        msg: { items: ['Milk', 'Sugar'] },
+        emitTimeout: 1000 // Timeout after 1000 ms
+      }
+    )
+  }
+}
+```
+
+Then, when errors occur, one of the following outcomes will occur. If you provided a *label*, the error will simply get logged to either "emitTimeouts" or "emitErrors", depending on whether or not the error was timeout or non-timeout related. If you only provided a socket instance but no label, the action's promise will reject with the error, and it will be up to you to catch and handle. At any time you need to inspect the errors, the easiest way is to use Vue dev tools, and inspect vuex (and inspect the $nuxtSocket module)
+
+
+## Socket Persistence [↑](#nuxt-socket-io)
+
+As of v1.0.22, there is now a means to persist instantiated sockets, as was mentionned in the previous section, using the "persist" option. The "persist" option can be either a boolean or a string, where if it is a string, that string will be used as the label for that socket. Every other part of your app would reference that label to reuse the socket.
+
+If the value provided is a boolean and set to `true`, then the plugin will automatically create the label "[socketname][namespace]" for you. Below are examples, assuming the following nuxt config:
+
+nuxt.config:
+
+```
+io: {
+  sockets: [{
+    url: 'http://localhost:3000' // This is the default socket with name "dflt" because it's the first entry
+  }, {
+    name: 'home',
+    url: 'http://localhost:4000'
+  }]
+}
+```
+
+* If persist is set to `true`:
+
+```
+this.socket1 = this.$nuxtSocket({
+  persist: true // This will be persisted with label "dflt" (no name or channel specified)
+})
+
+this.socket2 = this.$nuxtSocket({
+  namespace: '/examples'
+  persist: true // This will be persisted with label "dflt/examples" (no name specified)
+})
+
+this.socket3 = this.$nuxtSocket({
+  name: 'home',
+  namespace: '/examples'
+  persist: true // This will be persisted with label "home/examples" (both name and channel specified)
+})
+```
+
+* If persist is set to a *string*:
+
+```
+this.mySocket = this.$nuxtSocket({
+  persist: 'mySocket' // This will be persisted with label "mySocket". It will use the default socket
+})
+```
+
+Then, at any time to re-use those sockets, you access them from Vuex using the corresponding labels:
+
+```
+var reusedSocket = this.$store.state.$nuxtSocket.mySocket // Re-use "mySocket"
+```
+
+It should be noted that by *enabling* persistence, the *teardown* feature will be disabled because it is assumed you want to re-use the socket. You will be responsible for the teardown steps where you feel it's appropriate. If you still desire the auto teardown feature, you can pass true to the "teardown" option and it will be respected.
+
+Examples:
+
+```
+this.socket1 = this.$nuxtSocket({
+  persist: true // Socket will be persisted, teardown disabled
+})
+
+this.socket2 = this.$nuxtSocket({
+  persist: true, // Socket will be persisted...but...
+  teardown: true // ...explicitly setting teardown will override the default behavior
+})
+```
+
+
+## Dynamic API Overview [↑](#nuxt-socket-io)
+
+This is a lengthy, potentially advanced topic. Pleaser refer to the article [Rethinking Web APIs to be Dynamic and Run-Time Adaptable](https://medium.com/javascript-in-plain-english/re-thinking-web-apis-to-be-dynamic-and-run-time-adaptable-a1e9fb43cc4) for more details.
+
+## Dynamic API Registration [↑](#nuxt-socket-io)
+
+This is a lengthy, potentially advanced topic. Please refer to the article [Nuxt Socket.IO: The Magic of Dynamic API Registration](https://medium.com/@richard.e.schloss/nuxt-socket-io-the-magic-of-dynamic-api-registration-9af180383869) for more details.
 
 ## Build Setup [↑](#nuxt-socket-io)
 
