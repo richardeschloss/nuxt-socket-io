@@ -31,7 +31,7 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 7. [Debug Logging](#debug-logging-)
 8. [Console Warnings](#console-warnings-)
 9. [Auto Teardown](#auto-teardown-)
-10. [$nuxtSocket Vuex Module](#$nuxtSocket-vuex-module-)
+10. [$nuxtSocket Vuex Module](#nuxtsocket-vuex-module-)
 11. [Socket Persistence](#socket-persistence-)
 12. [Dynamic API Overview](#dynamic-api-overview-)
 13. [Dynamic API Registration](#dynamic-api-registration-)
