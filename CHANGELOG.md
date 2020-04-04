@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.22] - 2020-04-04
+### Added
+- Instance options for vuex and namespace config (that will override nuxt.config entries)
+
 ## [1.0.22] - 2020-04-03
 ### Added
 - Registration of $nuxtSocket vuex module

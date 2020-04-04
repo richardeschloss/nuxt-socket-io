@@ -455,7 +455,7 @@ const register = {
           return watchProp
         },
         async (data, oldData) => {
-          debug('vuex emitBack data changed', { emitBack: evt, data })
+          debug('vuex emitBack data changed', { emitBack: evt, data, oldData })
           const preResult = await runHook(ctx, pre, { data, oldData })
           if (preResult === false) {
             return Promise.resolve()
@@ -791,6 +791,8 @@ function nuxtSocket(ioOpts) {
     apiIgnoreEvts = [],
     serverAPI,
     clientAPI,
+    vuex,
+    namespaceCfg,
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
@@ -841,7 +843,8 @@ function nuxtSocket(ioOpts) {
   let { url: connectUrl } = useSocket
   connectUrl += channel
 
-  const { vuex: vuexOpts, namespaces } = useSocket
+  const vuexOpts = vuex || useSocket.vuex
+  const { namespaces = {} } = useSocket
 
   let socket
   const label =
@@ -877,24 +880,22 @@ function nuxtSocket(ioOpts) {
     consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
   }
 
-  if (namespaces) {
-    const namespaceCfg = namespaces[channel]
-    if (namespaceCfg) {
-      register.namespace({
-        ctx: this,
-        namespace: channel,
-        namespaceCfg,
-        socket,
-        useSocket,
-        emitTimeout,
-        emitErrorsProp
-      })
-      debug('namespaces configured for socket', {
-        name: useSocket.name,
-        channel,
-        namespaceCfg
-      })
-    }
+  const _namespaceCfg = namespaceCfg || namespaces[channel]
+  if (_namespaceCfg) {
+    register.namespace({
+      ctx: this,
+      namespace: channel,
+      namespaceCfg: _namespaceCfg,
+      socket,
+      useSocket,
+      emitTimeout,
+      emitErrorsProp
+    })
+    debug('namespaces configured for socket', {
+      name: useSocket.name,
+      channel,
+      namespaceCfg
+    })
   }
 
   if (serverAPI) {

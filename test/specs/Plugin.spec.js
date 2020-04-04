@@ -215,6 +215,7 @@ async function testNamespace({
   t,
   context,
   namespace,
+  namespaceCfg,
   url = 'http://localhost:3000',
   channel = '/index',
   emitTimeout,
@@ -243,13 +244,14 @@ async function testNamespace({
     context,
     ioOpts: {
       channel,
-      emitTimeout
+      emitTimeout,
+      namespaceCfg
     }
   })
 
-  if (!namespace) return
+  if (!(namespace || namespaceCfg)) return
 
-  const { emitters = [], listeners = [] } = namespace
+  const { emitters = [], listeners = [] } = namespace || namespaceCfg
   if (listeners.constructor.name === 'Array') {
     listeners.forEach((entry) => {
       const { pre, post, evt, mapTo } = parseEntry(entry)
@@ -301,6 +303,7 @@ async function testVuexOpts({
   t,
   context,
   callCnt,
+  ioOpts = {},
   vuexOpts,
   url = 'http://localhost:3000/index'
 }) {
@@ -314,8 +317,9 @@ async function testVuexOpts({
     ]
   }
   pOptions.set(testCfg)
-  const socket = await loadPlugin({ t, context, callCnt })
-  Object.entries(vuexOpts).forEach(([opt, groupOpts]) => {
+  const socket = await loadPlugin({ t, context, callCnt, ioOpts })
+  const group = ioOpts.vuex || vuexOpts
+  Object.entries(group).forEach(([opt, groupOpts]) => {
     if (groupOpts.constructor.name === 'Array') {
       groupOpts.forEach((entry) => {
         const { evt } = parseEntry(entry)
@@ -961,6 +965,47 @@ test('Socket plugin (vuex opts ok)', async (t) => {
   })
 })
 
+test('Vuex opts (defined in instance)', async (t) => {
+  const callCnt = {
+    storeWatch: 0,
+    storeCommit: 0,
+    storeCommit_something: 0,
+    storeDispatch: 0,
+    storeDispatch_someAction: 0
+  }
+  const context = {}
+  const vuexOpts = {
+    actions: [
+      'nonExist1] someAction [nonExist2',
+      'pre1] someAction2 --> format [post1',
+      { chatMessage: 'FORMAT_MESSAGE' }
+    ],
+    mutations: ['someMutation', 'anotherMutation'],
+    emitBacks: [
+      'noPre] examples/sample [noPost',
+      { 'examples/sample2': 'sample2' },
+      'preEmit] sample2b <-- examples/sample2b [postAck',
+      'titleFromUser', // defined in store/index.js (for issue #35)
+      'preEmitVal] echoHello <-- examples/hello [postEmitHook',
+      'preEmitValFail] echoHello <-- examples/helloFail [postEmitHook'
+    ]
+  }
+  const ioOpts = {
+    vuex: {
+      actions: ['someAction'],
+      mutations: ['something'],
+      emitBacks: [{ 'examples/sample2': 'sample2' }]
+    }
+  }
+  const testUrl = 'http://localhost:3000/examples'
+  await testVuexOpts({ t, context, vuexOpts, callCnt, url: testUrl, ioOpts })
+  await delay(1000)
+  t.not(callCnt.storeCommit, vuexOpts.mutations.length)
+  t.not(callCnt.storeDispatch, vuexOpts.actions.length)
+  t.is(callCnt.storeCommit_something, ioOpts.vuex.mutations.length)
+  t.is(callCnt.storeDispatch_someAction, ioOpts.vuex.actions.length)
+})
+
 test('Emitback is not defined in vuex store', (t) => {
   const errEmitBack = 'something/undefined'
   const errEmitBacks = [
@@ -1316,6 +1361,58 @@ test('Namespace config (emitbacks)', async (t) => {
       resolve()
     }, 1000)
   })
+})
+
+test('Namespace config (locally defined)', async (t) => {
+  const callItems = ['reset', 'handleDone', 'preProgress', 'postProgress']
+  const context = {
+    progress: 0,
+    refreshInfo: {
+      period: 50
+    },
+    someString: 'Hello world',
+    someString2: 'Hello world2',
+    myArray: [],
+    someArray: [3, 1, 2],
+    myObj: {},
+    echoResp: {},
+    preEmitVal(arg) {
+      return arg
+    },
+    hello: false
+  }
+  const callees = Callees({ t, callItems, context })
+  const namespace = {
+    emitters: [
+      'reset] getProgress + refreshInfo --> progress [handleDone',
+      'sample3',
+      'receiveString + someString --> myArray',
+      'receiveArray + someArray --> myObj',
+      'noMethod] receiveArray2 + undefProp --> undefProp2 [noMethod2',
+      'receiveString2 + someString2',
+      'echoBack --> echoResp',
+      'receiveUndef',
+      'preEmitVal] echoHello --> hello'
+    ],
+    listeners: ['preProgress] progress [postProgress']
+  }
+  const socket = await testNamespace({
+    t,
+    context,
+    namespaceCfg: namespace,
+    channel: '/examples',
+    teardown: false
+  })
+  callees.called()
+  context.hello = false
+  await context.echoHello(false)
+  t.false(context.hello)
+  await context.echoHello({ data: 'hello' })
+  t.is(context.hello.data, 'hello')
+  const argsAsMsg = { data: 'some data!!' }
+  await context.echoBack(argsAsMsg)
+  t.is(argsAsMsg.data, context.echoResp.data)
+  socket.close()
 })
 
 test('Rooms (emitters)', async (t) => {
