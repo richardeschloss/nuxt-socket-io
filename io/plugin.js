@@ -792,6 +792,7 @@ function nuxtSocket(ioOpts) {
     serverAPI,
     clientAPI,
     vuex,
+    namespaceCfg,
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
@@ -843,7 +844,7 @@ function nuxtSocket(ioOpts) {
   connectUrl += channel
 
   const vuexOpts = vuex || useSocket.vuex
-  const { namespaces } = useSocket
+  const { namespaces = {} } = useSocket
 
   let socket
   const label =
@@ -879,24 +880,22 @@ function nuxtSocket(ioOpts) {
     consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
   }
 
-  if (namespaces) {
-    const namespaceCfg = namespaces[channel]
-    if (namespaceCfg) {
-      register.namespace({
-        ctx: this,
-        namespace: channel,
-        namespaceCfg,
-        socket,
-        useSocket,
-        emitTimeout,
-        emitErrorsProp
-      })
-      debug('namespaces configured for socket', {
-        name: useSocket.name,
-        channel,
-        namespaceCfg
-      })
-    }
+  const _namespaceCfg = namespaceCfg || namespaces[channel]
+  if (_namespaceCfg) {
+    register.namespace({
+      ctx: this,
+      namespace: channel,
+      namespaceCfg: _namespaceCfg,
+      socket,
+      useSocket,
+      emitTimeout,
+      emitErrorsProp
+    })
+    debug('namespaces configured for socket', {
+      name: useSocket.name,
+      channel,
+      namespaceCfg
+    })
   }
 
   if (serverAPI) {
