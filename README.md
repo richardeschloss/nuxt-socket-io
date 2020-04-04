@@ -82,6 +82,25 @@ modules: [
 ...
 ```
 
+### Overrides (Vuex Opts)
+
+As of v1.0.23, it is possible to now specify the vuex options when you instantiate the $nuxtSocket, using the "vuex" property:
+
+```
+mounted() {
+  this.socket = this.$nuxtSocket({
+    name: 'home',
+    vuex: { // overrides the vuex opts in the nuxt.config above.
+      mutations: ['examples/SET_PROGRESS'],
+      actions: ['FORMAT_MESSAGE'],
+      emitBacks: ['examples/sample']
+    }
+  })
+}
+```
+
+You may prefer to maintain the vuex options like this instead of in the nuxt.config. The vuex options defined in the instance will override the vuex options in the config for a given socket. Best practice is to keep things clean and avoid duplicating entries.
+
 ## Configuration (Namespaces) [↑](#nuxt-socket-io)
 
 It is also possible to configure namespaces in `nuxt.config`. Each socket set can have its own configuration of namespaces and each namespace can now have emitters, listeners, and emitbacks. The configuration supports an arrow syntax in each entry to help describe the flow (with pre/post hook designation support too).
@@ -156,6 +175,25 @@ When `this.getProgress()` is called, *first* `this.reset()` will be called (if i
 
 * Listeners:
 When event "progress" is received, `this.progress` will get set to that data.
+
+### Overrides (Namespace Config)
+
+It may turn out that you would prefer to define the namespace config when you instantiate the $nuxtSocket instead of in your `nuxt.config`. As of v1.0.23, this is now possible with the "namespaceCfg" prop:
+
+```
+mounted(){
+  this.socket = this.$nuxtSocket({
+    name: 'home',
+    channel: '/examples',
+    namespaceCfg: { // overrides the namespace config of "examples" above
+      emitters: [],
+      listeners: [],
+      emitBacks: []
+    }
+  })
+}
+```
+
 
 ## Usage: [↑](#nuxt-socket-io)
 
