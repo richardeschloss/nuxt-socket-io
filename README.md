@@ -185,7 +185,7 @@ mounted(){
   this.socket = this.$nuxtSocket({
     name: 'home',
     channel: '/examples',
-    namespaceCfg: {
+    namespaceCfg: { // overrides the namespace config of "examples" above
       emitters: [],
       listeners: [],
       emitBacks: []
