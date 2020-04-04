@@ -301,6 +301,7 @@ async function testVuexOpts({
   t,
   context,
   callCnt,
+  ioOpts,
   vuexOpts,
   url = 'http://localhost:3000/index'
 }) {
@@ -314,8 +315,9 @@ async function testVuexOpts({
     ]
   }
   pOptions.set(testCfg)
-  const socket = await loadPlugin({ t, context, callCnt })
-  Object.entries(vuexOpts).forEach(([opt, groupOpts]) => {
+  const socket = await loadPlugin({ t, context, callCnt, ioOpts })
+  const group = ioOpts.vuex || vuexOpts
+  Object.entries(group).forEach(([opt, groupOpts]) => {
     if (groupOpts.constructor.name === 'Array') {
       groupOpts.forEach((entry) => {
         const { evt } = parseEntry(entry)
@@ -959,6 +961,47 @@ test('Socket plugin (vuex opts ok)', async (t) => {
       resolve()
     }, 1000)
   })
+})
+
+test.only('Vuex opts (defined in instance)', async (t) => {
+  const callCnt = {
+    storeWatch: 0,
+    storeCommit: 0,
+    storeCommit_something: 0,
+    storeDispatch: 0,
+    storeDispatch_someAction: 0
+  }
+  const context = {}
+  const vuexOpts = {
+    actions: [
+      'nonExist1] someAction [nonExist2',
+      'pre1] someAction2 --> format [post1',
+      { chatMessage: 'FORMAT_MESSAGE' }
+    ],
+    mutations: ['someMutation', 'anotherMutation'],
+    emitBacks: [
+      'noPre] examples/sample [noPost',
+      { 'examples/sample2': 'sample2' },
+      'preEmit] sample2b <-- examples/sample2b [postAck',
+      'titleFromUser', // defined in store/index.js (for issue #35)
+      'preEmitVal] echoHello <-- examples/hello [postEmitHook',
+      'preEmitValFail] echoHello <-- examples/helloFail [postEmitHook'
+    ]
+  }
+  const ioOpts = {
+    vuex: {
+      actions: ['someAction'],
+      mutations: ['something'],
+      emitBacks: [{ 'examples/sample2': 'sample2' }]
+    }
+  }
+  const testUrl = 'http://localhost:3000/examples'
+  await testVuexOpts({ t, context, vuexOpts, callCnt, url: testUrl, ioOpts })
+  await delay(1000)
+  t.not(callCnt.storeCommit, vuexOpts.mutations.length)
+  t.not(callCnt.storeDispatch, vuexOpts.actions.length)
+  t.is(callCnt.storeCommit_something, ioOpts.vuex.mutations.length)
+  t.is(callCnt.storeDispatch_someAction, ioOpts.vuex.actions.length)
 })
 
 test('Emitback is not defined in vuex store', (t) => {

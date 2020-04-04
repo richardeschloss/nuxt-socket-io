@@ -455,7 +455,7 @@ const register = {
           return watchProp
         },
         async (data, oldData) => {
-          debug('vuex emitBack data changed', { emitBack: evt, data })
+          debug('vuex emitBack data changed', { emitBack: evt, data, oldData })
           const preResult = await runHook(ctx, pre, { data, oldData })
           if (preResult === false) {
             return Promise.resolve()
@@ -791,6 +791,7 @@ function nuxtSocket(ioOpts) {
     apiIgnoreEvts = [],
     serverAPI,
     clientAPI,
+    vuex,
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
@@ -841,7 +842,8 @@ function nuxtSocket(ioOpts) {
   let { url: connectUrl } = useSocket
   connectUrl += channel
 
-  const { vuex: vuexOpts, namespaces } = useSocket
+  const vuexOpts = vuex || useSocket.vuex
+  const { namespaces } = useSocket
 
   let socket
   const label =
