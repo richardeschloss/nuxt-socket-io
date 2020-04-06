@@ -791,11 +791,14 @@ test('Socket plugin (malformed sockets)', async (t) => {
 })
 
 test('Socket plugin (options missing info)', async (t) => {
+  const jsdom = require('jsdom-global')
   const testCfg = { sockets: [{}] }
+  const windowUrl = 'http://localhost:3000'
   pOptions.set(testCfg)
-  await loadPlugin({ t }).catch((e) => {
-    t.is(e.message, 'URL must be defined for nuxtSocket')
-  })
+
+  jsdom('', { url: windowUrl })
+  const socket = await loadPlugin({ t })
+  t.is(socket.io.uri, windowUrl)
 })
 
 test('Socket plugin (no vuex options)', async (t) => {

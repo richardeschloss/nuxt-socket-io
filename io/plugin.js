@@ -866,23 +866,31 @@ function nuxtSocket(ioOpts) {
     store.commit('$nuxtSocket/SET_EMIT_TIMEOUT', { label, emitTimeout })
   }
 
+  function connectSocket() {
+    if (connectUrl) {
+      socket = io(connectUrl, connectOpts)
+      consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
+    } else {
+      socket = io(connectOpts)
+      consola.info('[nuxt-socket-io]: connect', useSocket.name, window.location)
+    }
+  }
+
   if (persist) {
     if (store.state.$nuxtSocket.sockets[label]) {
       debug(`resuing persisted socket ${label}`)
       socket = store.state.$nuxtSocket.sockets[label]
       if (socket.disconnected) {
         debug('persisted socket disconnected, reconnecting...')
-        socket = connectUrl ? io(connectOpts) : io(connectUrl, connectOpts)
+        connectSocket()
       }
     } else {
       debug(`socket ${label} does not exist, creating and connecting to it..`)
-      socket = connectUrl ? io(connectOpts) : io(connectUrl, connectOpts)
-      consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
+      connectSocket()
       store.commit('$nuxtSocket/SET_SOCKET', { label, socket })
     }
   } else {
-    socket = connectUrl ? io(connectOpts) : io(connectUrl, connectOpts)
-    consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
+    connectSocket()
   }
 
   const _namespaceCfg = namespaceCfg || namespaces[channel]
