@@ -82,6 +82,10 @@ modules: [
 ...
 ```
 
+### Defaults
+
+* URL - As of v1.0.24, If url is omitted, it will default to `window.location`
+
 ### Overrides (Vuex Opts)
 
 As of v1.0.23, it is possible to now specify the vuex options when you instantiate the $nuxtSocket, using the "vuex" property:
@@ -103,7 +107,7 @@ You may prefer to maintain the vuex options like this instead of in the nuxt.con
 
 ## Configuration (Namespaces) [↑](#nuxt-socket-io)
 
-It is also possible to configure namespaces in `nuxt.config`. Each socket set can have its own configuration of namespaces and each namespace can now have emitters, listeners, and emitbacks. The configuration supports an arrow syntax in each entry to help describe the flow (with pre/post hook designation support too).
+It is also possible to configure [namespaces](https://socket.io/docs/rooms-and-namespaces/) in `nuxt.config`. Each socket set can have its own configuration of namespaces and each namespace can now have emitters, listeners, and emitbacks. The configuration supports an arrow syntax in each entry to help describe the flow (with pre/post hook designation support too).
 
 The syntax is as follows:
 * **Emitters**:

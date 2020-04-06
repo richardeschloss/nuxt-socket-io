@@ -829,10 +829,7 @@ function nuxtSocket(ioOpts) {
   }
 
   if (!useSocket.url) {
-    warn(
-      `URL not defined for socket "${useSocket.name}". Defaulting to "window.location"\r\n` +
-      `NOTE: channel ${channel} will be ignored`
-    )
+    warn(`URL not defined for socket "${useSocket.name}". Defaulting to "window.location"`)
   }
 
   if (!useSocket.registeredWatchers) {
@@ -871,8 +868,8 @@ function nuxtSocket(ioOpts) {
       socket = io(connectUrl, connectOpts)
       consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
     } else {
-      socket = io(connectOpts)
-      consola.info('[nuxt-socket-io]: connect', useSocket.name, window.location)
+      socket = io(channel, connectOpts)
+      consola.info('[nuxt-socket-io]: connect', useSocket.name, window.location, channel)
     }
   }
 
