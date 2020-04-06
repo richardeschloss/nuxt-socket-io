@@ -829,7 +829,7 @@ function nuxtSocket(ioOpts) {
   }
 
   if (!useSocket.url) {
-    throw new Error('URL must be defined for nuxtSocket')
+    warn(`URL not defined for socket "${useSocket.name}". Defaulting to "window.location"`)
   }
 
   if (!useSocket.registeredWatchers) {
@@ -841,7 +841,9 @@ function nuxtSocket(ioOpts) {
   }
 
   let { url: connectUrl } = useSocket
-  connectUrl += channel
+  if (connectUrl) {
+    connectUrl += channel
+  }
 
   const vuexOpts = vuex || useSocket.vuex
   const { namespaces = {} } = useSocket
@@ -861,23 +863,31 @@ function nuxtSocket(ioOpts) {
     store.commit('$nuxtSocket/SET_EMIT_TIMEOUT', { label, emitTimeout })
   }
 
+  function connectSocket() {
+    if (connectUrl) {
+      socket = io(connectUrl, connectOpts)
+      consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
+    } else {
+      socket = io(channel, connectOpts)
+      consola.info('[nuxt-socket-io]: connect', useSocket.name, window.location, channel)
+    }
+  }
+
   if (persist) {
     if (store.state.$nuxtSocket.sockets[label]) {
       debug(`resuing persisted socket ${label}`)
       socket = store.state.$nuxtSocket.sockets[label]
       if (socket.disconnected) {
         debug('persisted socket disconnected, reconnecting...')
-        socket = io(connectUrl, connectOpts)
+        connectSocket()
       }
     } else {
       debug(`socket ${label} does not exist, creating and connecting to it..`)
-      socket = io(connectUrl, connectOpts)
-      consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
+      connectSocket()
       store.commit('$nuxtSocket/SET_SOCKET', { label, socket })
     }
   } else {
-    socket = io(connectUrl, connectOpts)
-    consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
+    connectSocket()
   }
 
   const _namespaceCfg = namespaceCfg || namespaces[channel]

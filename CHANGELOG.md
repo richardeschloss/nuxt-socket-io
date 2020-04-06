@@ -2,7 +2,14 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## [1.0.22] - 2020-04-04
+## [1.0.24] - 2020-04-05
+### Added
+- Default handler for url missing. Now `window.location` will be used.
+
+### Changed
+- Before when URL was empty, an error would be thrown. Now it will just be a warning.
+
+## [1.0.23] - 2020-04-04
 ### Added
 - Instance options for vuex and namespace config (that will override nuxt.config entries)
 
