@@ -1,4 +1,4 @@
-function Svc() {
+export default function Svc() {
   return Object.freeze({
     getMessage({ notify, ...data }) {
       return new Promise((resolve, reject) => {
@@ -45,8 +45,4 @@ function Svc() {
       })
     }
   })
-}
-
-module.exports = {
-  Svc
 }

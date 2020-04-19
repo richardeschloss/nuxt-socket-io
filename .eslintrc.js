@@ -18,8 +18,7 @@ module.exports = {
   // add your custom rules here
   rules: {
     'nuxt/no-cjs-in-config': 'off',
-    'no-console': 'off',
-    'standard/no-callback-literal': 'off',
-    'no-return-await': 'off'
+    'require-await': 'off',
+    'prefer-promise-reject-errors': 'off'
   }
 }

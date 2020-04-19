@@ -1,4 +1,4 @@
-function Svc() {
+export default function Svc() {
   return Object.freeze({
     getProgress({ notify, period }) {
       return new Promise((resolve) => {
@@ -21,7 +21,7 @@ function Svc() {
       return Promise.resolve({ evt, data })
     },
     echoError({ evt, data }) {
-      return Promise.reject(new Error('ExampleError'))
+      return Promise.reject({ emitError: 'ExampleError' })
     },
     'examples/sample': ({ data: sample, notify }) => {
       return new Promise((resolve) => {
@@ -107,8 +107,4 @@ function Svc() {
       return Promise.resolve()
     }
   })
-}
-
-module.exports = {
-  Svc
 }

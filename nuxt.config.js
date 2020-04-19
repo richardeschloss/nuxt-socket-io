@@ -44,6 +44,7 @@ module.exports = {
     '~/io/module'
   ],
   io: {
+    server: true,
     sockets: [
       {
         name: 'heroku',
@@ -176,6 +177,6 @@ module.exports = {
     loadingTimeout: 5000
   },
   generate: {
-    dir: '/tmp/netlify/nuxt-socket-io-demos'
+    dir: '/tmp/netlify/nuxt-socket-io-standalone'
   }
 }

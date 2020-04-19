@@ -800,7 +800,7 @@ function nuxtSocket(ioOpts) {
   const { $store: store } = this
 
   warn =
-    warnings && process.env.NODE_ENV !== 'production' ? console.warn : () => {}
+    warnings && process.env.NODE_ENV !== 'production' ? consola.warn : () => {}
 
   if (
     !sockets ||

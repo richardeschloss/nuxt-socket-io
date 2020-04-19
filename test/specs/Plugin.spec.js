@@ -1,20 +1,21 @@
 import path from 'path'
-import { serial as test } from 'ava'
+import { serial as test, before } from 'ava'
 import config from '@/nuxt.config'
 import { state as indexState } from '@/store/index'
 import { state as examplesState } from '@/store/examples'
-import { compileAndImportPlugin } from '@/test/utils'
+import { delay, compileAndImportPlugin } from '@/test/utils'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
+import { register } from '@/io/module'
 
 const { io } = config
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
 
-function delay(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
+before(() => {
+  const ports = [3000]
+  const p = ports.map((port) => register.server(undefined, { port }))
+  return Promise.all(p)
+})
 
 function socketConnected(socket) {
   return new Promise((resolve) => {
