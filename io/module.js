@@ -1,3 +1,4 @@
+/* eslint-disable standard/no-callback-literal */
 /*
  * Copyright 2020 Richard Schloss (https://github.com/richardeschloss/nuxt-socket-io)
  */
@@ -7,19 +8,6 @@ import { existsSync, readdirSync } from 'fs'
 import { resolve as pResolve, parse as pParse } from 'path'
 import consola from 'consola'
 import socketIO from 'socket.io'
-
-function listen(server, port, host) {
-  // TBD: move to utils, re-test deploy
-  return new Promise((resolve, reject) => {
-    server
-      .listen(port, host)
-      .on('error', reject)
-      .on('listening', () => {
-        consola.info(`socket.io server listening on ${host}:${port}`)
-        resolve(server)
-      })
-  })
-}
 
 const register = {
   ioSvc(io, ioSvc) {
@@ -42,16 +30,6 @@ const register = {
   },
   nspSvc(io, nspDir) {
     return new Promise((resolve, reject) => {
-      // const nspDirFull = pResolve(nspDir)
-      // if (!existsSync(nspDirFull)) {
-      //   reject(
-      //     new Error(
-      //       `Namespace directory ${nspDirFull} does not exist. Not registering namespaces`
-      //     )
-      //   )
-      //   return
-      // }
-
       const namespaces = readdirSync(nspDir)
         .map(pParse)
         .filter(({ ext }) => ext === '.js')
@@ -73,7 +51,18 @@ const register = {
       resolve()
     })
   },
-  server(server = http.createServer(), options = {}) {
+  listener(server = http.createServer(), port = 3000, host = 'localhost') {
+    return new Promise((resolve, reject) => {
+      server
+        .listen(port, host)
+        .on('error', reject)
+        .on('listening', () => {
+          consola.info(`socket.io server listening on ${host}:${port}`)
+          resolve(server)
+        })
+    })
+  },
+  server(options = {}, server = http.createServer()) {
     const {
       ioSvc = './server/io',
       nspDir = ioSvc,
@@ -94,7 +83,7 @@ const register = {
     })
 
     if (!server.listening) {
-      p.push(listen(server, port, host))
+      p.push(register.listener(server, port, host))
     }
     return Promise.all(p).then(() => server)
   },
@@ -102,11 +91,13 @@ const register = {
     consola.info('socket.io client connected to ', namespace)
     Object.entries(svc).forEach(([evt, fn]) => {
       if (typeof fn === 'function') {
-        socket.on(evt, (msg, cb) => {
-          // TBD: re-run plugin tests
-          fn(msg)
-            .then(cb)
-            .catch(cb)
+        socket.on(evt, async (msg, cb) => {
+          try {
+            const resp = await fn(msg)
+            cb(resp)
+          } catch (err) {
+            cb({ emitError: err.message, evt })
+          }
         })
       }
     })

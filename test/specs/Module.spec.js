@@ -10,18 +10,7 @@ const srcDir = path.resolve('.')
 const { io } = getModuleOptions('io/module', 'io')
 
 const serverDflt = http.createServer()
-
-function listen(server, port = 3000, host = 'localhost') {
-  return new Promise((resolve, reject) => {
-    server
-      .listen(port, host)
-      .on('error', reject)
-      .on('listening', () => {
-        consola.info(`socket.io server listening on ${host}:${port}`)
-        resolve(server)
-      })
-  })
-}
+const { listener: listen } = register
 
 function loadModule(moduleOptions, server) {
   consola.log('Testing with moduleOptions:', moduleOptions)
@@ -44,7 +33,7 @@ function loadModule(moduleOptions, server) {
 
     function handleDone() {
       if (pluginInfo) {
-        if (moduleOptions.server) {
+        if (moduleOptions.server !== false) {
           if (hooksCalled === hooksCnt) {
             // if (server) server.close()
             resolve({ pluginInfo })
@@ -105,12 +94,7 @@ function sendReceive({
   })
 }
 
-test('Module: adds plugin, does not register IO server (simple config)', async (t) => {
-  const moduleOptions = {
-    server: false,
-    sockets: [{ name: 'home', url: 'https://localhost:3000' }]
-  }
-  const { pluginInfo } = await loadModule(moduleOptions, serverDflt)
+function validatePlugin({ pluginInfo, t, moduleOptions }) {
   const { ssr, src, fileName, options } = pluginInfo
   t.true(ssr)
   t.is(src, path.resolve(srcDir, 'io/plugin.js'))
@@ -122,43 +106,10 @@ test('Module: adds plugin, does not register IO server (simple config)', async (
       t.is(entry, moduleOptions.sockets[idx][key])
     })
   })
-})
-
-test('Module: adds plugin, registers IO server (nuxt config)', async (t) => {
-  const moduleOptions = Object.assign({}, io)
-  const { pluginInfo } = await loadModule(moduleOptions, serverDflt)
-  const { ssr, src, fileName, options } = pluginInfo
-  t.true(ssr)
-  t.is(src, path.resolve(srcDir, 'io/plugin.js'))
-  t.is(fileName, 'nuxt-socket-io.js')
-  t.truthy(options.sockets)
-  t.true(options.sockets.length > 0)
-  options.sockets.forEach((s, idx) => {
-    Object.entries(s).forEach(([key, entry]) => {
-      t.is(entry, moduleOptions.sockets[idx][key])
-    })
-  })
-})
-
-test('Module adds plugin correctly (nuxt config, server undefined)', async (t) => {
-  const moduleOptions = Object.assign({}, io)
-  const { pluginInfo } = await loadModule(moduleOptions)
-  const { ssr, src, fileName, options } = pluginInfo
-  t.true(ssr)
-  t.is(src, path.resolve(srcDir, 'io/plugin.js'))
-  t.is(fileName, 'nuxt-socket-io.js')
-  t.truthy(options.sockets)
-  t.true(options.sockets.length > 0)
-  options.sockets.forEach((s, idx) => {
-    Object.entries(s).forEach(([key, entry]) => {
-      t.is(entry, moduleOptions.sockets[idx][key])
-    })
-  })
-})
+}
 
 test('Register.server: server created if undef', async (t) => {
-  let serverIn
-  const server = await register.server(serverIn, {})
+  const server = await register.server({})
   t.truthy(server)
   t.true(server.listening)
   server.close()
@@ -166,7 +117,7 @@ test('Register.server: server created if undef', async (t) => {
 
 test('Register.server: server already listening', async (t) => {
   await listen(serverDflt)
-  const server = await register.server(serverDflt, {})
+  const server = await register.server({}, serverDflt)
   t.truthy(server)
   t.true(server.listening)
   serverDflt.close()
@@ -174,20 +125,18 @@ test('Register.server: server already listening', async (t) => {
 
 test('Register.ioSvc (ioSvc does not exist)', async (t) => {
   const ioSvc = '/tmp/ioNotHere'
-  await listen(serverDflt)
-  await register.server(serverDflt, { ioSvc })
+  const server = await register.server({ ioSvc })
   const msg = { data: 'hello' }
   await sendReceive({ msg }).catch((err) => {
     t.is(err.message, 'emitTimeout')
   })
-  serverDflt.close()
+  server.close()
 })
 
 test('Register.ioSvc (ioSvc exists, default export undefined)', async (t) => {
   const ioSvc = './server/io.bad1'
   const rootSvc = path.resolve(ioSvc + '.js')
-  await listen(serverDflt)
-  await register.server(serverDflt, { ioSvc }).catch((err) => {
+  await register.server({ ioSvc }, serverDflt).catch((err) => {
     t.is(
       err.message,
       `io service at ${rootSvc} does not export a default "Svc()" function. Not registering`
@@ -199,8 +148,7 @@ test('Register.ioSvc (ioSvc exists, default export undefined)', async (t) => {
 test('Register.ioSvc (ioSvc exists, default export not a function)', async (t) => {
   const ioSvc = './server/io.bad2'
   const rootSvc = path.resolve(ioSvc + '.js')
-  await listen(serverDflt)
-  await register.server(serverDflt, { ioSvc }).catch((err) => {
+  await register.server({ ioSvc }, serverDflt).catch((err) => {
     t.is(
       err.message,
       `io service at ${rootSvc} does not export a default "Svc()" function. Not registering`
@@ -211,8 +159,7 @@ test('Register.ioSvc (ioSvc exists, default export not a function)', async (t) =
 
 test('Register.ioSvc (ioSvc exists, ok)', async (t) => {
   const ioSvc = './server/io'
-  await listen(serverDflt)
-  await register.server(serverDflt, { ioSvc })
+  await register.server({ ioSvc }, serverDflt)
   const msg = { data: 'hello' }
   const resp = await sendReceive({ msg })
   t.is(resp.data, msg.data)
@@ -221,8 +168,7 @@ test('Register.ioSvc (ioSvc exists, ok)', async (t) => {
 
 test('Register.ioSvc (ioSvc exists, ok, strip off ".js" ext)', async (t) => {
   const ioSvc = './server/io.js'
-  await listen(serverDflt)
-  await register.server(serverDflt, { ioSvc })
+  await register.server({ ioSvc }, serverDflt)
   const msg = { data: 'hello' }
   const resp = await sendReceive({ msg })
   t.is(resp.data, msg.data)
@@ -231,8 +177,7 @@ test('Register.ioSvc (ioSvc exists, ok, strip off ".js" ext)', async (t) => {
 
 test('Register.nspSvc (nspDir does not exist)', async (t) => {
   const nspDir = '/tmp/io/notAvail'
-  await listen(serverDflt)
-  await register.server(serverDflt, { ioSvc: '/tmp/ignore', nspDir })
+  await register.server({ ioSvc: '/tmp/ignore', nspDir }, serverDflt)
   const msg = { data: 'hello' }
   await sendReceive({ nsp: '/chat', msg }).catch((err) => {
     t.is(err.message, 'emitTimeout')
@@ -242,14 +187,14 @@ test('Register.nspSvc (nspDir does not exist)', async (t) => {
 
 test('Register.nspSvc (nspDir exists, some nsp malformed)', async (t) => {
   const nspDir = './server/io'
-  await listen(serverDflt)
-  await register.server(serverDflt, { ioSvc: '/tmp/ignore', nspDir })
+  await register.server({ ioSvc: '/tmp/ignore', nspDir }, serverDflt)
   const msg = { data: 'hello' }
   const resp = await sendReceive({ nsp: '/chat', msg })
   t.is(resp.data, msg.data + ' from chat')
+  const evt = 'badRequest'
   const resp2 = await sendReceive({
     nsp: '/chat',
-    evt: 'emitError',
+    evt,
     msg,
     listeners: ['dataAck'],
     notify(evt, data) {
@@ -257,6 +202,23 @@ test('Register.nspSvc (nspDir exists, some nsp malformed)', async (t) => {
       t.is(data, msg.data)
     }
   })
-  t.is(resp2.emitError, 'badRequest')
+  t.is(resp2.emitError, 'double check format')
+  t.is(resp2.evt, evt)
+  serverDflt.close()
+})
+
+test('Module: adds plugin, does not register IO server (simple config)', async (t) => {
+  const moduleOptions = {
+    server: false,
+    sockets: [{ name: 'home', url: 'https://localhost:3000' }]
+  }
+  const { pluginInfo } = await loadModule(moduleOptions)
+  validatePlugin({ pluginInfo, t, moduleOptions })
+})
+
+test('Module: adds plugin, registers IO server (nuxt config)', async (t) => {
+  const moduleOptions = Object.assign({}, io)
+  const { pluginInfo } = await loadModule(moduleOptions, serverDflt)
+  validatePlugin({ pluginInfo, t, moduleOptions })
   serverDflt.close()
 })

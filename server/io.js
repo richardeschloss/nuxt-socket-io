@@ -1,6 +1,6 @@
 export default function(socket, io) {
   return {
-    async echo(msg) {
+    echo(msg) {
       return msg
     }
   }
