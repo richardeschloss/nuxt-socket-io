@@ -36,7 +36,6 @@ function loadModule(moduleOptions, server) {
       },
       async listen(fn) {
         await fn(server)
-        console.log('here??')
         hooksCalled++
         handleDone()
       }
@@ -85,10 +84,11 @@ function sendReceive({
   evt = 'echo',
   msg = {},
   listeners = [],
-  notify = () => {}
+  notify = () => {},
+  emitTimeout = 1500
 }) {
-  return new Promise((resolve) => {
-    console.log('connect', nsp)
+  return new Promise((resolve, reject) => {
+    consola.log('connect', nsp)
     const socket = ioClient(`http://${host}:${port}${nsp}`)
     listeners.forEach((listenEvt) => {
       socket.on(listenEvt, (data) => {
@@ -99,11 +99,15 @@ function sendReceive({
       socket.close()
       resolve(resp)
     })
+    setTimeout(() => {
+      reject(new Error('emitTimeout'))
+    }, emitTimeout)
   })
 }
 
 test('Module: adds plugin, does not register IO server (simple config)', async (t) => {
   const moduleOptions = {
+    server: false,
     sockets: [{ name: 'home', url: 'https://localhost:3000' }]
   }
   const { pluginInfo } = await loadModule(moduleOptions, serverDflt)
@@ -169,18 +173,44 @@ test('Register.server: server already listening', async (t) => {
 })
 
 test('Register.ioSvc (ioSvc does not exist)', async (t) => {
-  const ioSvc = '/tmp/io/svc.js'
+  const ioSvc = '/tmp/ioNotHere'
   await listen(serverDflt)
-  await register.server(serverDflt, { ioSvc }).catch((err) => {
-    const baseMsg = `Cannot find module '${ioSvc}'`
-    t.true(err.message.startsWith(baseMsg))
+  await register.server(serverDflt, { ioSvc })
+  const msg = { data: 'hello' }
+  await sendReceive({ msg }).catch((err) => {
+    t.is(err.message, 'emitTimeout')
   })
   serverDflt.close()
 })
 
-test('Register.ioSvc (ioSvc exists)', async (t) => {
-  console.log('start next test!')
-  const ioSvc = './io/index'
+test('Register.ioSvc (ioSvc exists, default export undefined)', async (t) => {
+  const ioSvc = './server/io.bad1'
+  const rootSvc = path.resolve(ioSvc + '.js')
+  await listen(serverDflt)
+  await register.server(serverDflt, { ioSvc }).catch((err) => {
+    t.is(
+      err.message,
+      `io service at ${rootSvc} does not export a default "Svc()" function. Not registering`
+    )
+  })
+  serverDflt.close()
+})
+
+test('Register.ioSvc (ioSvc exists, default export not a function)', async (t) => {
+  const ioSvc = './server/io.bad2'
+  const rootSvc = path.resolve(ioSvc + '.js')
+  await listen(serverDflt)
+  await register.server(serverDflt, { ioSvc }).catch((err) => {
+    t.is(
+      err.message,
+      `io service at ${rootSvc} does not export a default "Svc()" function. Not registering`
+    )
+  })
+  serverDflt.close()
+})
+
+test('Register.ioSvc (ioSvc exists, ok)', async (t) => {
+  const ioSvc = './server/io'
   await listen(serverDflt)
   await register.server(serverDflt, { ioSvc })
   const msg = { data: 'hello' }
@@ -189,53 +219,31 @@ test('Register.ioSvc (ioSvc exists)', async (t) => {
   serverDflt.close()
 })
 
-test('Register.ioSvc (ioSvc exists, default export undefined)', async (t) => {
-  const ioSvc = './io/index.bad1'
+test('Register.ioSvc (ioSvc exists, ok, strip off ".js" ext)', async (t) => {
+  const ioSvc = './server/io.js'
   await listen(serverDflt)
-  await register.server(serverDflt, { ioSvc }).catch((err) => {
-    t.is(
-      err.message,
-      `io service at ${ioSvc} does not export a default "Svc()" function. Not registering`
-    )
-  })
-  serverDflt.close()
-})
-
-test('Register.ioSvc (ioSvc exists, default export not a function)', async (t) => {
-  const ioSvc = './io/index.bad2'
-  await listen(serverDflt)
-  await register.server(serverDflt, { ioSvc }).catch((err) => {
-    t.is(
-      err.message,
-      `io service at ${ioSvc} does not export a default "Svc()" function. Not registering`
-    )
-  })
+  await register.server(serverDflt, { ioSvc })
+  const msg = { data: 'hello' }
+  const resp = await sendReceive({ msg })
+  t.is(resp.data, msg.data)
   serverDflt.close()
 })
 
 test('Register.nspSvc (nspDir does not exist)', async (t) => {
   const nspDir = '/tmp/io/notAvail'
   await listen(serverDflt)
-  await register.server(serverDflt, { nspDir }).catch((err) => {
-    t.is(
-      err.message,
-      `Namespace directory ${nspDir} does not exist. Not registering namespaces`
-    )
+  await register.server(serverDflt, { ioSvc: '/tmp/ignore', nspDir })
+  const msg = { data: 'hello' }
+  await sendReceive({ nsp: '/chat', msg }).catch((err) => {
+    t.is(err.message, 'emitTimeout')
   })
   serverDflt.close()
 })
 
 test('Register.nspSvc (nspDir exists, some nsp malformed)', async (t) => {
-  const nspDir = './io/namespaces'
-  const nspDirFull = path.resolve(nspDir)
+  const nspDir = './server/io'
   await listen(serverDflt)
-  await register.server(serverDflt, { nspDir }).catch((err) => {
-    console.log('HERE?', err.message)
-    t.is(
-      err.message,
-      `Namespace directory ${nspDirFull} does not exist. Not registering namespaces`
-    )
-  })
+  await register.server(serverDflt, { ioSvc: '/tmp/ignore', nspDir })
   const msg = { data: 'hello' }
   const resp = await sendReceive({ nsp: '/chat', msg })
   t.is(resp.data, msg.data + ' from chat')

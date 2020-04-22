@@ -9,6 +9,7 @@ import consola from 'consola'
 import socketIO from 'socket.io'
 
 function listen(server, port, host) {
+  // TBD: move to utils, re-test deploy
   return new Promise((resolve, reject) => {
     server
       .listen(port, host)
@@ -21,17 +22,9 @@ function listen(server, port, host) {
 }
 
 const register = {
-  ioSvc(io, ioSvc = './io/index') {
+  ioSvc(io, ioSvc) {
     return new Promise((resolve, reject) => {
-      let Svc
-      try {
-        const { default: _Svc } = require(pResolve(ioSvc))
-        Svc = _Svc
-      } catch (err) {
-        reject(err)
-        return
-      }
-
+      const { default: Svc } = require(ioSvc)
       if (Svc && typeof Svc === 'function') {
         io.on('connection', (socket) => {
           const svc = Svc(socket, io)
@@ -47,19 +40,19 @@ const register = {
       }
     })
   },
-  nspSvc(io, nspDir = './io/namespaces') {
+  nspSvc(io, nspDir) {
     return new Promise((resolve, reject) => {
-      const nspDirFull = pResolve(nspDir)
-      if (!existsSync(nspDirFull)) {
-        reject(
-          new Error(
-            `Namespace directory ${nspDirFull} does not exist. Not registering namespaces`
-          )
-        )
-        return
-      }
+      // const nspDirFull = pResolve(nspDir)
+      // if (!existsSync(nspDirFull)) {
+      //   reject(
+      //     new Error(
+      //       `Namespace directory ${nspDirFull} does not exist. Not registering namespaces`
+      //     )
+      //   )
+      //   return
+      // }
 
-      const namespaces = readdirSync(nspDirFull)
+      const namespaces = readdirSync(nspDir)
         .map(pParse)
         .filter(({ ext }) => ext === '.js')
         .map(({ name }) => name)
@@ -72,7 +65,7 @@ const register = {
             register.socket(svc, socket, namespace)
           })
         } else {
-          consola.info(
+          consola.warn(
             `io service at ${nspDir}/${namespace} does not export a default "Svc()" function. Not registering`
           )
         }
@@ -80,11 +73,26 @@ const register = {
       resolve()
     })
   },
-  server(server = http.createServer(), options) {
-    consola.log('register socket IO server')
-    const { nspDir, ioSvc, host = 'localhost', port = 3000 } = options
+  server(server = http.createServer(), options = {}) {
+    const {
+      ioSvc = './server/io',
+      nspDir = ioSvc,
+      host = 'localhost',
+      port = 3000
+    } = options
+    const ioSvcFull = pResolve(ioSvc.endsWith('.js') ? ioSvc : ioSvc + '.js')
+    const nspDirFull = pResolve(
+      nspDir.endsWith('.js') ? nspDir.substr(nspDir.length - 3) : nspDir
+    )
     const io = socketIO(server)
-    const p = [register.ioSvc(io, ioSvc), register.nspSvc(io, nspDir)]
+    const svcs = { ioSvc: ioSvcFull, nspSvc: nspDirFull }
+    const p = []
+    Object.entries(svcs).forEach(([svcName, svc]) => {
+      if (existsSync(svc)) {
+        p.push(register[svcName](io, svc))
+      }
+    })
+
     if (!server.listening) {
       p.push(listen(server, port, host))
     }
@@ -95,12 +103,8 @@ const register = {
     Object.entries(svc).forEach(([evt, fn]) => {
       if (typeof fn === 'function') {
         socket.on(evt, (msg, cb) => {
-          fn({
-            notify({ evt: notifyEvt, data }) {
-              socket.emit(notifyEvt, data)
-            },
-            ...msg
-          })
+          // TBD: re-run plugin tests
+          fn(msg)
             .then(cb)
             .catch(cb)
         })
@@ -115,7 +119,7 @@ const register = {
 export default function nuxtSocketIO(moduleOptions) {
   const options = Object.assign({}, this.options.io, moduleOptions)
 
-  if (options.server) {
+  if (options.server !== false) {
     this.nuxt.hook('listen', async (server = http.createServer()) => {
       await register.server(server, options.server).catch(consola.error)
       this.nuxt.hook('close', () => {

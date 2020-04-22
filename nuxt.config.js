@@ -44,7 +44,6 @@ module.exports = {
     '~/io/module'
   ],
   io: {
-    server: true,
     sockets: [
       {
         name: 'heroku',

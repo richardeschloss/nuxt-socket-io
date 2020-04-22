@@ -7,8 +7,8 @@ export default function(socket, io) {
     me: {
       info: 'I am not a function. Do not register'
     },
-    emitError({ notify, data }) {
-      notify({ evt: 'dataAck', data })
+    emitError({ data }) {
+      socket.emit('dataAck', data)
       return Promise.reject({
         emitError: 'badRequest',
         msg: 'double check format'
