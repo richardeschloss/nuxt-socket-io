@@ -43,7 +43,7 @@ const register = {
             register.socket(svc, socket, namespace)
           })
         } else {
-          consola.warn(
+          consola.info(
             `io service at ${nspDir}/${namespace} does not export a default "Svc()" function. Not registering`
           )
         }
@@ -112,10 +112,8 @@ export default function nuxtSocketIO(moduleOptions) {
 
   if (options.server !== false) {
     this.nuxt.hook('listen', async (server = http.createServer()) => {
-      await register.server(server, options.server).catch(consola.error)
-      this.nuxt.hook('close', () => {
-        server.close()
-      })
+      await register.server(options.server, server).catch(consola.error)
+      this.nuxt.hook('close', () => server.close())
     })
   }
 

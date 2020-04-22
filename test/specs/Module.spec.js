@@ -35,7 +35,6 @@ function loadModule(moduleOptions, server) {
       if (pluginInfo) {
         if (moduleOptions.server !== false) {
           if (hooksCalled === hooksCnt) {
-            // if (server) server.close()
             resolve({ pluginInfo })
           }
         } else {
@@ -115,12 +114,19 @@ test('Register.server: server created if undef', async (t) => {
   server.close()
 })
 
-test('Register.server: server already listening', async (t) => {
-  await listen(serverDflt)
-  const server = await register.server({}, serverDflt)
+test('Register.server: options undef', async (t) => {
+  const server = await register.server()
   t.truthy(server)
   t.true(server.listening)
-  serverDflt.close()
+  server.close()
+})
+
+test('Register.server: server already listening', async (t) => {
+  const serverIn = await listen()
+  await register.server({}, serverIn)
+  t.truthy(serverIn)
+  t.true(serverIn.listening)
+  serverIn.close()
 })
 
 test('Register.ioSvc (ioSvc does not exist)', async (t) => {
@@ -221,4 +227,10 @@ test('Module: adds plugin, registers IO server (nuxt config)', async (t) => {
   const { pluginInfo } = await loadModule(moduleOptions, serverDflt)
   validatePlugin({ pluginInfo, t, moduleOptions })
   serverDflt.close()
+})
+
+test('Module: adds plugin, registers IO server, if undef', async (t) => {
+  const moduleOptions = Object.assign({}, io)
+  const { pluginInfo } = await loadModule(moduleOptions)
+  validatePlugin({ pluginInfo, t, moduleOptions })
 })
