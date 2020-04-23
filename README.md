@@ -26,18 +26,19 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 2. [Configuration (io sockets)](#configuration-io-sockets-)
 3. [Configuration (namespaces)](#configuration-namespaces-)
 4. [Usage](#usage-)
-5. [Socket Status](#socket-status-)
-6. [Error Handling](#error-handling-)
-7. [Debug Logging](#debug-logging-)
-8. [Console Warnings](#console-warnings-)
-9. [Auto Teardown](#auto-teardown-)
-10. [$nuxtSocket Vuex Module](#nuxtsocket-vuex-module-)
-11. [Socket Persistence](#socket-persistence-)
-12. [Dynamic API Overview](#dynamic-api-overview-)
-13. [Dynamic API Registration](#dynamic-api-registration-)
-14. [Build Setup](#build-setup-)
-15. [Testing](#testing-)
-16. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
+5. [IO Server Registration](#io-server-registration)
+6. [Socket Status](#socket-status-)
+7. [Error Handling](#error-handling-)
+8. [Debug Logging](#debug-logging-)
+9. [Console Warnings](#console-warnings-)
+10. [Auto Teardown](#auto-teardown-)
+11. [$nuxtSocket Vuex Module](#nuxtsocket-vuex-module-)
+12. [Socket Persistence](#socket-persistence-)
+13. [Dynamic API Overview](#dynamic-api-overview-)
+14. [Dynamic API Registration](#dynamic-api-registration-)
+15. [Build Setup](#build-setup-)
+16. [Testing](#testing-)
+17. [Contributing](https://github.com/richardeschloss/nuxt-socket-io/blob/gh-pages/CONTRIBUTING.md)
 
 ## Installation [↑](#nuxt-socket-io)
 
@@ -258,6 +259,110 @@ methods: {
 ```
 
 If it is desired to use nuxtSocket globally, which this author discourages, one way to do so is to commit an instance of nuxtSocket in Vuex, with "teardown" option set to false so that I can be re-used throughout the app. Then, you can simply dispatch Vue actions which would contain the "socket.emit" code. This an interesting approach, but just remember you will be responsible for closing your sockets and performing cleanup (since teardown will be set to false). See the section on teardown feature, [feat/reuse branch](https://github.com/richardeschloss/nuxt-socket-io/tree/feat/reuse) and also [issue 62](https://github.com/richardeschloss/nuxt-socket-io/issues/62) for more details.
+
+## IO Server Registration [↑](#nuxt-socket-io)
+
+As of v1.0.25, it will be possible to automatically start an IO server simply based on the existence of an IO server file and folder. Inspired by the way Nuxt creates routes based on your "pages" directory, server-side IO services will be automatically registered if your "server" directory contains a file "io.js" and folder "io":
+
+```
+[appRoot]/
+- server/
+  - io/
+    - namespace1.js
+    - namespace2.js
+  - io.js
+```
+
+Then, `io.js` will be registered as the IO service for IO clients that connect to '' or '/' (root), while the namespace .js files in `server/io/*.js` will be registered as the IO services for IO clients that connect to those namespaces. So, in the example above, `namespace1.js` would handle IO clients that connect to namespace `/namespace1`, while `namespace2.js` would handle IO clients that connect to namespace `/namespace2`.
+
+### IO Service Format: (important)
+
+Each IO service file must export a default service function to be used by the module and it should have the following format:
+
+```
+// Inside each ".js" file above, the module expects this at a bare-minimum
+export default function(socket, io) { 
+  return Object.freeze({})
+}
+```
+
+In the above snippet, the *module* will give you the socket and io instances in case you need them. There is no need to start the IO server yourself, since the module is simply piggy-backing off the Nuxt server once that server starts listening. All you need to do is build out the service.
+
+Ideally you would build out your service like this:
+
+```
+// An example svc:
+export default function(socket, io) { 
+  return Object.freeze({
+    /* Just define the methods here */
+    fn1(msg) { 
+      return { status: 'ok' }
+    },
+    async fn2(msg) { 
+      const users = await getUsers(msg)
+      return users
+    },
+    fn3(msg) {
+      return new Promise((resolve, reject) => {
+        someTimeConsumingFunction(msg, (err, progress) => {
+          if (err) {
+            reject(err)
+          } else {
+            socket.emit('progress', progress)
+            if (progress === 1) {
+              resolve(progress)
+            }
+          }
+        })
+      })
+    }
+  })
+}
+```
+
+In the above example, the code is really easy to read and write. The function names here are mapped to the socket IO *event* names that are received. So, when an IO client emits an event "fn1" with data "msg", the "fn1" will be called with "msg". Likewise, when "fn2" is emitted, "fn2" will be run. Also, your functions can be promisified or not, the module will wait for promises to resolve, if there are any. It will also *catch* any error you throw, sending back a JSON object as response, with the `resp.emitError` set to your `err.message`. So, when "fn3" is emitted, it will be called with "msg" and it will take some time to run. As that function provides it's notification back in the form of "err" and "progress", we can "socket.emit" that progress back to the IO client as we wait for the function to complete. If for any reason that fn3 fails, the module will catch the error and respond with that "emitError".
+
+** A Helpful Tip **: Running just "nuxt" won't watch for changes on the server. If you wish to keep having the server restart when you make server-side changes you'll want to run "npm run dev:server" which I have defined as:
+
+```
+// package.json
+"scripts": {
+  "dev:server": "cross-env NODE_ENV=development nodemon server/index.js --watch server"
+}
+```
+
+(See my [server/index.js](https://github.com/richardeschloss/nuxt-socket-io/blob/master/server/index.js) to see how I start Nuxt using their API)
+
+
+### IO Server Overrides
+
+The default behavior above can be simply overridden in nuxt.config with one prop "server":
+
+```
+io: {
+  server: [your overrides here],
+  sockets: []
+}
+```
+
+* Setting `io.server` to `false` completely disables the feature.
+* Setting `io.server` to `{ ioSvc: '/my/io/svc' }` will cause the module to instead look for file `/my/io/svc.js` and folder `/my/io/svc` for your IO services (instead of `/server/io.js` and `/server/io`)
+
+If you wish to still start the IO server on your own, the module exports a `register.server` function which you can use: 
+
+```
+import http from 'http'
+import { register } from 'nuxt-socket-io'
+
+// Options can be host, port, ioSvc, nspDir:
+const myIOServer = register.server({ port: 3001 }) // your IO server, to start http server, listening on 3001
+
+// YOu can also provide your own server instance if you want:
+const httpServer = http.createServer()
+const myIOServer2 = register.server({ port: 3002 }, httpServer) // use your server instead
+```
+
+Both IO servers would still register your ioSvc file and folder so you can continue using those even when Nuxt isn't running. In fact, this is exactly what some of my automated tests rely on.
 
 ## Socket Status [↑](#nuxt-socket-io)
 Sometimes, it may be desired to check the status of the socket IO connection. Fortunately, the Socket.IO client API emits events to help understand the status:
