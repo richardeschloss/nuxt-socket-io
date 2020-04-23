@@ -1,3 +1,4 @@
+import consola from 'consola'
 export default function Svc(socket, io) {
   return Object.freeze({
     getProgress({ period }) {
@@ -5,10 +6,10 @@ export default function Svc(socket, io) {
         let progress = 0
         const timer = setInterval(() => {
           progress += 10
-          socket.emit('progress', { data: progress })
+          socket.emit('progress', progress)
           if (progress === 100) {
             clearInterval(timer)
-            resolve({ data: progress })
+            resolve(progress)
           }
         }, period)
       })
@@ -32,7 +33,8 @@ export default function Svc(socket, io) {
         }
       })
     },
-    'examples/someObj'({ data }) {
+    'examples/someObj'(data) {
+      consola.log('someObj received!', data)
       return { msg: 'ok' }
     },
     sample2({ data: sample }) {

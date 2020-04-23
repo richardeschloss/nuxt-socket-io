@@ -8,7 +8,7 @@ export default function Svc(socket, io) {
         ]
         let msgIdx = 0
         const timer = setInterval(() => {
-          socket.emit('chatMessage', { data: msgs[msgIdx] })
+          socket.emit('chatMessage', msgs[msgIdx])
           if (++msgIdx >= msgs.length) {
             clearInterval(timer)
             resolve('It worked! Received msg: ' + JSON.stringify(data))
@@ -26,8 +26,8 @@ export default function Svc(socket, io) {
         socket.emit('chatMessage4', { data: 'Hi again' })
         socket.emit('chatMessage5', { data: 'Hi again from 5' })
         const timer = setInterval(() => {
-          socket.emit('chatMessage2', { data: msgs[msgIdx] })
-          socket.emit('chatMessage3', { data: 'sending chat message3...' })
+          socket.emit('chatMessage2', msgs[msgIdx])
+          socket.emit('chatMessage3', 'sending chat message3...')
           if (++msgIdx >= msgs.length) {
             clearInterval(timer)
             resolve('It worked! Received msg: ' + JSON.stringify(data))
