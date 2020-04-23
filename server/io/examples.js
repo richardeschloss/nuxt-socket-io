@@ -14,14 +14,14 @@ export default function Svc(socket, io) {
       })
     },
     echoBack(msg) {
-      const { evt = 'echoBack', data } = msg || {}
+      const { evt = 'echoBack', data = evt } = msg || {}
       socket.emit(evt, data)
       return { evt, data }
     },
     echoHello(data) {
       return { evt: 'echoHello', data: 'hello' }
     },
-    echoError({ evt, data }) {
+    echoError() {
       throw new Error('ExampleError')
     },
     'examples/sample'({ data: sample }) {
@@ -32,7 +32,7 @@ export default function Svc(socket, io) {
         }
       })
     },
-    'examples/someObj'({ data }){
+    'examples/someObj'({ data }) {
       return { msg: 'ok' }
     },
     sample2({ data: sample }) {
@@ -51,10 +51,10 @@ export default function Svc(socket, io) {
         }
       })
     },
-    sample3(data) {
-      const sample = data || 'undef'
+    sample3(msg) {
+      const { data: sample } = msg || {}
       return {
-        msg: 'rxd sample ' + sample
+        msg: 'rxd sample ' + (sample || 'undef')
       }
     },
     sample4({ data: sample }) {

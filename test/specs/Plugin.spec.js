@@ -277,11 +277,11 @@ async function testNamespace({
       context[emitEvt]()
         .then((resp) => {
           if (context[mapTo] !== undefined) {
-            if (typeof resp === 'object') {
+            if (typeof resp === 'object' && emitEvt !== mapTo) {
               Object.entries(resp).forEach(([key, val]) => {
                 t.is(val, context[mapTo][key])
               })
-            } else if (mapTo) {
+            } else if (mapTo && emitEvt !== mapTo) {
               setImmediate(() => {
                 t.is(resp, context[mapTo])
               })
@@ -417,7 +417,7 @@ test('$nuxtSocket vuex module (emit action; error conditions)', async (t) => {
     })
     .catch((err) => {
       const json = JSON.parse(err.message)
-      t.is(json.message, 'badRequest')
+      t.is(json.message, 'badRequest...Input does not match schema')
     })
 
   await context.$store.dispatch('$nuxtSocket/emit', {
@@ -429,7 +429,7 @@ test('$nuxtSocket vuex module (emit action; error conditions)', async (t) => {
   t.true(state.$nuxtSocket.emitErrors['home/dynamic'].badRequest.length > 0)
   t.is(
     state.$nuxtSocket.emitErrors['home/dynamic'].badRequest[0].message,
-    'badRequest'
+    'badRequest...Input does not match schema'
   )
 })
 
@@ -1253,13 +1253,9 @@ test('Namespace config (emitters, emitTimeout --> emitErrors)', async (t) => {
       t.truthy(timestamp)
     }
   )
-  return new Promise((resolve) => {
-    context.undefMethod().then(() => {
-      socket.close()
-      t.is(context.emitErrors.undefMethod.length, 2)
-      resolve()
-    })
-  })
+  await context.undefMethod()
+  socket.close()
+  t.is(context.emitErrors.undefMethod.length, 2)
 })
 
 test('Namespace config (emitters, emitErrors rejected)', async (t) => {
@@ -1353,12 +1349,8 @@ test('Namespace config (emitbacks)', async (t) => {
   }
 
   await testNamespace({ t, context, namespace, channel: '/examples' })
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      t.is(called.postEmitHook, 1)
-      resolve()
-    }, 1000)
-  })
+  await delay(1000)
+  t.is(called.postEmitHook, 1)
 })
 
 test('Namespace config (locally defined)', async (t) => {
