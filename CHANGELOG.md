@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.0.25] - 2020-04-23
+### Added
+- Automatic IO Server registration based on presence of IO server file and folder (added to module)
+
 ## [1.0.24] - 2020-04-05
 ### Added
 - Default handler for url missing. Now `window.location` will be used.

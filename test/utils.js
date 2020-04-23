@@ -4,10 +4,15 @@ import template from 'lodash/template'
 import { Nuxt, Builder } from 'nuxt'
 import serialize from 'serialize-javascript'
 import config from '@/nuxt.config'
-import { IOServer } from '@/server/io'
 
 const oneSecond = 1000
 const oneMinute = 60 * oneSecond
+
+export function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
 
 export function compilePlugin({ src, tmpFile, options, overwrite = false }) {
   if (!overwrite && fs.existsSync(tmpFile)) {
@@ -95,20 +100,6 @@ export function getModuleOptions(moduleName, optsContainer) {
     }
   })
   return opts
-}
-
-export async function ioServerInit({
-  proto = 'http',
-  host = 'localhost',
-  port = 4000
-}) {
-  const ioServer = IOServer({
-    proto,
-    host,
-    port
-  })
-  await ioServer.start()
-  return ioServer
 }
 
 export async function nuxtInit(t) {

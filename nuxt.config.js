@@ -176,6 +176,6 @@ module.exports = {
     loadingTimeout: 5000
   },
   generate: {
-    dir: '/tmp/netlify/nuxt-socket-io-demos'
+    dir: '/tmp/netlify/nuxt-socket-io-standalone'
   }
 }

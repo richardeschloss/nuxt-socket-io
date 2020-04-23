@@ -40,6 +40,7 @@ import { mapState2Way } from '@/utils/esm'
 export default {
   data() {
     return {
+      ackRxd: '',
       sample3: 123,
       myObj: {
         sample4: 'watch me (I should be emitted back)',
@@ -66,7 +67,7 @@ export default {
   },
   methods: {
     handleAck(ack) {
-      console.log('ack received', ack)
+      this.ackRxd = ack
     },
     changeObj(evt) {
       const msgs = ['hi from object', 'hi again', 'another msg']

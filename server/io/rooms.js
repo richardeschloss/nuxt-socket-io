@@ -22,7 +22,7 @@ Object.entries(rooms).forEach(([room, roomInfo]) => {
   })
 })
 
-function Svc(socket, io) {
+export default function Svc(socket, io) {
   return Object.freeze({
     getRooms() {
       return Promise.resolve(Object.keys(rooms))
@@ -30,13 +30,10 @@ function Svc(socket, io) {
   })
 }
 
-module.exports = {
-  getRoom(room) {
-    const fndRoom = rooms[room]
-    if (fndRoom === undefined) {
-      throw new Error(`Room ${room} not found`)
-    }
-    return fndRoom
-  },
-  Svc
+export function getRoom(room) {
+  const fndRoom = rooms[room]
+  if (fndRoom === undefined) {
+    throw new Error(`Room ${room} not found`)
+  }
+  return fndRoom
 }
