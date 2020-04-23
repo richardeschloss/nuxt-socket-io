@@ -17,9 +17,6 @@ module.exports = {
   plugins: ['prettier'],
   // add your custom rules here
   rules: {
-    'nuxt/no-cjs-in-config': 'off',
-    'no-console': 'off',
-    'standard/no-callback-literal': 'off',
-    'no-return-await': 'off'
+    'nuxt/no-cjs-in-config': 'off'
   }
 }

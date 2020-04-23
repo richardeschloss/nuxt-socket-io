@@ -1,3 +1,5 @@
+const debug = require('debug')('nuxt-socket-io:p2p')
+
 /* API */
 const api = {
   label: 'ioApi_page',
@@ -5,16 +7,16 @@ const api = {
 }
 
 /* SVC */
-function Svc(socket) {
+export default function Svc(socket) {
   return Object.freeze({
     getAPI(msg) {
-      console.log('getAPI', msg)
+      debug('getAPI', msg)
       return Promise.resolve(api)
     },
 
     /* Methods */
     sendEvts(msg) {
-      console.log('sendEvts', msg)
+      debug('sendEvts', msg)
       return new Promise((resolve) => {
         let doneCnt = 0
         const expCnt = 3
@@ -26,7 +28,7 @@ function Svc(socket) {
         }
 
         function handleResp(resp) {
-          console.log('received resp', resp)
+          debug('received resp', resp)
           doneCnt++
           if (doneCnt === expCnt) {
             resolve()
@@ -42,19 +44,15 @@ function Svc(socket) {
     },
 
     warnings(msg) {
-      console.log('received warnings', msg)
-      return Promise.resolve(msg)
+      debug('received warnings', msg)
+      return msg
     },
 
     receiveMsg(msg) {
-      console.log('[peer] receiveMsg', msg)
-      return Promise.resolve({
+      debug('[peer] receiveMsg', msg)
+      return {
         status: 'ok'
-      })
+      }
     }
   })
-}
-
-module.exports = {
-  Svc
 }

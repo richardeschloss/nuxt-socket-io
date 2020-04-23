@@ -1,3 +1,5 @@
+const debug = require('debug')('nuxt-socket-io:dynamic')
+
 /* Schemas */
 const Item = {
   id: '',
@@ -43,12 +45,10 @@ const api = {
 }
 
 /* SVC */
-function Svc(socket) {
+export default function(socket) {
   return Object.freeze({
     getAPI(data) {
-      console.log('getAPI', data)
       socket.emit('getAPI', {}, (clientApi) => {
-        console.log('clientApi', clientApi)
         socket.emit(
           'receiveMsg',
           {
@@ -58,11 +58,11 @@ function Svc(socket) {
             text: 'Hi client from server!'
           },
           (resp) => {
-            console.log('receiveMsg response', resp)
+            debug('receiveMsg response', resp)
           }
         )
         socket.on('warnings', (msg) => {
-          console.log('warnings from client', msg)
+          debug('warnings from client', msg)
         })
       })
       return Promise.resolve(api)
@@ -98,14 +98,13 @@ function Svc(socket) {
         }, 500)
       })
     },
-    getItem({ notify, id }) {
-      console.log('received msg', id)
+    getItem({ id }) {
       const data = {
         date: new Date(),
         msg: id
       }
       socket.emit('msgRxd', { data }, (resp) => {
-        console.log('ack received', resp)
+        debug('ack received', resp)
       })
       const ItemOut = Object.assign(
         { ...Item },
@@ -115,20 +114,13 @@ function Svc(socket) {
           desc: 'Some description'
         }
       )
-      return Promise.resolve(ItemOut)
+      return ItemOut
     },
     noResp() {
-      return Promise.resolve({})
+      return {}
     },
     badRequest() {
-      return Promise.resolve({
-        emitError: 'badRequest',
-        details: 'Input does not match schema'
-      })
+      throw new Error('badRequest...Input does not match schema')
     }
   })
-}
-
-module.exports = {
-  Svc
 }

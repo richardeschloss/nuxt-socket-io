@@ -1,6 +1,6 @@
 const { getRoom } = require('./rooms')
 
-function Svc(socket, io) {
+export default function Svc(socket, io) {
   const roomSvc = Object.freeze({
     joinRoom({ room, user }) {
       const fndRoom = getRoom(room)
@@ -49,17 +49,14 @@ function Svc(socket, io) {
   return roomSvc
 }
 
-module.exports = {
-  getChannel(room, channel) {
-    const fndRoom = getRoom(room)
-    if (fndRoom === undefined) {
-      throw new Error(`Room ${room} not found`)
-    }
+export function getChannel(room, channel) {
+  const fndRoom = getRoom(room)
+  if (fndRoom === undefined) {
+    throw new Error(`Room ${room} not found`)
+  }
 
-    if (fndRoom.channels === undefined) {
-      throw new Error(`Channels not found in ${room}`)
-    }
-    return fndRoom.channels[channel]
-  },
-  Svc
+  if (fndRoom.channels === undefined) {
+    throw new Error(`Channels not found in ${room}`)
+  }
+  return fndRoom.channels[channel]
 }

@@ -1,6 +1,11 @@
+/* eslint-disable prettier/prettier */
 export default {
   require: ['@babel/register', './test/specs.setup.js'],
-  files: ['test/specs/Module.spec.js', 'test/specs/Plugin.spec.js'],
+  serial: true,
+  files: [
+    'test/specs/Module.spec.js',
+    'test/specs/Plugin.spec.js'
+  ],
   ignoredByWatcher: ['io/plugin.compiled.js'],
   babel: {
     testOptions: {

@@ -1,6 +1,6 @@
 const { getChannel } = require('./room')
 
-function Svc(socket, io) {
+export default function(socket, io) {
   const channelSvc = Object.freeze({
     joinChannel({ room, channel, user }) {
       const fndChannel = getChannel(room, channel)
@@ -60,8 +60,4 @@ function Svc(socket, io) {
   })
 
   return channelSvc
-}
-
-module.exports = {
-  Svc
 }

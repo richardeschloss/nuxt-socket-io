@@ -1,20 +1,22 @@
 import path from 'path'
-import { serial as test } from 'ava'
+import { serial as test, before } from 'ava'
+import consola from 'consola'
 import config from '@/nuxt.config'
 import { state as indexState } from '@/store/index'
 import { state as examplesState } from '@/store/examples'
-import { compileAndImportPlugin } from '@/test/utils'
+import { delay, compileAndImportPlugin } from '@/test/utils'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
+import { register } from '@/io/module'
 
 const { io } = config
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
 
-function delay(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
+before(() => {
+  const ports = [3000]
+  const p = ports.map((port) => register.server({ port }))
+  return Promise.all(p)
+})
 
 function socketConnected(socket) {
   return new Promise((resolve) => {
@@ -255,8 +257,8 @@ async function testNamespace({
   if (listeners.constructor.name === 'Array') {
     listeners.forEach((entry) => {
       const { pre, post, evt, mapTo } = parseEntry(entry)
-      if (pre) console.log(`testing pre ${pre} too`)
-      if (post) console.log(`testing post ${post} too`)
+      if (pre) consola.log(`testing pre ${pre} too`)
+      if (post) consola.log(`testing post ${post} too`)
       socket.on(evt, (msgRxd) => {
         setImmediate(() => {
           if (context[mapTo]) t.is(context[mapTo], msgRxd)
@@ -275,11 +277,11 @@ async function testNamespace({
       context[emitEvt]()
         .then((resp) => {
           if (context[mapTo] !== undefined) {
-            if (typeof resp === 'object') {
+            if (typeof resp === 'object' && emitEvt !== mapTo) {
               Object.entries(resp).forEach(([key, val]) => {
                 t.is(val, context[mapTo][key])
               })
-            } else if (mapTo) {
+            } else if (mapTo && emitEvt !== mapTo) {
               setImmediate(() => {
                 t.is(resp, context[mapTo])
               })
@@ -415,7 +417,7 @@ test('$nuxtSocket vuex module (emit action; error conditions)', async (t) => {
     })
     .catch((err) => {
       const json = JSON.parse(err.message)
-      t.is(json.message, 'badRequest')
+      t.is(json.message, 'badRequest...Input does not match schema')
     })
 
   await context.$store.dispatch('$nuxtSocket/emit', {
@@ -427,11 +429,11 @@ test('$nuxtSocket vuex module (emit action; error conditions)', async (t) => {
   t.true(state.$nuxtSocket.emitErrors['home/dynamic'].badRequest.length > 0)
   t.is(
     state.$nuxtSocket.emitErrors['home/dynamic'].badRequest[0].message,
-    'badRequest'
+    'badRequest...Input does not match schema'
   )
 })
 
-test('socket persistence (enabled)', async (t) => {
+test('Socket persistence (enabled)', async (t) => {
   const testCfg = {
     sockets: [
       {
@@ -453,7 +455,7 @@ test('socket persistence (enabled)', async (t) => {
   t.is(socket1.id, socket2.id)
 })
 
-test('socket persistence (enabled; use provided label)', async (t) => {
+test('Socket persistence (enabled; use provided label)', async (t) => {
   const testCfg = {
     sockets: [
       {
@@ -475,7 +477,7 @@ test('socket persistence (enabled; use provided label)', async (t) => {
   t.is(socket1.id, socket2.id)
 })
 
-test('socket persistence (enabled; reconnect only if disconnected)', async (t) => {
+test('Socket persistence (enabled; reconnect only if disconnected)', async (t) => {
   const testCfg = {
     sockets: [
       {
@@ -498,7 +500,7 @@ test('socket persistence (enabled; reconnect only if disconnected)', async (t) =
   t.true(socket1.id !== socket2.id)
 })
 
-test('socket persistence (disabled)', async (t) => {
+test('Socket persistence (disabled)', async (t) => {
   const testCfg = {
     sockets: [
       {
@@ -516,7 +518,7 @@ test('socket persistence (disabled)', async (t) => {
   t.falsy(context.$store.state.$nuxtSocket.sockets[label])
 })
 
-test('Api registration (server)', async (t) => {
+test('API registration (server)', async (t) => {
   const testCfg = {
     sockets: [
       {
@@ -550,11 +552,11 @@ test('Api registration (server)', async (t) => {
     state,
     actions
   })
-  console.log('creating a duplicate listener to see if plugin handles it')
+  consola.log('creating a duplicate listener to see if plugin handles it')
   socket1.on('itemRxd', () => {})
   await delay(500)
   t.true(context.ioApi.ready)
-  console.log('Attempt to re-use api...')
+  consola.log('Attempt to re-use api...')
   await loadPlugin({ t, context, ioOpts, callCnt, state, actions })
   await delay(500)
   t.true(context.ioApi.ready)
@@ -577,7 +579,7 @@ test('Api registration (server)', async (t) => {
   t.true(Object.keys(noResp).length === 0)
 })
 
-test('Api registration (server, ioApi not defined)', async (t) => {
+test('API registration (server, ioApi not defined)', async (t) => {
   const testCfg = {
     sockets: [
       {
@@ -598,7 +600,7 @@ test('Api registration (server, ioApi not defined)', async (t) => {
   t.falsy(context.ioApi)
 })
 
-test('Api registration (server, methods and evts not defined)', async (t) => {
+test('API registration (server, methods and evts not defined)', async (t) => {
   const testCfg = {
     sockets: [
       {
@@ -631,7 +633,7 @@ test('Api registration (server, methods and evts not defined)', async (t) => {
   t.true(context.ioApi.ready)
 })
 
-test('Api registration (server, methods and evts not defined, but is peer)', async (t) => {
+test('API registration (server, methods and evts not defined, but is peer)', async (t) => {
   const testCfg = {
     sockets: [
       {
@@ -671,7 +673,7 @@ test('Api registration (server, methods and evts not defined, but is peer)', asy
   t.true(context.ioApi.ready)
 })
 
-test('Api registration (client, methods and evts not defined)', async (t) => {
+test('API registration (client, methods and evts not defined)', async (t) => {
   const testCfg = {
     sockets: [
       {
@@ -698,7 +700,7 @@ test('Api registration (client, methods and evts not defined)', async (t) => {
   t.falsy(context.receiveMsg)
 })
 
-test('Api registration (client, methods and evts defined)', async (t) => {
+test('API registration (client, methods and evts defined)', async (t) => {
   const testCfg = {
     sockets: [
       {
@@ -762,7 +764,7 @@ test('Api registration (client, methods and evts defined)', async (t) => {
   t.is(resp2.battery, context.warnings.battery)
   t.is(resp3.battery, 22)
 
-  console.log(
+  consola.log(
     'load plugin again, verify that events have already been registered'
   )
   await loadPlugin({ t, context, ioOpts, callCnt, state, mutations, actions })
@@ -841,19 +843,15 @@ test('Socket plugin (socket status OK)', async (t) => {
   }
   pOptions.set(testCfg)
   await loadPlugin({ t, ioOpts: {}, context })
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      Object.entries(context.socketStatus).forEach(([key, val]) => {
-        if (key === 'connectUrl') {
-          t.is(val, url)
-        } else {
-          t.is(val, '')
-        }
-      })
-      context.$emit('closeSockets')
-      resolve()
-    }, 150)
+  await delay(150)
+  Object.entries(context.socketStatus).forEach(([key, val]) => {
+    if (key === 'connectUrl') {
+      t.is(val, url)
+    } else {
+      t.is(val, '')
+    }
   })
+  context.$emit('closeSockets')
 })
 
 test('Socket plugin (socket status NOT ok)', async (t) => {
@@ -878,21 +876,17 @@ test('Socket plugin (socket status NOT ok)', async (t) => {
   }
   pOptions.set(testCfg)
   await loadPlugin({ t, ioOpts: {}, context })
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      Object.entries(context.socketStatus).forEach(([key, val]) => {
-        if (key === 'connectUrl') {
-          t.is(val, url)
-        } else if (key === 'connectError') {
-          t.is(val.message, 'xhr poll error')
-        } else {
-          t.is(val, '')
-        }
-      })
-      context.$emit('closeSockets')
-      resolve()
-    }, 150)
+  await delay(150)
+  Object.entries(context.socketStatus).forEach(([key, val]) => {
+    if (key === 'connectUrl') {
+      t.is(val, url)
+    } else if (key === 'connectError') {
+      t.is(val.message, 'xhr poll error')
+    } else {
+      t.is(val, '')
+    }
   })
+  context.$emit('closeSockets')
 })
 
 test('Socket plugin (vuex options empty)', async (t) => {
@@ -961,15 +955,12 @@ test('Socket plugin (vuex opts ok)', async (t) => {
   }
   const testUrl = 'http://localhost:3000/examples'
   await testVuexOpts({ t, context, vuexOpts, callCnt, url: testUrl })
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      callees.called()
-      t.is(callCnt.storeCommit, vuexOpts.mutations.length)
-      t.is(callCnt.storeDispatch, vuexOpts.actions.length)
-      t.is(callCnt.postEmitHook, 1)
-      resolve()
-    }, 1000)
-  })
+  await delay(1000)
+  callees.called()
+  t.is(callCnt.storeCommit, vuexOpts.mutations.length)
+  t.is(callCnt.storeDispatch, vuexOpts.actions.length)
+  t.is(callCnt.postEmitHook, 1)
+  t.pass()
 })
 
 test('Vuex opts (defined in instance)', async (t) => {
@@ -1262,13 +1253,9 @@ test('Namespace config (emitters, emitTimeout --> emitErrors)', async (t) => {
       t.truthy(timestamp)
     }
   )
-  return new Promise((resolve) => {
-    context.undefMethod().then(() => {
-      socket.close()
-      t.is(context.emitErrors.undefMethod.length, 2)
-      resolve()
-    })
-  })
+  await context.undefMethod()
+  socket.close()
+  t.is(context.emitErrors.undefMethod.length, 2)
 })
 
 test('Namespace config (emitters, emitErrors rejected)', async (t) => {
@@ -1362,12 +1349,8 @@ test('Namespace config (emitbacks)', async (t) => {
   }
 
   await testNamespace({ t, context, namespace, channel: '/examples' })
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      t.is(called.postEmitHook, 1)
-      resolve()
-    }, 1000)
-  })
+  await delay(1000)
+  t.is(called.postEmitHook, 1)
 })
 
 test('Namespace config (locally defined)', async (t) => {
@@ -1762,7 +1745,7 @@ test('Socket plugin (from nuxt.config)', async (t) => {
     options: io,
     overwrite: true
   }).catch((err) => {
-    console.error('Compile and Import err', err.message)
+    consola.error('Compile and Import err', err.message)
     t.fail()
   })
 
