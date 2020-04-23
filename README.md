@@ -26,7 +26,7 @@ These docs are hosted on the `gh-pages` branch. View a larger version of this [h
 2. [Configuration (io sockets)](#configuration-io-sockets-)
 3. [Configuration (namespaces)](#configuration-namespaces-)
 4. [Usage](#usage-)
-5. [IO Server Registration](#io-server-registration)
+5. [IO Server Registration](#io-server-registration-)
 6. [Socket Status](#socket-status-)
 7. [Error Handling](#error-handling-)
 8. [Debug Logging](#debug-logging-)
