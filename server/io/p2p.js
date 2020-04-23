@@ -45,14 +45,14 @@ export default function Svc(socket) {
 
     warnings(msg) {
       debug('received warnings', msg)
-      return Promise.resolve(msg)
+      return msg
     },
 
     receiveMsg(msg) {
       debug('[peer] receiveMsg', msg)
-      return Promise.resolve({
+      return {
         status: 'ok'
-      })
+      }
     }
   })
 }

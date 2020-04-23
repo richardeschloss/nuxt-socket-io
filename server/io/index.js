@@ -1,6 +1,6 @@
 export default function Svc(socket, io) {
   return Object.freeze({
-    getMessage() {
+    getMessage(data) {
       return new Promise((resolve, reject) => {
         const msgs = [
           'Hi, this is a chat message from IO server!',
@@ -16,7 +16,7 @@ export default function Svc(socket, io) {
         }, 500)
       })
     },
-    getMessage2({ data }) {
+    getMessage2(data) {
       return new Promise((resolve, reject) => {
         const msgs = [
           'Hi, this is a chat message from IO server!',

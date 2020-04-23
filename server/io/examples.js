@@ -8,22 +8,23 @@ export default function Svc(socket, io) {
           socket.emit('progress', { data: progress })
           if (progress === 100) {
             clearInterval(timer)
-            resolve(progress)
+            resolve({ data: progress })
           }
         }, period)
       })
     },
-    echoBack({ evt, data }) {
+    echoBack(msg) {
+      const { evt = 'echoBack', data } = msg || {}
       socket.emit(evt, data)
       return { evt, data }
     },
-    echoHello({ evt, data }) {
-      return { evt, data }
+    echoHello(data) {
+      return { evt: 'echoHello', data: 'hello' }
     },
     echoError({ evt, data }) {
-      return Promise.reject({ emitError: 'ExampleError' })
+      throw new Error('ExampleError')
     },
-    'examples/sample': ({ data: sample }) => {
+    'examples/sample'({ data: sample }) {
       socket.emit('sampleDataRxd', {
         data: {
           msg: 'Sample data rxd on state change',
@@ -31,7 +32,7 @@ export default function Svc(socket, io) {
         }
       })
     },
-    'examples/someObj': ({ data }) => {
+    'examples/someObj'({ data }){
       return { msg: 'ok' }
     },
     sample2({ data: sample }) {
@@ -50,8 +51,8 @@ export default function Svc(socket, io) {
         }
       })
     },
-    sample3(msg) {
-      const sample = msg.data || 'undef'
+    sample3(data) {
+      const sample = data || 'undef'
       return {
         msg: 'rxd sample ' + sample
       }
@@ -75,7 +76,7 @@ export default function Svc(socket, io) {
     receiveArray2(msg) {
       return {
         resp: 'Received array2',
-        length: msg.length
+        msg
       }
     },
     receiveString(msg) {
