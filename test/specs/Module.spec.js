@@ -4,7 +4,7 @@ import consola from 'consola'
 import { serial as test } from 'ava'
 import ioClient from 'socket.io-client'
 import NuxtSocketMod, { register } from '@/io/module'
-import { getModuleOptions } from '@/test/utils'
+import { delay, getModuleOptions } from '@/test/utils'
 
 const srcDir = path.resolve('.')
 const { io } = getModuleOptions('io/module', 'io')
@@ -65,6 +65,27 @@ function loadModule(moduleOptions, server) {
   })
 }
 
+async function send({
+  host = 'localhost',
+  port = 3000,
+  nsp = '',
+  evt = 'echo',
+  msg = {},
+  listeners = [],
+  notify = () => {},
+  emitTimeout = 1500
+}) {
+  consola.log('connect', nsp)
+  const socket = ioClient(`http://${host}:${port}${nsp}`)
+  listeners.forEach((listenEvt) => {
+    socket.on(listenEvt, (data) => {
+      notify(listenEvt, data)
+    })
+  })
+  socket.emit(evt, msg)
+  await delay(emitTimeout)
+}
+
 function sendReceive({
   host = 'localhost',
   port = 3000,
@@ -75,7 +96,7 @@ function sendReceive({
   notify = () => {},
   emitTimeout = 1500
 }) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     consola.log('connect', nsp)
     const socket = ioClient(`http://${host}:${port}${nsp}`)
     listeners.forEach((listenEvt) => {
@@ -87,9 +108,8 @@ function sendReceive({
       socket.close()
       resolve(resp)
     })
-    setTimeout(() => {
-      reject(new Error('emitTimeout'))
-    }, emitTimeout)
+    await delay(emitTimeout)
+    reject(new Error('emitTimeout'))
   })
 }
 
@@ -172,6 +192,15 @@ test('Register.ioSvc (ioSvc exists, ok)', async (t) => {
   serverDflt.close()
 })
 
+test('Register.ioSvc (ioSvc exists, ok, callback undef)', async (t) => {
+  const ioSvc = './server/io'
+  await register.server({ ioSvc }, serverDflt)
+  const msg = { data: 'hello' }
+  const resp = await send({ msg })
+  t.falsy(resp)
+  serverDflt.close()
+})
+
 test('Register.ioSvc (ioSvc exists, ok, strip off ".js" ext)', async (t) => {
   const ioSvc = './server/io.js'
   await register.server({ ioSvc }, serverDflt)
@@ -222,15 +251,15 @@ test('Module: adds plugin, does not register IO server (simple config)', async (
   validatePlugin({ pluginInfo, t, moduleOptions })
 })
 
+test('Module: adds plugin, registers IO server, if undef', async (t) => {
+  const moduleOptions = Object.assign({}, io)
+  const { pluginInfo } = await loadModule(moduleOptions)
+  validatePlugin({ pluginInfo, t, moduleOptions })
+})
+
 test('Module: adds plugin, registers IO server (nuxt config)', async (t) => {
   const moduleOptions = Object.assign({}, io)
   const { pluginInfo } = await loadModule(moduleOptions, serverDflt)
   validatePlugin({ pluginInfo, t, moduleOptions })
   serverDflt.close()
-})
-
-test('Module: adds plugin, registers IO server, if undef', async (t) => {
-  const moduleOptions = Object.assign({}, io)
-  const { pluginInfo } = await loadModule(moduleOptions)
-  validatePlugin({ pluginInfo, t, moduleOptions })
 })
