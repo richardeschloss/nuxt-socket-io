@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { resolve as pResolve } from 'path'
 import { compilePlugin } from './utils'
 import config from '@/nuxt.config'

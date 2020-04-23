@@ -1,62 +1,100 @@
-const { getRoom } = require('./rooms')
+import { resolve as pResolve } from 'path'
+const { default: Data } = require(pResolve('./server/db'))
+
+const API = {
+  version: 1.0,
+  evts: {
+    users: {
+      data: ['']
+    },
+    userJoined: {
+      data: ''
+    },
+    userLeft: {
+      data: ''
+    }
+  },
+  methods: {
+    join: {
+      msg: {
+        room: '',
+        user: ''
+      },
+      resp: {
+        room: '',
+        channels: ['']
+      }
+    },
+    leave: {
+      msg: {
+        room: '',
+        user: ''
+      }
+    }
+  }
+}
 
 export default function Svc(socket, io) {
   const roomSvc = Object.freeze({
-    joinRoom({ room, user }) {
-      const fndRoom = getRoom(room)
-      if (!fndRoom) {
-        return Promise.reject(new Error(`room ${room} not found`))
+    getAPI() {
+      return API
+    },
+    getRoom({ room }) {
+      if (room === undefined) {
+        throw new Error(`Room name not specified`)
       }
-      return new Promise((resolve, reject) => {
+      const fndRoom = Data.rooms.find(({ name }) => name === room)
+      if (fndRoom === undefined) {
+        throw new Error(`Room ${room} not found`)
+      }
+      return fndRoom
+    },
+    join({ room, user }) {
+      const fndRoom = roomSvc.getRoom({ room })
+      return new Promise((resolve) => {
+        if (!fndRoom.users) {
+          fndRoom.users = []
+        }
         if (!fndRoom.users.includes(user)) {
           fndRoom.users.push(user)
         }
 
         const namespace = `rooms/${room}`
-        const channels = Object.keys(fndRoom.channels)
-        const { users } = fndRoom
         socket.join(namespace, () => {
-          const resp = { room, users, channels, user, namespace }
-          socket.to(namespace).emit('joinedRoom', resp)
-          resolve(resp)
+          socket.to(namespace).emit('userJoined', { data: user })
+          socket.to(namespace).emit('users', { data: fndRoom.users })
+          socket.emit('users', { data: fndRoom.users })
+          resolve({
+            room,
+            channels: fndRoom.channels.map(({ name }) => name)
+          })
         })
-        socket.on('disconnect', () => {
-          roomSvc.leaveRoom({ room, user })
+
+        socket.once('disconnect', () => {
+          roomSvc.leave({ room, user })
         })
       })
     },
-    leaveRoom({ room, user }) {
-      const fndRoom = getRoom(room)
+    leave({ room, user }) {
+      const fndRoom = roomSvc.getRoom({ room })
       if (!fndRoom) {
-        return Promise.reject(new Error(`room ${room} not found`))
+        throw new Error(`room ${room} not found`)
       }
       return new Promise((resolve, reject) => {
-        if (fndRoom.users.includes(user)) {
+        if (fndRoom.users && fndRoom.users.includes(user)) {
           const userIdx = fndRoom.users.findIndex((u) => u === user)
           fndRoom.users.splice(userIdx, 1)
         }
 
         const namespace = `rooms/${room}`
-        const { users } = fndRoom
         socket.leave(namespace, () => {
-          const resp = { room: fndRoom, users, user, namespace }
-          socket.to(namespace).emit('leftRoom', resp)
-          resolve(resp)
+          socket.to(namespace).emit('userLeft', { data: user })
+          socket.to(namespace).emit('users', { data: fndRoom.users })
+          socket.emit('users', { data: fndRoom.users })
+          resolve()
         })
       })
     }
   })
   return roomSvc
-}
-
-export function getChannel(room, channel) {
-  const fndRoom = getRoom(room)
-  if (fndRoom === undefined) {
-    throw new Error(`Room ${room} not found`)
-  }
-
-  if (fndRoom.channels === undefined) {
-    throw new Error(`Channels not found in ${room}`)
-  }
-  return fndRoom.channels[channel]
 }

@@ -1,9 +1,7 @@
-function propByPath(obj, path) {
-  return path.split(/[/.]/).reduce((out, prop) => {
-    if (out !== undefined && out[prop] !== undefined) {
-      return out[prop]
-    }
-  }, obj)
+function $onP(ctx, evt) {
+  return new Promise((resolve) => {
+    ctx.$on(evt, resolve)
+  })
 }
 
 function mapState2Way(map) {
@@ -18,4 +16,16 @@ function mapState2Way(map) {
   }
 }
 
-export { mapState2Way }
+function propByPath(obj, path) {
+  return path.split(/[/.]/).reduce((out, prop) => {
+    if (out !== undefined && out[prop] !== undefined) {
+      return out[prop]
+    }
+  }, obj)
+}
+
+function propExists(obj, path) {
+  return propByPath(obj, path) !== undefined
+}
+
+export { mapState2Way, $onP, propByPath, propExists }

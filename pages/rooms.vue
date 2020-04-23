@@ -1,67 +1,56 @@
 <template>
   <div class="container">
-    <div>
-      <h2 class="join-room-hdr">Join Room:</h2>
-      <input
-        v-model="selectedRoom"
-        list="room-choices"
-        placeholder="Join a room (click me!)"
-        class="room-choice form-control"
-        @input="toRoom()"
-      />
-    </div>
-
-    <datalist id="room-choices">
-      <option
-        v-for="room in rooms"
-        :key="room"
-        :value="room"
-        class="room-choice"
-      >
-      </option>
-    </datalist>
-    <nuxt-child v-if="showRoom" :user="user"></nuxt-child>
+    <room-select class="room-select" :rooms="rooms" :user="user" />
+    <nuxt-child
+      v-if="rooms.includes($route.params.room)"
+      class="room"
+      :user="user"
+    />
   </div>
 </template>
 
 <script>
+import RoomSelect from '@/components/RoomSelect'
 export default {
+  components: {
+    RoomSelect
+  },
   data() {
     return {
+      ioApi: {},
+      ioData: {},
       rooms: [],
-      selectedRoom: '',
       user: `user_${Date.now()
         .toString()
         .slice(7)}`
     }
   },
-  computed: {
-    showRoom() {
-      return (
-        this.rooms.length > 0 && this.rooms.includes(this.$route.params.room)
-      )
+  watch: {
+    async 'ioApi.ready'(n, o) {
+      this.rooms = await this.ioApi.getRooms()
     }
   },
   mounted() {
-    this.socket = this.$nuxtSocket({ channel: '/rooms' })
-    this.getRooms()
-  },
-  methods: {
-    toRoom(room) {
-      this.$router.push(`/rooms/${this.selectedRoom}`)
-    }
+    this.socket = this.$nuxtSocket({
+      name: 'chatSvc',
+      channel: '/rooms',
+      serverAPI: true
+    })
   }
 }
 </script>
 
 <style scoped>
-.join-room-hdr {
-  display: inline-block;
+.room-select {
+  width: 100%;
+  text-align: center;
 }
 
-.room-choice {
-  display: inline-block;
-  width: 25%;
-  cursor: pointer;
+.room-select > div {
+  padding-top: 1%;
+}
+
+.room {
+  padding-top: 1%;
 }
 </style>

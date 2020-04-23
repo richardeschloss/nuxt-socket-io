@@ -4,13 +4,17 @@
  */
 
 import http from 'http'
-import { existsSync, readdirSync } from 'fs'
-import { resolve as pResolve, parse as pParse } from 'path'
+import { existsSync } from 'fs'
+import { resolve as pResolve } from 'path'
+import { promisify } from 'util'
 import consola from 'consola'
 import socketIO from 'socket.io'
+import Glob from 'glob'
+
+const glob = promisify(Glob)
 
 const register = {
-  ioSvc(io, ioSvc) {
+  ioSvc(io, ioSvc, nspDir) {
     return new Promise((resolve, reject) => {
       const { default: Svc } = require(ioSvc)
       if (Svc && typeof Svc === 'function') {
@@ -29,22 +33,19 @@ const register = {
     })
   },
   nspSvc(io, nspDir) {
-    return new Promise((resolve, reject) => {
-      const namespaces = readdirSync(nspDir)
-        .map(pParse)
-        .filter(({ ext }) => ext === '.js')
-        .map(({ name }) => name)
-
-      namespaces.forEach((namespace) => {
-        const { default: Svc } = require(pResolve(`${nspDir}/${namespace}`))
+    return new Promise(async (resolve, reject) => {
+      const nspFiles = await glob(`${nspDir}/**/*.js`)
+      const namespaces = nspFiles.map((f) => f.split(nspDir)[1].split('.js')[0])
+      namespaces.forEach(async (namespace, idx) => {
+        const { default: Svc } = await import(nspFiles[idx])
         if (Svc && typeof Svc === 'function') {
-          io.of(`/${namespace}`).on('connection', (socket) => {
+          io.of(`${namespace}`).on('connection', (socket) => {
             const svc = Svc(socket, io)
-            register.socket(svc, socket, namespace)
+            register.socket(svc, socket, namespace)            
           })
         } else {
           consola.info(
-            `io service at ${nspDir}/${namespace} does not export a default "Svc()" function. Not registering`
+            `io service at ${nspDir}${namespace} does not export a default "Svc()" function. Not registering`
           )
         }
       })
@@ -78,7 +79,7 @@ const register = {
     const p = []
     Object.entries(svcs).forEach(([svcName, svc]) => {
       if (existsSync(svc)) {
-        p.push(register[svcName](io, svc))
+        p.push(register[svcName](io, svc, nspDirFull))
       }
     })
 

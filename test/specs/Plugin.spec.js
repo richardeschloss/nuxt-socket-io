@@ -112,7 +112,11 @@ function $set(obj, prop, val) {
     obj[prop] = {}
   }
   if (typeof val === 'object') {
-    Object.assign(obj[prop], val)
+    if (val.constructor.name === 'Array') {
+      obj[prop] = val
+    } else {
+      Object.assign(obj[prop], val)
+    }
   } else {
     Object.assign(obj, { [prop]: val })
   }
@@ -330,6 +334,31 @@ async function testVuexOpts({
     }
   })
   return socket
+}
+
+async function waitForAPI({ t, ioOpts }) {
+  const testCfg = {
+    sockets: [
+      {
+        name: 'home',
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+
+  pOptions.set(testCfg)
+  const context = {
+    ioApi: {},
+    ioData: {}
+  }
+  const socket = await loadPlugin({
+    t,
+    context,
+    ioOpts
+  })
+  await delay(500)
+  t.true(context.ioApi.ready)
+  return { context, socket }
 }
 
 test('$nuxtSocket vuex module registration', async (t) => {
@@ -577,6 +606,25 @@ test('API registration (server)', async (t) => {
     }
   })
   t.true(Object.keys(noResp).length === 0)
+})
+
+test('API registration (server; join and leave room)', async (t) => {
+  const ioOpts = { channel: '/room', serverAPI: true }
+  const { context: ctx1, socket: s1 } = await waitForAPI({ t, ioOpts })
+  await ctx1.ioApi.join({ room: 'vueJS', user: 'userABC' })
+
+  const { context: ctx2, socket: s2 } = await waitForAPI({ t, ioOpts })
+  await ctx2.ioApi.join({ room: 'vueJS', user: 'userXYZ' })
+  t.is(ctx1.ioData.userJoined, 'userXYZ')
+  t.is(ctx1.ioData.users.length, 2)
+  t.is(ctx2.ioData.users.length, 2)
+
+  const r1 = await ctx1.ioApi.leave({ room: 'vueJS', user: 'userABC' })
+  t.is(ctx2.ioData.userLeft, 'userABC')
+  t.falsy(r1)
+
+  s1.close()
+  s2.close()
 })
 
 test('API registration (server, ioApi not defined)', async (t) => {
@@ -960,6 +1008,37 @@ test('Socket plugin (vuex opts ok)', async (t) => {
   t.is(callCnt.storeCommit, vuexOpts.mutations.length)
   t.is(callCnt.storeDispatch, vuexOpts.actions.length)
   t.is(callCnt.postEmitHook, 1)
+  t.pass()
+})
+
+test('IO Opts (warnings disabled)', async (t) => {
+  pOptions.set({ warnings: false, sockets: [{}] })
+  await loadPlugin({
+    t,
+    context: {},
+    ioOpts: {}
+  }).catch(() => {})
+
+  pOptions.set({ sockets: [{}] })
+  await loadPlugin({
+    t,
+    context: {},
+    ioOpts: { warnings: false }
+  }).catch(() => {})
+  consola.log('Check coverage report')
+  t.pass()
+})
+
+test('IO Opts (warnings enabled by default)', async (t) => {
+  pOptions.set({ sockets: [{}] })
+  await loadPlugin({
+    t,
+    context: {},
+    ioOpts: {}
+  }).catch(() => {})
+
+  pOptions.set({ sockets: [{}] })
+  consola.log('Check coverage report')
   t.pass()
 })
 
@@ -1403,274 +1482,6 @@ test('Namespace config (locally defined)', async (t) => {
   await context.echoBack(argsAsMsg)
   t.is(argsAsMsg.data, context.echoResp.data)
   socket.close()
-})
-
-test('Rooms (emitters)', async (t) => {
-  const namespace = {
-    emitters: ['getRooms --> rooms']
-  }
-
-  const expected = ['vueJS', 'nuxtJS']
-  const context = {
-    rooms: []
-  }
-  await testNamespace({
-    t,
-    context,
-    namespace,
-    channel: '/rooms',
-    teardown: false
-  })
-  expected.forEach((room, idx) => {
-    t.is(room, context.rooms[idx])
-  })
-})
-
-test('Room (emitters and listeners)', (t) => {
-  t.timeout(5000)
-  const users = ['userABC', 'userXYZ']
-  const namespace = {
-    emitters: ['joinRoom + joinMsg --> roomInfo'],
-    listeners: ['joinedRoom [updateUsers', 'leftRoom [userLeft']
-  }
-  let doneCnt = 0
-  const sockets = []
-
-  return new Promise((resolve) => {
-    const room = 'vueJS'
-    users.forEach(async (user, idx) => {
-      const called = { updateUsers: false }
-      const context = {
-        joinMsg: {
-          room,
-          user
-        },
-        joinedRoom: {},
-        roomInfo: {},
-        userLeft({ user: goneUser, users: usersNow }) {
-          t.is(goneUser, users[1])
-          t.is(usersNow.length, 1)
-          sockets[0].close()
-          resolve()
-        },
-        updateUsers(resp) {
-          called.updateUsers = true
-        }
-      }
-      const socket = await testNamespace({
-        t,
-        context,
-        namespace,
-        channel: '/room',
-        teardown: false
-      })
-      sockets.push(socket)
-      setTimeout(() => {
-        if (idx === 0) {
-          t.true(called.updateUsers)
-          t.is(context.joinedRoom.user, users[1])
-        }
-        const {
-          room: roomName,
-          users: roomUsers,
-          user: userResp,
-          namespace
-        } = context.roomInfo
-        t.is(namespace, `rooms/${context.joinMsg.room}`)
-        t.is(roomName, room)
-        t.is(userResp, user)
-        t.true(roomUsers.includes(user))
-        if (++doneCnt === users.length) {
-          sockets[1].close()
-        }
-      }, 100)
-    })
-  })
-})
-
-test('Channel (emitters and listeners)', (t) => {
-  t.timeout(5000)
-  const users = ['userABC', 'userXYZ']
-  const namespace = {
-    emitters: [
-      'joinChannel + joinMsg --> channelInfo',
-      'sendMsg + userMsg --> msgRxd [updateChats'
-    ],
-    listeners: [
-      'joinedChannel [updateUsers',
-      'leftChannel [userLeft',
-      'chatMessage [appendChat'
-    ]
-  }
-
-  let doneCnt = 0
-  const sockets = []
-
-  return new Promise((resolve) => {
-    const room = 'vueJS'
-    const channel = 'general'
-    const chatNamespace = `rooms/${room}/${channel}`
-    users.forEach((user, idx) => {
-      const context = {
-        joinMsg: {
-          room,
-          channel,
-          user
-        },
-        joinedChannel: {},
-        channelInfo: {},
-        chatMessage: '',
-        userMsg: {
-          inputMsg: `Hi from user ${user}`,
-          user,
-          room,
-          channel,
-          namespace: chatNamespace
-        },
-        msgRxd: {},
-        appendChat(resp) {
-          t.is(context.chatMessage.inputMsg, `Hi from user ${users[1]}`)
-        },
-        userLeft({ user: goneUser, users: usersNow }) {
-          t.is(goneUser, users[1])
-          t.is(usersNow.length, 1)
-          resolve()
-        },
-        updateChats(resp) {
-          t.is(resp.inputMsg, context.userMsg.inputMsg)
-        },
-        updateUsers({ user: joinedUser }) {
-          t.is(joinedUser, users[1])
-        }
-      }
-
-      setTimeout(async () => {
-        const socket = await testNamespace({
-          t,
-          context,
-          namespace,
-          channel: '/channel',
-          teardown: false
-        })
-        sockets.push(socket)
-      }, 100 * (idx + 1))
-
-      setTimeout(() => {
-        if (idx === 0) {
-          t.is(context.joinedChannel.user, users[1])
-        }
-        const {
-          channel: fndChannel,
-          user: userResp,
-          chats,
-          namespace
-        } = context.channelInfo
-        t.is(namespace, chatNamespace)
-        t.is(fndChannel, channel)
-        t.is(userResp, user)
-        t.is(context.msgRxd.inputMsg, context.userMsg.inputMsg)
-        if (++doneCnt === users.length) {
-          const [firstChat] = chats
-          t.is(firstChat.user, users[0])
-          t.is(firstChat.inputMsg, `Hi from user ${users[0]}`)
-          sockets[1].close()
-        }
-      }, 1000)
-    })
-  })
-})
-
-test('Channel (emitters and listeners, warnings off)', (t) => {
-  t.timeout(5000)
-  const users = ['userABC', 'userXYZ']
-  const namespace = {
-    emitters: [
-      'joinChannel + joinMsg --> channelInfo',
-      'sendMsg + userMsg --> msgRxd [updateChats'
-    ],
-    listeners: [
-      'joinedChannel [updateUsers',
-      'leftChannel [userLeft',
-      'chatMessage [appendChat'
-    ]
-  }
-
-  let doneCnt = 0
-  const sockets = []
-
-  return new Promise((resolve) => {
-    const room = 'vueJS'
-    const channel = 'general'
-    const chatNamespace = `rooms/${room}/${channel}`
-    users.forEach((user, idx) => {
-      const context = {
-        joinMsg: {
-          room,
-          channel,
-          user
-        },
-        joinedChannel: {},
-        channelInfo: {},
-        chatMessage: '',
-        userMsg: {
-          inputMsg: `Hi from user ${user}`,
-          user,
-          room,
-          channel,
-          namespace: chatNamespace
-        },
-        msgRxd: {},
-        appendChat(resp) {
-          t.is(context.chatMessage.inputMsg, `Hi from user ${users[1]}`)
-        },
-        userLeft({ user: goneUser, users: usersNow }) {
-          t.is(goneUser, users[1])
-          t.is(usersNow.length, 1)
-          resolve()
-        },
-        updateChats(resp) {
-          t.is(resp.inputMsg, context.userMsg.inputMsg)
-        },
-        updateUsers({ user: joinedUser }) {
-          t.is(joinedUser, users[1])
-        }
-      }
-
-      setTimeout(async () => {
-        const socket = await testNamespace({
-          t,
-          context,
-          namespace,
-          channel: '/channel',
-          warnings: false,
-          teardown: false
-        })
-        sockets.push(socket)
-      }, 100 * (idx + 1))
-
-      setTimeout(() => {
-        if (idx === 0) {
-          t.is(context.joinedChannel.user, users[1])
-        }
-        const {
-          channel: fndChannel,
-          user: userResp,
-          chats,
-          namespace
-        } = context.channelInfo
-        t.is(namespace, chatNamespace)
-        t.is(fndChannel, channel)
-        t.is(userResp, user)
-        t.is(context.msgRxd.inputMsg, context.userMsg.inputMsg)
-        if (++doneCnt === users.length) {
-          const [firstChat] = chats
-          t.is(firstChat.user, users[0])
-          t.is(firstChat.inputMsg, `Hi from user ${users[0]}`)
-          sockets[1].close()
-        }
-      }, 1000)
-    })
-  })
 })
 
 test('Teardown (enabled)', async (t) => {
