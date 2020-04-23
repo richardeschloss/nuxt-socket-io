@@ -98,7 +98,7 @@ export default function(socket) {
         }, 500)
       })
     },
-    getItem({ notify, id }) {
+    getItem({ id }) {
       const data = {
         date: new Date(),
         msg: id
@@ -114,16 +114,13 @@ export default function(socket) {
           desc: 'Some description'
         }
       )
-      return Promise.resolve(ItemOut)
+      return ItemOut
     },
     noResp() {
-      return Promise.resolve({})
+      return {}
     },
     badRequest() {
-      return Promise.resolve({
-        emitError: 'badRequest',
-        details: 'Input does not match schema'
-      })
+      throw new Error('badRequest...Input does not match schema')
     }
   })
 }

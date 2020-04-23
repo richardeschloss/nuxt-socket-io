@@ -21,7 +21,7 @@ let store
 
 before(() => {
   const ports = [3000]
-  const p = ports.map((port) => register.server(undefined, { port }))
+  const p = ports.map((port) => register.server({ port }))
   return Promise.all(p)
 })
 

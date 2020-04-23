@@ -91,7 +91,7 @@ const register = {
     consola.info('socket.io client connected to ', namespace)
     Object.entries(svc).forEach(([evt, fn]) => {
       if (typeof fn === 'function') {
-        socket.on(evt, async (msg, cb) => {
+        socket.on(evt, async (msg, cb = () => {}) => {
           try {
             const resp = await fn(msg)
             cb(resp)
