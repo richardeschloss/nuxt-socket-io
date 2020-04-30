@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { resolve as pResolve } from 'path'
 import hooks from 'require-extension-hooks'
 import { compilePlugin } from './utils'

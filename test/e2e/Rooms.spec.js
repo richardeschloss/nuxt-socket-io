@@ -1,46 +1,38 @@
-/* eslint-disable no-console */
-import test, { beforeEach } from 'ava'
-import { createLocalVue, shallowMount } from '@vue/test-utils'
+import test, { before, beforeEach } from 'ava'
+import { createLocalVue, mount } from '@vue/test-utils'
 import Vuex from 'vuex'
 import { BootstrapVue } from 'bootstrap-vue'
 import config from '@/nuxt.config'
 import Plugin, { pOptions } from '@/io/plugin.compiled'
-import { injectPlugin } from '@/test/utils'
+import { injectPlugin, watchP, ioServerInit } from '@/test/utils'
 import Rooms from '@/pages/rooms.vue'
-import { state as indexState, mutations, actions } from '@/store/index'
-import {
-  state as examplesState,
-  mutations as examplesMutations
-} from '@/store/examples'
 
 const { io } = config
 pOptions.set(io)
-const state = indexState()
-const vuexModules = {
-  examples: {
-    namespaced: true,
-    state: examplesState(),
-    mutations: examplesMutations
-  }
-}
 
 let localVue
 let store
+
+before(() => ioServerInit())
 
 beforeEach(() => {
   localVue = createLocalVue()
   localVue.use(Vuex)
   localVue.use(BootstrapVue)
   store = new Vuex.Store({
-    state,
-    mutations,
-    actions,
-    modules: vuexModules
+    state: {}
   })
 })
 
 test('Rooms page', async (t) => {
-  const wrapper = shallowMount(Rooms, {
+  const wrapper = mount(Rooms, {
+    data() {
+      return {
+        ioApi: {},
+        ioData: {},
+        selectedRoom: ''
+      }
+    },
     store,
     localVue,
     stubs: {
@@ -56,14 +48,14 @@ test('Rooms page', async (t) => {
       $nuxtSocket: await injectPlugin({}, Plugin)
     }
   })
-  wrapper.setData({ selectedRoom: 'vueJS' })
   t.truthy(wrapper.isVueInstance())
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      t.true(wrapper.vm.rooms.length > 0)
-      wrapper.vm.toRoom()
-      t.is(wrapper.vm.$router[0], `/rooms/${wrapper.vm.selectedRoom}`)
-      resolve()
-    }, 1500)
-  })
+  const ctx = wrapper.vm
+  await watchP(ctx, 'ioApi.ready')
+  t.true(ctx.ioApi.ready)
+  const rooms = await watchP(ctx, 'rooms')
+  t.true(rooms.length > 0)
+  wrapper.setData({ selectedRoom: 'vueJS' })
+  const elm = wrapper.find('input[list="room-choices"]')
+  elm.trigger('input')
+  t.is(ctx.$router[0], '/rooms/vueJS')
 })

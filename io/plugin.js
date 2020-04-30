@@ -230,19 +230,28 @@ const register = {
         warn(`evt ${evt} already has a listener registered`)
       }
 
-      methods.forEach((method) => {
-        if (ctx[ioDataProp][method] === undefined) {
-          ctx.$set(ctx[ioDataProp], method, {})
+      if (methods.length === 0) {
+        let initVal = dataT
+        if (typeof initVal === 'object') {
+          initVal = dataT.constructor.name === 'Array' ? [] : {}
         }
-
-        ctx.$set(
-          ctx[ioDataProp][method],
-          evt,
-          dataT.constructor.name === 'Array' ? [] : {}
-        )
-      })
+        ctx.$set(ctx[ioDataProp], evt, initVal)
+      } else {
+        methods.forEach((method) => {
+          if (ctx[ioDataProp][method] === undefined) {
+            ctx.$set(ctx[ioDataProp], method, {})
+          }
+  
+          ctx.$set(
+            ctx[ioDataProp][method],
+            evt,
+            dataT.constructor.name === 'Array' ? [] : {}
+          )
+        })
+      }
 
       socket.on(evt, (msg, cb) => {
+        debug(`serverAPI event ${evt} rxd with msg`, msg)
         const { method, data } = msg
         if (method !== undefined) {
           if (ctx[ioDataProp][method] === undefined) {
@@ -290,11 +299,7 @@ const register = {
             evt: emitEvt,
             msg
           })
-          if (respT === undefined) {
-            warn(
-              `resp not defined on schema for ${fn}. Assigning response as "any" object to ${ioDataProp}`
-            )
-          }
+          
           ctx[ioDataProp][fn].resp = resp
           resolve(resp)
         })
@@ -373,7 +378,7 @@ const register = {
       debug(`registered evts for ${label} to ${ioApiProp}`)
     }
 
-    ctx[ioApiProp].ready = true
+    ctx.$set(ctx[ioApiProp], 'ready', true)
     debug('ioApi', ctx[ioApiProp])
   },
   emitErrors({ ctx, err, emitEvt, emitErrorsProp }) {
@@ -796,8 +801,11 @@ function nuxtSocket(ioOpts) {
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
-  const { sockets, warnings = true } = pluginOptions
+  const { sockets } = pluginOptions
   const { $store: store } = this
+
+  const mergedOpts = Object.assign({}, pluginOptions, ioOpts)
+  const { warnings = true } = mergedOpts
 
   warn =
     warnings && process.env.NODE_ENV !== 'production' ? consola.warn : () => {}
@@ -829,7 +837,9 @@ function nuxtSocket(ioOpts) {
   }
 
   if (!useSocket.url) {
-    warn(`URL not defined for socket "${useSocket.name}". Defaulting to "window.location"`)
+    warn(
+      `URL not defined for socket "${useSocket.name}". Defaulting to "window.location"`
+    )
   }
 
   if (!useSocket.registeredWatchers) {
@@ -866,10 +876,16 @@ function nuxtSocket(ioOpts) {
   function connectSocket() {
     if (connectUrl) {
       socket = io(connectUrl, connectOpts)
-      consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl)
+      consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl, connectOpts)
     } else {
       socket = io(channel, connectOpts)
-      consola.info('[nuxt-socket-io]: connect', useSocket.name, window.location, channel)
+      consola.info(
+        '[nuxt-socket-io]: connect',
+        useSocket.name,
+        window.location,
+        channel,
+        connectOpts
+      )
     }
   }
 

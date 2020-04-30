@@ -46,58 +46,9 @@ module.exports = {
   io: {
     sockets: [
       {
-        name: 'heroku',
-        url: 'https://nuxt-socket-io-server.herokuapp.com',
-        default: process.env.DEPLOY === 'GH_PAGES',
-        vuex: {
-          mutations: [{ progress: 'examples/SET_PROGRESS' }],
-          actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
-          emitBacks: [
-            'examples/sample',
-            { 'examples/sample2': 'sample2' },
-            'titleFromUser'
-          ]
-        },
-        namespaces: {
-          '/index': {
-            emitters: ['getMessage2 + testMsg --> message2Rxd'],
-            listeners: ['chatMessage2', 'chatMessage3 --> message3Rxd']
-          },
-          '/examples': {
-            emitBacks: ['sample3', 'sample4 <-- myObj.sample4'],
-            emitters: [
-              'reset] getProgress + refreshInfo --> progress [handleDone'
-            ],
-            listeners: ['progress']
-          },
-          '/rooms': {
-            emitters: ['getRooms --> rooms']
-          },
-          '/room': {
-            emitters: [
-              'joinRoom + joinMsg --> roomInfo',
-              'leaveRoom + leaveMsg'
-            ],
-            listeners: ['joinedRoom [updateUsers', 'leftRoom [updateUsers']
-          },
-          '/channel': {
-            emitters: [
-              'joinChannel + joinMsg --> channelInfo',
-              'leaveChannel + leaveMsg',
-              'sendMsg + userMsg --> msgRxd [appendChats'
-            ],
-            listeners: [
-              'joinedChannel [updateChannelInfo',
-              'leftChannel [updateChannelInfo',
-              'chatMessage [appendChats'
-            ]
-          }
-        }
-      },
-      {
         name: 'home',
         url: 'http://localhost:3000',
-        default: process.env.DEPLOY !== 'GH_PAGES',
+        default: process.env.NODE_ENV !== 'production',
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
@@ -119,28 +70,36 @@ module.exports = {
               'reset] getProgress + refreshInfo --> progress [handleDone'
             ],
             listeners: ['progress']
+          }
+        }
+      },
+      {
+        name: 'chatSvc',
+        url:
+          process.env.NODE_ENV === 'production'
+            ? 'https://nuxt-socket-io-server.herokuapp.com'
+            : 'http://localhost:3000',
+        vuex: {
+          mutations: [{ progress: 'examples/SET_PROGRESS' }],
+          actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
+          emitBacks: [
+            'examples/someObj',
+            'examples/sample',
+            { 'examples/sample2': 'sample2' },
+            'titleFromUser'
+          ]
+        },
+        namespaces: {
+          '/index': {
+            emitters: ['getMessage2 + testMsg --> message2Rxd'],
+            listeners: ['chatMessage2', 'chatMessage3 --> message3Rxd']
           },
-          '/rooms': {
-            emitters: ['getRooms --> rooms']
-          },
-          '/room': {
+          '/examples': {
+            emitBacks: ['sample3', 'sample4 <-- myObj.sample4'],
             emitters: [
-              'joinRoom + joinMsg --> roomInfo',
-              'leaveRoom + leaveMsg'
+              'reset] getProgress + refreshInfo --> progress [handleDone'
             ],
-            listeners: ['joinedRoom [updateUsers', 'leftRoom [updateUsers']
-          },
-          '/channel': {
-            emitters: [
-              'joinChannel + joinMsg --> channelInfo',
-              'leaveChannel + leaveMsg',
-              'sendMsg + userMsg --> msgRxd [appendChats'
-            ],
-            listeners: [
-              'joinedChannel [updateChannelInfo',
-              'leftChannel [updateChannelInfo',
-              'chatMessage [appendChats'
-            ]
+            listeners: ['progress']
           }
         }
       },

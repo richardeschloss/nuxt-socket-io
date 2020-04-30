@@ -4,6 +4,7 @@ import template from 'lodash/template'
 import { Nuxt, Builder } from 'nuxt'
 import serialize from 'serialize-javascript'
 import config from '@/nuxt.config'
+import { register } from '@/io/module'
 
 const oneSecond = 1000
 const oneMinute = 60 * oneSecond
@@ -102,6 +103,11 @@ export function getModuleOptions(moduleName, optsContainer) {
   return opts
 }
 
+export function ioServerInit(ports = [3000]) {
+  const p = ports.map((port) => register.server({ port }))
+  return Promise.all(p)
+}
+
 export async function nuxtInit(t) {
   t.timeout(3 * oneMinute)
   console.time('nuxtInit')
@@ -116,4 +122,16 @@ export async function nuxtInit(t) {
 export function nuxtClose(t) {
   const { nuxt } = t.context
   nuxt.close()
+}
+
+export function waitForEvt(ctx, evt) {
+  return new Promise((resolve) => {
+    ctx.$on(evt, resolve)
+  })
+}
+
+export function watchP(ctx, prop) {
+  return new Promise((resolve) => {
+    ctx.$watch(prop, resolve)
+  })
 }
