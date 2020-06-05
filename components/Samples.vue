@@ -7,10 +7,10 @@
       <div>
         <b-form-input
           :value="someObj.id"
+          @input="changeObj($event)"
           type="number"
           min="0"
           style="width:25%; display: inline-block;"
-          @input="changeObj($event)"
         ></b-form-input>
       </div>
       <span>Msg: {{ someObj.msg }}</span>

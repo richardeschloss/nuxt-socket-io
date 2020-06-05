@@ -41,7 +41,7 @@ const register = {
         if (Svc && typeof Svc === 'function') {
           io.of(`${namespace}`).on('connection', (socket) => {
             const svc = Svc(socket, io)
-            register.socket(svc, socket, namespace)            
+            register.socket(svc, socket, namespace)
           })
         } else {
           consola.info(

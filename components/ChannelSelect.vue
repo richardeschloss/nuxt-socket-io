@@ -27,21 +27,21 @@
       </b-button>
       <b-collapse
         id="channel-list"
-        class="d-md-show"
         :visible="visible"
         @shown="visible = true"
+        class="d-md-show"
       >
         <ul class="nav flex-column">
           <li
             v-for="channel in channels"
             :key="channel.name"
-            class="nav-item channel-container"
             @click="setVisible()"
+            class="nav-item channel-container"
           >
             <nuxt-link
-              class="nav-link channel-select"
               :class="channelActive(channel)"
               :to="channelRoute(channel)"
+              class="nav-link channel-select"
             >
               {{ channel }}
             </nuxt-link>

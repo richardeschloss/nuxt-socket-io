@@ -5,7 +5,7 @@
     <div v-if="ioApi.ready" style="border: 1px solid; width:100%;">
       <span style="width: 40%; display:inline-block;">
         <label>IO server API (for "home" socket on "/dynamic" channel)</label>
-        <div style="white-space:pre-wrap;" v-text="ioApi"></div>
+        <div v-text="ioApi" style="white-space:pre-wrap;"></div>
       </span>
       <span style="width: 50%; display:inline-block; vertical-align:top;">
         <label>Actions Pane</label>
@@ -13,15 +13,15 @@
         <button @click="ioApi.getItems()">Get Items</button>
         <br />
         Events:
-        <div style="white-space:pre-wrap;" v-text="ioData.getItems.itemRxd" />
+        <div v-text="ioData.getItems.itemRxd" style="white-space:pre-wrap;" />
         <br />
         Items:
-        <div style="white-space:pre-wrap;" v-text="ioData.getItems.resp" />
+        <div v-text="ioData.getItems.resp" style="white-space:pre-wrap;" />
         <br />
         <input v-model="ioData.getItem.msg.id" placeholder="Item id" />
         <button @click="ioApi.getItem()">Get Item</button>
         Events: Msg Rxd: <span v-text="ioData.msgRxd" />
-        <div style="white-space:pre-wrap;" v-text="ioData.getItem.resp" />
+        <div v-text="ioData.getItem.resp" style="white-space:pre-wrap;" />
         <br />
         Warnings:
         <div>
@@ -37,7 +37,7 @@
     <div v-if="peerApi.ready" style="border: 1px solid; width:100%;">
       <span style="width: 40%; display:inline-block;">
         <label>Peer/Client API (for "home" socket on "/p2p" channel)</label>
-        <div style="white-space:pre-wrap;" v-text="peerApi"></div>
+        <div v-text="peerApi" style="white-space:pre-wrap;"></div>
       </span>
       <span style="width: 50%; display:inline-block; vertical-align:top;">
         <label>Actions Pane</label>

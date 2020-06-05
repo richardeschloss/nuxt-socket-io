@@ -47,8 +47,10 @@ module.exports = {
     sockets: [
       {
         name: 'home',
-        url: 'http://localhost:3000',
-        default: process.env.NODE_ENV !== 'production',
+        url:
+          process.env.NODE_ENV === 'production'
+            ? 'https://nuxt-socket-io.herokuapp.com'
+            : 'http://localhost:3000',
         vuex: {
           mutations: [{ progress: 'examples/SET_PROGRESS' }],
           actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
@@ -77,31 +79,31 @@ module.exports = {
         name: 'chatSvc',
         url:
           process.env.NODE_ENV === 'production'
-            ? 'https://nuxt-socket-io-server.herokuapp.com'
-            : 'http://localhost:3000',
-        vuex: {
-          mutations: [{ progress: 'examples/SET_PROGRESS' }],
-          actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
-          emitBacks: [
-            'examples/someObj',
-            'examples/sample',
-            { 'examples/sample2': 'sample2' },
-            'titleFromUser'
-          ]
-        },
-        namespaces: {
-          '/index': {
-            emitters: ['getMessage2 + testMsg --> message2Rxd'],
-            listeners: ['chatMessage2', 'chatMessage3 --> message3Rxd']
-          },
-          '/examples': {
-            emitBacks: ['sample3', 'sample4 <-- myObj.sample4'],
-            emitters: [
-              'reset] getProgress + refreshInfo --> progress [handleDone'
-            ],
-            listeners: ['progress']
-          }
-        }
+            ? 'https://nuxt-socket-io.herokuapp.com'
+            : 'http://localhost:3000'
+        // vuex: {
+        //   mutations: [{ progress: 'examples/SET_PROGRESS' }],
+        //   actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
+        //   emitBacks: [
+        //     'examples/someObj',
+        //     'examples/sample',
+        //     { 'examples/sample2': 'sample2' },
+        //     'titleFromUser'
+        //   ]
+        // },
+        // namespaces: {
+        //   '/index': {
+        //     emitters: ['getMessage2 + testMsg --> message2Rxd'],
+        //     listeners: ['chatMessage2', 'chatMessage3 --> message3Rxd']
+        //   },
+        //   '/examples': {
+        //     emitBacks: ['sample3', 'sample4 <-- myObj.sample4'],
+        //     emitters: [
+        //       'reset] getProgress + refreshInfo --> progress [handleDone'
+        //     ],
+        //     listeners: ['progress']
+        //   }
+        // }
       },
       { name: 'goodSocket', url: 'http://localhost:3000' },
       { name: 'badSocket', url: 'http://localhost:3001' },
@@ -133,8 +135,9 @@ module.exports = {
   },
   globals: {
     loadingTimeout: 5000
-  },
-  generate: {
-    dir: '/tmp/netlify/nuxt-socket-io-standalone'
   }
+  // ,
+  // generate: {
+  //   dir: '/tmp/netlify/nuxt-socket-io-standalone'
+  // }
 }

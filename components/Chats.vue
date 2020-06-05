@@ -3,9 +3,7 @@
     <div v-for="(chat, idx) in chats" :key="idx">
       <hr v-show="idx > 0" class="chat-separator" />
       <span class="chat-user"> {{ chat.user }} </span>
-      <span class="chat-time">
-        {{ new Date(chat.timestamp).toLocaleString() }}
-      </span>
+      <span class="chat-time"> {{ chatTimeStr(chat) }} </span>
       <div class="chat-msg">{{ chat.inputMsg }}</div>
     </div>
   </div>
@@ -30,6 +28,16 @@ export default {
       type: Array,
       default: () => []
     }
+  },
+  computed: {
+    chatTimeStr() {
+      return (chat) =>
+        chat.timestamp ? new Date(chat.timestamp).toLocaleString() : ''
+    }
+  },
+  mounted() {
+    // eslint-disable-next-line no-console
+    console.log('chats', this.chats, this.chats.length)
   }
 }
 </script>

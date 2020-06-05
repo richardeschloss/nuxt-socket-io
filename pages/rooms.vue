@@ -1,10 +1,10 @@
 <template>
   <div class="container">
-    <room-select class="room-select" :rooms="rooms" :user="user" />
+    <room-select :rooms="rooms" :user="user" class="room-select" />
     <nuxt-child
       v-if="rooms.includes($route.params.room)"
-      class="room"
       :user="user"
+      class="room"
     />
   </div>
 </template>
