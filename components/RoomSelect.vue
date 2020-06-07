@@ -6,10 +6,10 @@
       </div>
       <input
         v-model="selectedRoom"
+        @input="$router.push(`/rooms/${selectedRoom}`)"
         list="room-choices"
         placeholder="Join a room (click me!)"
         class="room-choice form-control"
-        @input="$router.push(`/rooms/${selectedRoom}`)"
       />
     </div>
     <datalist id="room-choices">

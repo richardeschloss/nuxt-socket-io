@@ -3,12 +3,12 @@
     <div class="col-md-10 col-8">
       <b-form-input
         v-model="inputMsg"
-        type="text"
         @keyup.enter="$emit('sendMsg')"
+        type="text"
       />
     </div>
     <div class="col-md0 col-1">
-      <b-button type="button" @click="$emit('sendMsg')">Submit</b-button>
+      <b-button @click="$emit('sendMsg')" type="button">Submit</b-button>
     </div>
   </div>
 </template>

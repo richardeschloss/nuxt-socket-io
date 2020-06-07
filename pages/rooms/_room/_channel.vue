@@ -55,7 +55,7 @@ export default {
       return this.$route.params.room
     },
 
-    userMsg(input) {
+    userMsg() {
       const { inputMsg, room, channel, user } = this
       return { inputMsg, user, room, channel }
     },

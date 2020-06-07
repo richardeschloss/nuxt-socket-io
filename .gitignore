@@ -90,3 +90,6 @@ sw.*
 *.swp
 
 io/plugin.compiled.js
+
+# Ignore docs here, separate repo
+docs
