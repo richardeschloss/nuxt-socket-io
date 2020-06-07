@@ -7,10 +7,10 @@
     <div>
       <label>Event 'progress' listened locally in this script</label>
       <b-progress
+        :value="progress"
         v-show="showProgress"
         class="examples-progress-bar"
-        height="inherit"
-        :value="progress"
+        height="30px"
         show-progress
         animated
       >
@@ -20,9 +20,9 @@
       <label>Consume progress from Vuex 'progress' state:</label>
       <b-progress
         v-show="showProgress"
-        class="examples-progress-bar"
-        height="inherit"
         :value="progressVuex"
+        class="examples-progress-bar"
+        height="30px"
         show-progress
         animated
       >

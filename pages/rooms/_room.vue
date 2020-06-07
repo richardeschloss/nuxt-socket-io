@@ -1,122 +1,91 @@
 <template>
-  <div>
-    <h3 v-if="roomInfo.user === user">
-      Welcome to room {{ room }}, {{ user }}!
-    </h3>
-    <h3 v-else>Joining room...{{ room }}</h3>
-    <p>
-      Users in room: <b> {{ roomUsers }} </b>
-    </p>
-    <div class="room">
-      <nav class="channel-select">
-        <div class="sidebar-sticky">
-          <ul class="nav flex-column">
-            <li
-              v-for="channel in channels"
-              :key="channel"
-              class="nav-item channel-container"
-            >
-              <nuxt-link
-                class="nav-link"
-                :class="channelActive(channel)"
-                :to="channelRoute(channel)"
-              >
-                {{ channel }}
-              </nuxt-link>
-            </li>
-          </ul>
-        </div>
-      </nav>
-      <nuxt-child v-if="showChannel" :user="user"></nuxt-child>
+  <div v-if="ioApi.ready">
+    <div id="notifications">
+      <toaster :msg="userJoinedMsg" @toastExpired="ioData.userJoined = ''" />
+      <toaster :msg="userLeftMsg" @toastExpired="ioData.userLeft = ''" />
+    </div>
+    <div class="row">
+      <div class="col-md0">
+        <channel-select :room="room" :channels="channels" />
+      </div>
+      <div class="col-md-11">
+        <nuxt-child
+          v-if="channels.includes($route.params.channel)"
+          :user="user"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import ChannelSelect from '@/components/ChannelSelect'
+import Toaster from '@/components/Toaster'
+
 export default {
+  components: {
+    ChannelSelect,
+    Toaster
+  },
   props: {
     user: {
       type: String,
-      default: ''
+      default: () => ''
     }
   },
   data() {
     return {
-      joined: false,
-      joinedRoom: {},
-      roomInfo: {},
-      joinMsg: {},
-      leaveMsg: {}
+      ioApi: {},
+      ioData: {},
+      room: this.$route.params.room,
+      channels: [],
+      users: []
     }
   },
   computed: {
-    channelActive() {
-      return (channel) =>
-        channel === this.$route.params.channel ? 'active' : ''
+    userJoinedMsg() {
+      return this.ioData.userJoined !== ''
+        ? `User ${this.ioData.userJoined} joined room!`
+        : ''
     },
 
-    channelRoute() {
-      return (channel) => `/rooms/${this.room}/${channel}`
-    },
-
-    channels() {
-      return this.roomInfo.channels ? this.roomInfo.channels : []
-    },
-
-    room() {
-      return this.$route.params.room
-    },
-
-    roomUsers() {
-      return this.roomInfo.users ? this.roomInfo.users.join(', ') : []
-    },
-
-    showChannel() {
-      return (
-        this.channels.length > 0 &&
-        this.channels.includes(this.$route.params.channel)
-      )
+    userLeftMsg() {
+      return this.ioData.userLeft !== ''
+        ? `User ${this.ioData.userLeft} left room!`
+        : ''
     }
   },
   watch: {
-    async room(newRoom, oldRoom) {
-      this.leaveMsg = { room: oldRoom, user: this.user }
-      await this.leaveRoom()
-
-      this.joinMsg = { room: newRoom, user: this.user }
-      this.joinRoom()
+    async 'ioApi.ready'(ready) {
+      if (ready) {
+        const { room, channels } = await this.ioApi.join({
+          room: this.room,
+          user: this.user
+        })
+        if (room === this.room) {
+          this.channels = channels
+        }
+      }
+    },
+    'ioData.users'(users) {
+      this.users = users
     }
   },
   mounted() {
-    this.socket = this.$nuxtSocket({ channel: '/room' })
-    this.joinMsg = { room: this.room, user: this.user }
-    this.joinRoom()
-  },
-  methods: {
-    updateUsers(resp) {
-      this.roomInfo.users = resp.users
-    }
+    this.socket = this.$nuxtSocket({
+      name: 'chatSvc',
+      channel: '/room',
+      serverAPI: true
+    })
   }
 }
 </script>
 
 <style scoped>
-.room {
-  display: grid;
-  grid-template: 80px repeat(5, 80px) / 1fr 5fr;
-  grid-gap: 15px;
-}
-
-.channel-select {
-  grid-row: span 5;
-}
-
-.channel-container {
-  border-bottom: 1px solid;
-  cursor: pointer;
-}
-
-.channel-container .active {
-  background-color: lavender;
+#notifications {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  padding: 2%;
 }
 </style>

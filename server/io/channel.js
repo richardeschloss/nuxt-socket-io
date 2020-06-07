@@ -1,12 +1,75 @@
-const { getChannel } = require('./room')
+import { resolve as pResolve } from 'path'
+const { ChatMsg } = require(pResolve('./server/apis'))
+const { default: RoomSvc } = require(pResolve('./server/io/room'))
+
+const API = {
+  version: 1.0,
+  evts: {
+    chat: {
+      data: ChatMsg
+    },
+    users: {
+      data: ['']
+    },
+    userJoined: {
+      data: ''
+    },
+    userLeft: {
+      data: ''
+    }
+  },
+  methods: {
+    join: {
+      msg: {
+        room: '',
+        channel: '',
+        user: ''
+      },
+      resp: {
+        room: '',
+        channel: '',
+        chats: [ChatMsg]
+      }
+    },
+    leave: {
+      msg: {
+        room: '',
+        channel: '',
+        user: ''
+      }
+    },
+    sendMsg: {
+      msg: {
+        room: '',
+        channel: '',
+        inputMsg: '',
+        user: ''
+      }
+    }
+  }
+}
+
+const roomSvc = RoomSvc()
+const chatLimit = 100
 
 export default function(socket, io) {
   const channelSvc = Object.freeze({
-    joinChannel({ room, channel, user }) {
-      const fndChannel = getChannel(room, channel)
-      if (!fndChannel) {
-        return Promise.reject(new Error(`channel ${channel} not found`))
+    getAPI() {
+      return API
+    },
+    getChannel(room, channel) {
+      const fndRoom = roomSvc.getRoom({ room })
+      if (fndRoom.channels === undefined) {
+        throw new Error(`Channels not found in ${room}`)
       }
+      const fndChannel = fndRoom.channels.find(({ name }) => name === channel)
+      if (fndChannel === undefined) {
+        throw new Error(`Channel ${channel} not found in room ${room}`)
+      }
+      return fndChannel
+    },
+    join({ room, channel, user }) {
+      const fndChannel = channelSvc.getChannel(room, channel)
 
       return new Promise((resolve, reject) => {
         if (!fndChannel.users.includes(user)) {
@@ -16,21 +79,18 @@ export default function(socket, io) {
         const { users, chats } = fndChannel
         const namespace = `rooms/${room}/${channel}`
         socket.join(namespace, () => {
-          const resp = { room, channel, chats, users, user, namespace }
-          socket.to(namespace).emit('joinedChannel', resp)
-          resolve(resp)
+          socket.to(namespace).emit('userJoined', { data: user })
+          socket.to(namespace).emit('users', { data: users })
+          socket.emit('users', { data: users })
+          resolve({ room, channel, chats })
         })
-        socket.on('disconnect', () => {
-          channelSvc.leaveChannel({ room, channel, user })
+        socket.once('disconnect', () => {
+          channelSvc.leave({ room, channel, user })
         })
       })
     },
-    leaveChannel({ room, channel, user }) {
-      const fndChannel = getChannel(room, channel)
-      if (!fndChannel) {
-        return Promise.reject(new Error(`channel ${channel} not found`))
-      }
-
+    leave({ room, channel, user }) {
+      const fndChannel = channelSvc.getChannel(room, channel)
       return new Promise((resolve, reject) => {
         if (fndChannel.users.includes(user)) {
           const userIdx = fndChannel.users.findIndex((u) => u === user)
@@ -40,22 +100,32 @@ export default function(socket, io) {
         const { users } = fndChannel
         const namespace = `rooms/${room}/${channel}`
         socket.leave(namespace, () => {
-          const resp = { room, channel, users, user, namespace }
-          socket.to(namespace).emit('leftChannel', resp)
-          resolve(resp)
+          socket.to(namespace).emit('userLeft', { data: user })
+          socket.to(namespace).emit('users', { data: users })
+          socket.emit('users', { data: users })
+          resolve()
         })
       })
     },
-    sendMsg({ inputMsg, room, channel, user, namespace }) {
-      const fndChannel = getChannel(room, channel)
+    sendMsg({ inputMsg, room, channel, user }) {
+      if (!inputMsg || inputMsg === '') {
+        throw new Error('no input msg rxd')
+      }
+      const fndChannel = channelSvc.getChannel(room, channel)
       const chatMsg = {
         user,
         inputMsg,
         timestamp: Date.now()
       }
+      if (fndChannel.chats.length > chatLimit) {
+        fndChannel.chats = fndChannel.chats.splice(Math.floor(chatLimit / 2))
+      }
+
       fndChannel.chats.push(chatMsg)
-      socket.to(namespace).emit('chatMessage', chatMsg)
-      return Promise.resolve(chatMsg)
+      const namespace = `rooms/${room}/${channel}`
+      socket.to(namespace).emit('chat', { data: chatMsg })
+      socket.emit('chat', { data: chatMsg })
+      return Promise.resolve()
     }
   })
 

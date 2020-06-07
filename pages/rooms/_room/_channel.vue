@@ -1,52 +1,34 @@
 <template>
   <div>
-    <div class="channel">
-      <div class="channel-content">
-        <div v-show-recent="chats ? chats.length : 0" class="chats-container">
-          <div v-for="(chat, idx) in chats" :key="idx">
-            <hr v-show="idx > 0" class="chat-separator" />
-            <span class="chat-user"> {{ chat.user }} </span>
-            <span class="chat-time">
-              {{ new Date(chat.timestamp).toLocaleString() }}
-            </span>
-            <div class="chat-msg">{{ chat.inputMsg }}</div>
-          </div>
-          <div></div>
-          <div></div>
-        </div>
+    <div class="row">
+      <div class="col-md-10">
+        <chats :chats="chats" />
       </div>
-      <div class="channel-users">
-        <label>Users in channel:</label>
-        <div v-for="channelUser in channelInfo.users" :key="channelUser">
-          {{ channelUser }}
-        </div>
+      <div class="col-md0 d-none d-sm-none d-md-block">
+        <channel-users :users="users" />
       </div>
-      <b-form-input
-        v-model="inputMsg"
-        class="input-msg"
-        type="text"
-        @keyup.enter="sendMsg()"
-      />
-      <b-button class="submit-btn" type="button" @click="sendMsg()"
-        >Submit</b-button
-      >
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <chat-input
+          v-model="inputMsg"
+          @sendMsg="inputMsg !== '' ? ioApi.sendMsg(userMsg) : null"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import ChannelUsers from '@/components/ChannelUsers'
+import ChatInput from '@/components/ChatInput'
+import Chats from '@/components/Chats'
+
 export default {
-  directives: {
-    showRecent: {
-      update(elm, binding) {
-        const { value: chatsLength, oldValue: oldChatsLength } = binding
-        if (chatsLength !== oldChatsLength) {
-          setTimeout(() => {
-            elm.scrollTop = elm.scrollHeight
-          }, 250)
-        }
-      }
-    }
+  components: {
+    ChannelUsers,
+    ChatInput,
+    Chats
   },
   props: {
     user: {
@@ -56,13 +38,12 @@ export default {
   },
   data() {
     return {
-      joinedChannel: {},
-      channelInfo: {},
-      chatMessage: '',
+      ioApi: {},
+      ioData: {},
+
+      chats: [],
       inputMsg: '',
-      msgRxd: {},
-      joinMsg: {},
-      leaveMsg: {}
+      users: []
     }
   },
   computed: {
@@ -70,108 +51,82 @@ export default {
       return this.$route.params.channel
     },
 
-    chats() {
-      return this.channelInfo.chats
-    },
-
-    namespace() {
-      return this.channelInfo.namespace
-    },
-
     room() {
       return this.$route.params.room
     },
 
     userMsg() {
-      return {
-        inputMsg: this.inputMsg,
-        user: this.user,
-        room: this.room,
-        channel: this.channel,
-        namespace: this.namespace
-      }
+      const { inputMsg, room, channel, user } = this
+      return { inputMsg, user, room, channel }
+    },
+
+    userJoinedMsg() {
+      return this.ioData.userJoined !== ''
+        ? `User ${this.ioData.userJoined} joined channel!`
+        : ''
+    },
+
+    userLeftMsg() {
+      return this.ioData.userLeft !== ''
+        ? `User ${this.ioData.userLeft} left channel!`
+        : ''
     }
   },
   watch: {
-    channel(newChannel, oldChannel) {
-      const { room, user } = this
-      this.leaveMsg = { room, channel: oldChannel, user }
-      this.leaveChannel()
+    channel(n, o) {
+      this.chats = []
+      this.socket.close()
+      this.socket = this.$nuxtSocket({
+        name: 'chatSvc',
+        channel: '/channel',
+        serverAPI: true
+      })
+    },
 
-      this.joinMsg = { room, channel: newChannel, user }
-      this.joinChannel()
+    async 'ioApi.ready'(ready) {
+      if (ready) {
+        const { room, channel, chats } = await this.ioApi.join({
+          room: this.room,
+          channel: this.channel,
+          user: this.user
+        })
+        if (room === this.room && channel === this.channel) {
+          this.chats = chats
+        }
+      }
+    },
+
+    'ioData.chat'(chat) {
+      if (chat) {
+        this.inputMsg = ''
+        this.chats.push(chat)
+      }
+    },
+
+    'ioData.users'(users) {
+      this.users = users
     }
   },
   mounted() {
-    this.socket = this.$nuxtSocket({ channel: '/channel' })
-    this.joinMsg = { room: this.room, channel: this.channel, user: this.user }
-    this.joinChannel()
-  },
-  methods: {
-    appendChats(resp) {
-      this.channelInfo.chats.push(resp)
-      this.inputMsg = ''
-    },
-
-    updateChannelInfo(resp) {
-      const { room, users, channel, namespace } = resp
-      const { channel: activeChannel, room: activeRoom } = this
-      if (room === activeRoom && channel === activeChannel) {
-        Object.assign(this.channelInfo, { users, namespace })
-      }
-    }
+    this.socket = this.$nuxtSocket({
+      name: 'chatSvc',
+      channel: '/channel',
+      serverAPI: true
+    })
   }
 }
 </script>
 
 <style scoped>
-.channel {
-  display: grid;
-  grid-template: repeat(4, 80px) 45px / 5fr 1fr;
-  grid-gap: 15px;
+.row:nth-of-type(1) {
+  height: 75vh;
 }
 
-.channel-content {
-  grid-row: span 4;
+.row:nth-of-type(1) > div {
+  height: inherit;
 }
 
-.channel-users {
-  grid-column: 2;
-}
-
-.channel-msgs-txt {
-  height: 100%;
-}
-
-.chats-container {
-  border: 1px solid;
-  border-radius: 10px;
-  height: 100%;
-  padding: 10px;
-  background: #36393f;
-  color: #f2ffed;
-  overflow-y: scroll;
-}
-
-.chat-separator {
-  background: #f2ffed5e;
-}
-
-.chat-user {
-  font-weight: bold;
-}
-
-.chat-time {
-  float: right;
-  font-size: 0.75rem;
-}
-
-.input-msg {
-  grid-row: 5;
-}
-
-.submit-btn {
-  grid-row: 5;
-  grid-column: 2;
+.row:nth-of-type(2) {
+  padding-top: 2%;
 }
 </style>
