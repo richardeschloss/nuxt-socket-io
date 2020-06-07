@@ -2,6 +2,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2020-06-07
+### Added
+- Much cleaner documentation, hosted on their own site
+
+### Changed
+- This github's README. I consider this to be a major change in docs, even though the code change was minor. Code was just linted.
+
 ## [1.0.25] - 2020-04-23
 ### Added
 - Automatic IO Server registration based on presence of IO server file and folder (added to module)

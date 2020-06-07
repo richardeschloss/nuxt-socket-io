@@ -4,6 +4,8 @@
 [![](https://gitlab.com/richardeschloss/nuxt-socket-io/badges/master/coverage.svg)](https://gitlab.com/richardeschloss/nuxt-socket-io)
 [![NPM](https://img.shields.io/npm/l/nuxt-socket-io)](https://github.com/richardeschloss/nuxt-socket-io/blob/development/LICENSE)
 
+[📖 **Release Notes**](./CHANGELOG.md)
+
 # nuxt-socket-io
 
 [Socket.io](https://socket.io/) client and server module for Nuxt
@@ -92,4 +94,4 @@ There you will see:
 
 1. Clone this repository
 2. Install dependencies using `yarn install` or `npm install`
-3. Start development server using `npm run dev`
+3. Start development server using `yarn dev` or `npm run dev`
