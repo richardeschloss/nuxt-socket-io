@@ -61,8 +61,8 @@ yarn add nuxt-socket-io # or npm install nuxt-socket-io
     })
   },
   methods: {
-    /* Emit events */
-    this.method1() {
+    method1() {
+      /* Emit events */
       this.socket.emit('method1', {
         hello: 'world' 
       }, (resp) => {
