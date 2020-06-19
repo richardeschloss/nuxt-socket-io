@@ -1,9 +1,9 @@
+/* eslint-disable no-console */
 /*
  * Copyright 2020 Richard Schloss (https://github.com/richardeschloss/nuxt-socket-io)
  */
 
 import io from 'socket.io-client'
-import consola from 'consola'
 import Debug from 'debug'
 
 const debug = Debug('nuxt-socket-io')
@@ -318,7 +318,7 @@ const register = {
     clientAPI = {}
   }) {
     if (ctx[ioApiProp] === undefined) {
-      consola.error(
+      console.error(
         `[nuxt-socket-io]: ${ioApiProp} needs to be defined in the current context for ` +
           `serverAPI registration (vue requirement)`
       )
@@ -808,7 +808,7 @@ function nuxtSocket(ioOpts) {
   const { warnings = true } = mergedOpts
 
   warn =
-    warnings && process.env.NODE_ENV !== 'production' ? consola.warn : () => {}
+    warnings && process.env.NODE_ENV !== 'production' ? console.warn : () => {}
 
   if (
     !sockets ||
@@ -876,10 +876,10 @@ function nuxtSocket(ioOpts) {
   function connectSocket() {
     if (connectUrl) {
       socket = io(connectUrl, connectOpts)
-      consola.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl, connectOpts)
+      console.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl, connectOpts)
     } else {
       socket = io(channel, connectOpts)
-      consola.info(
+      console.info(
         '[nuxt-socket-io]: connect',
         useSocket.name,
         window.location,
