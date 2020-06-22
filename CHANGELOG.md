@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2020-06-22
+### Changed
+- consola to console in the plugin. Allows logging statements to be dropped with TerserWebpack plugin.
+
 ## [1.1.0] - 2020-06-07
 ### Added
 - Much cleaner documentation, hosted on their own site
