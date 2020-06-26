@@ -1,15 +1,15 @@
+/* eslint-disable no-console */
 /* eslint-disable standard/no-callback-literal */
 /*
  * Copyright 2020 Richard Schloss (https://github.com/richardeschloss/nuxt-socket-io)
  */
 
-import http from 'http'
-import { existsSync } from 'fs'
-import { resolve as pResolve } from 'path'
-import { promisify } from 'util'
-import consola from 'consola'
-import socketIO from 'socket.io'
-import Glob from 'glob'
+const http = require('http')
+const { existsSync } = require('fs')
+const { resolve: pResolve } = require('path')
+const { promisify } = require('util')
+const socketIO = require('socket.io')
+const Glob = require('glob')
 
 const glob = promisify(Glob)
 
@@ -37,14 +37,14 @@ const register = {
       const nspFiles = await glob(`${nspDir}/**/*.js`)
       const namespaces = nspFiles.map((f) => f.split(nspDir)[1].split('.js')[0])
       namespaces.forEach(async (namespace, idx) => {
-        const { default: Svc } = await import(nspFiles[idx])
+        const { default: Svc } = require(nspFiles[idx])
         if (Svc && typeof Svc === 'function') {
           io.of(`${namespace}`).on('connection', (socket) => {
             const svc = Svc(socket, io)
             register.socket(svc, socket, namespace)
           })
         } else {
-          consola.info(
+          console.info(
             `io service at ${nspDir}${namespace} does not export a default "Svc()" function. Not registering`
           )
         }
@@ -58,7 +58,7 @@ const register = {
         .listen(port, host)
         .on('error', reject)
         .on('listening', () => {
-          consola.info(`socket.io server listening on ${host}:${port}`)
+          console.info(`socket.io server listening on ${host}:${port}`)
           resolve(server)
         })
     })
@@ -89,7 +89,7 @@ const register = {
     return Promise.all(p).then(() => server)
   },
   socket(svc, socket, namespace) {
-    consola.info('socket.io client connected to ', namespace)
+    console.info('socket.io client connected to ', namespace)
     Object.entries(svc).forEach(([evt, fn]) => {
       if (typeof fn === 'function') {
         socket.on(evt, async (msg, cb = () => {}) => {
@@ -103,17 +103,17 @@ const register = {
       }
     })
     socket.on('disconnect', () => {
-      consola.info('client disconnected from', namespace)
+      console.info('client disconnected from', namespace)
     })
   }
 }
 
-export default function nuxtSocketIO(moduleOptions) {
+function nuxtSocketIO(moduleOptions) {
   const options = Object.assign({}, this.options.io, moduleOptions)
 
   if (options.server !== false) {
     this.nuxt.hook('listen', async (server = http.createServer()) => {
-      await register.server(options.server, server).catch(consola.error)
+      await register.server(options.server, server).catch(console.error)
       this.nuxt.hook('close', () => server.close())
     })
   }
@@ -126,4 +126,7 @@ export default function nuxtSocketIO(moduleOptions) {
   })
 }
 
-export { register }
+module.exports = {
+  default: nuxtSocketIO,
+  register
+}
