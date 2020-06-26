@@ -135,7 +135,8 @@ module.exports = {
   },
   globals: {
     loadingTimeout: 5000
-  }
+  },
+  telemetry: false
   // ,
   // generate: {
   //   dir: '/tmp/netlify/nuxt-socket-io-standalone'

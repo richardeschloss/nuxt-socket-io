@@ -2,6 +2,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.3] - 2020-06-25
+### Changed
+- module to CommonJS format. may be easier to re-use this way for now.
+- consola to console in the module.
+
 ## [1.1.2] - 2020-06-22
 ### Changed
 - consola to console in the plugin. Allows logging statements to be dropped with TerserWebpack plugin.
