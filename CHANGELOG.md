@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.4] - 2020-06-27
+### Changed
+- Reverted to 1.1.2. Module is back in ESM. I think going forward, if CJS is needed, a duplicate or built file with .cjs will be created. It seems like the future is going towards ESM.
+
 ## [1.1.3] - 2020-06-25
 ### Changed
 - module to CommonJS format. may be easier to re-use this way for now.

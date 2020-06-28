@@ -3,8 +3,8 @@ import path from 'path'
 import consola from 'consola'
 import { serial as test } from 'ava'
 import ioClient from 'socket.io-client'
+import NuxtSocketMod, { register } from '@/io/module'
 import { delay, getModuleOptions } from '@/test/utils'
-const { default: NuxtSocketMod, register } = require('@/io/module')
 
 const srcDir = path.resolve('.')
 const { io } = getModuleOptions('io/module', 'io')
