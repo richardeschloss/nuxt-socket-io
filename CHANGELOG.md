@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.5] - 2020-07-14
+### Changed
+- Changed internal workings of socket persistence. Socket instances are no longer being persisted in vuex, but instead internally by the plugin. This may break any code that relies on accessessing the sockets directly from vuex.
+
 ## [1.1.4] - 2020-06-27
 ### Changed
 - Reverted to 1.1.2. Module is back in ESM. I think going forward, if CJS is needed, a duplicate or built file with .cjs will be created. It seems like the future is going towards ESM.
