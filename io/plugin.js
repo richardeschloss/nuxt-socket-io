@@ -22,6 +22,8 @@ function PluginOptions() {
 
 const _pOptions = PluginOptions()
 
+const _sockets = {}
+
 let warn
 
 function camelCase(str) {
@@ -585,7 +587,6 @@ const register = {
         state: {
           clientApis: {},
           ioApis: {},
-          sockets: {},
           emitErrors: {},
           emitTimeouts: {}
         },
@@ -596,10 +597,6 @@ const register = {
 
           SET_CLIENT_API(state, { label = 'clientAPI', ...api }) {
             state.clientApis[label] = api
-          },
-
-          SET_SOCKET(state, { label, socket }) {
-            state.sockets[label] = socket
           },
 
           SET_EMIT_ERRORS(state, { label, emitEvt, err }) {
@@ -625,7 +622,7 @@ const register = {
           ) {
             debug('$nuxtSocket vuex action "emit" dispatched', label, evt)
             return new Promise((resolve, reject) => {
-              const _socket = socket || state.sockets[label]
+              const _socket = socket || _sockets[label]
               const _emitTimeout =
                 emitTimeout !== undefined
                   ? emitTimeout
@@ -890,9 +887,9 @@ function nuxtSocket(ioOpts) {
   }
 
   if (persist) {
-    if (store.state.$nuxtSocket.sockets[label]) {
+    if (_sockets[label]) {
       debug(`resuing persisted socket ${label}`)
-      socket = store.state.$nuxtSocket.sockets[label]
+      socket = _sockets[label]
       if (socket.disconnected) {
         debug('persisted socket disconnected, reconnecting...')
         connectSocket()
@@ -900,7 +897,7 @@ function nuxtSocket(ioOpts) {
     } else {
       debug(`socket ${label} does not exist, creating and connecting to it..`)
       connectSocket()
-      store.commit('$nuxtSocket/SET_SOCKET', { label, socket })
+      _sockets[label] = socket
     }
   } else {
     connectSocket()

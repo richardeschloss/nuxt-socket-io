@@ -476,12 +476,11 @@ test('Socket persistence (enabled)', async (t) => {
   const context = {}
   const state = {}
   const ioOpts = { persist: true, teardown: false, channel: '/dynamic' }
-  const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
   const socket1 = await loadPlugin({ t, context, ioOpts, state })
-  await socketConnected(socket1)
-  t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
   const socket2 = await loadPlugin({ t, context, ioOpts, state })
   t.is(socket1.id, socket2.id)
+  socket1.close()
+  socket2.close()
 })
 
 test('Socket persistence (enabled; use provided label)', async (t) => {
@@ -498,12 +497,12 @@ test('Socket persistence (enabled; use provided label)', async (t) => {
   const context = {}
   const state = {}
   const ioOpts = { persist: 'mySocket', teardown: false, channel: '/dynamic' }
-  const label = ioOpts.persist
   const socket1 = await loadPlugin({ t, context, ioOpts, state })
   await socketConnected(socket1)
-  t.is(socket1.id, context.$store.state.$nuxtSocket.sockets[label].id)
   const socket2 = await loadPlugin({ t, context, ioOpts, state })
   t.is(socket1.id, socket2.id)
+  socket1.close()
+  socket2.close()
 })
 
 test('Socket persistence (enabled; reconnect only if disconnected)', async (t) => {
@@ -520,13 +519,13 @@ test('Socket persistence (enabled; reconnect only if disconnected)', async (t) =
   const context = {}
   const state = {}
   const ioOpts = { persist: true, teardown: false, channel: '/dynamic' }
-  const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
   const socket1 = await loadPlugin({ t, context, ioOpts, state })
   const socket2 = await loadPlugin({ t, context, ioOpts, state })
-  t.truthy(context.$store.state.$nuxtSocket.sockets[label])
   await socketConnected(socket1)
   await socketConnected(socket2)
   t.true(socket1.id !== socket2.id)
+  socket1.close()
+  socket2.close()
 })
 
 test('Socket persistence (disabled)', async (t) => {
@@ -541,10 +540,16 @@ test('Socket persistence (disabled)', async (t) => {
 
   pOptions.set(testCfg)
   const context = {}
+  const state = {}
   const ioOpts = { persist: false, channel: '/dynamic' }
   await loadPlugin({ t, context, ioOpts })
-  const label = `${testCfg.sockets[0].name}${ioOpts.channel}`
-  t.falsy(context.$store.state.$nuxtSocket.sockets[label])
+  const socket1 = await loadPlugin({ t, context, ioOpts, state })
+  const socket2 = await loadPlugin({ t, context, ioOpts, state })
+  await socketConnected(socket1)
+  await socketConnected(socket2)
+  t.true(socket1.id !== socket2.id)
+  socket1.close()
+  socket2.close()
 })
 
 test('API registration (server)', async (t) => {
