@@ -861,9 +861,7 @@ function nuxtSocket(ioOpts) {
       ? persist
       : `${useSocket.name}${channel}`
 
-  if (!store) {
-    warn('Vuex store does not exist. Please create the "Nuxt way" if you want the $nuxtSocket vuex module to be registered')
-  } else if (!store.state.$nuxtSocket) {
+  if (!store.state.$nuxtSocket) {
     debug('vuex store $nuxtSocket does not exist....registering it')
     register.vuexModule({ store })
   }
@@ -889,9 +887,6 @@ function nuxtSocket(ioOpts) {
   }
 
   if (persist) {
-    if (!this.$root.$sockets) {
-      this.$root.$sockets = {}  
-    }
     if (_sockets[label]) {
       debug(`resuing persisted socket ${label}`)
       socket = _sockets[label]
@@ -903,7 +898,6 @@ function nuxtSocket(ioOpts) {
       debug(`socket ${label} does not exist, creating and connecting to it..`)
       connectSocket()
       _sockets[label] = socket
-      this.$root.$sockets[label] = socket
     }
   } else {
     connectSocket()
