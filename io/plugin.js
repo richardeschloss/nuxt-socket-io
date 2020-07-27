@@ -798,8 +798,25 @@ function nuxtSocket(ioOpts) {
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
-  const { sockets } = pluginOptions
+  let { sockets } = pluginOptions // io
   const { $store: store } = this
+
+  // TBD
+  const mergedOptions = { ...pluginOptions }
+  if (this.$config 
+    && this.$config.io) {
+    Object.assign(mergedOptions, this.$config.io)
+    mergedOptions.sockets = pluginOptions.sockets
+    if (this.$config.io.sockets&& Array.isArray(this.$config.io.sockets)) {
+      this.$config.io.sockets.forEach((socket) => {
+        const fnd = mergedOptions.sockets.find(({ name }) => name === socket.name)
+        if (fnd === undefined) {
+          mergedOptions.sockets.push(socket)
+        }
+      })
+    }
+  }
+  console.log('merged io', mergedOptions)
 
   const mergedOpts = Object.assign({}, pluginOptions, ioOpts)
   const { warnings = true } = mergedOpts

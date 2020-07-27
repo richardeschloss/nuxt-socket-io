@@ -66,6 +66,12 @@ export default {
     }
   },
   computed: mapState(['chatMessages']),
+  created() {
+    this.$nuxtSocket({
+      channel: '/index',
+      reconnection: false
+    })
+  },
   mounted() {
     this.socket = this.$nuxtSocket({
       channel: '/index',

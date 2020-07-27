@@ -1,4 +1,24 @@
 module.exports = {
+  publicRuntimeConfig: {
+    io: {
+      sockets: [
+        {
+          name: 'publicSocket',
+          url: 'url1'
+        }
+      ]
+    }
+  },
+  privateRuntimeConfig: {
+    io: {
+      sockets: [
+        {
+          name: 'privateSocket',
+          url: 'url2'
+        }
+      ]
+    }
+  },
   mode: 'universal',
   /*
    ** Headers of the page
