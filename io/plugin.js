@@ -818,7 +818,9 @@ function nuxtSocket(ioOpts) {
   }
   console.log('merged io', mergedOptions)
 
-  const mergedOpts = Object.assign({}, pluginOptions, ioOpts)
+  // To be tested: merge
+  const mergedOpts = Object.assign({}, mergedOptions, ioOpts) // merges build and runtime options. better naming tbd
+  // const mergedOpts = Object.assign({}, pluginOptions, ioOpts)
   const { warnings = true } = mergedOpts
 
   warn =
