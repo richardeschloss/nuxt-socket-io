@@ -1552,6 +1552,144 @@ test('Teardown (disabled)', async (t) => {
   t.is(componentDestroyCnt, 1)
 })
 
+test('Socket plugin (runtime IO $config defined, sockets undef)', async (t) => {
+  const cbs = []
+  const context = {
+    $config: {
+      io: {}
+    },
+    socketStatus: {},
+    $on(evt, cb) {
+      cbs.push(cb)
+    },
+    $emit(evt) {
+      cbs.forEach((cb) => cb())
+    }
+  }
+  const url = 'http://localhost:3000'
+  const testCfg = {
+    sockets: [
+      {
+        default: true,
+        url
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  await loadPlugin({
+    t,
+    ioOpts: {
+      name: 'runtime'
+    },
+    context
+  })
+  await delay(150)
+  Object.entries(context.socketStatus).forEach(([key, val]) => {
+    if (key === 'connectUrl') {
+      t.is(val, url)
+    } else {
+      t.is(val, '')
+    }
+  })
+  context.$emit('closeSockets')
+})
+
+test('Socket plugin (runtime IO $config defined)', async (t) => {
+  const cbs = []
+  const context = {
+    $config: {
+      io: {
+        sockets: [
+          {
+            name: 'runtime',
+            url: 'http://someurl'
+          },
+          {
+            name: 'runtime',
+            url: 'http://someurl'
+          }
+        ]
+      }
+    },
+    socketStatus: {},
+    $on(evt, cb) {
+      cbs.push(cb)
+    },
+    $emit(evt) {
+      cbs.forEach((cb) => cb())
+    }
+  }
+  const url = 'http://localhost:3000'
+  const testCfg = {
+    sockets: [
+      {
+        default: true,
+        url
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  const socket = await loadPlugin({
+    t,
+    ioOpts: {
+      name: 'runtime'
+    },
+    context
+  })
+  await delay(150)
+  t.is(context.socketStatus.connectUrl, 'http://someurl')
+  socket.close()
+  context.$emit('closeSockets')
+})
+
+test('Socket plugin (runtime IO $config defined, dev sockets malformed)', async (t) => {
+  const cbs = []
+  const context = {
+    $config: {
+      io: {
+        sockets: [
+          {
+            name: 'runtime',
+            url: 'http://someurl'
+          },
+          {
+            name: 'runtime',
+            url: 'http://someurl'
+          }
+        ]
+      }
+    },
+    socketStatus: {},
+    $on(evt, cb) {
+      cbs.push(cb)
+    },
+    $emit(evt) {
+      cbs.forEach((cb) => cb())
+    }
+  }
+  const url = 'http://localhost:3000'
+  const testCfg = {
+    socketsX: [
+      {
+        default: true,
+        url
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  const socket = await loadPlugin({
+    t,
+    ioOpts: {
+      name: 'runtime'
+    },
+    context
+  })
+  await delay(150)
+  t.is(context.socketStatus.connectUrl, 'http://someurl')
+  socket.close()
+  context.$emit('closeSockets')
+})
+
 test('Socket plugin (from nuxt.config)', async (t) => {
   delete require.cache[tmpFile]
   delete process.env.TEST

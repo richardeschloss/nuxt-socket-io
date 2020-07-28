@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.6] - 2020-07-27
+### Added
+- Support for Nuxt 2.13+ runtime config feature. Experimental feature.
+
 ## [1.1.5] - 2020-07-14
 ### Changed
 - Changed internal workings of socket persistence. Socket instances are no longer being persisted in vuex, but instead internally by the plugin. This may break any code that relies on accessessing the sockets directly from vuex.
