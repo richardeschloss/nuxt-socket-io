@@ -127,6 +127,12 @@ function propByPath(obj, path) {
   }, obj)
 }
 
+function validateSockets(sockets) {
+  return (sockets 
+    && Array.isArray(sockets)
+    && sockets.length > 0)  
+}
+
 const register = {
   clientApiEvents({ ctx, store, socket, api }) {
     const { evts } = api
@@ -798,39 +804,31 @@ function nuxtSocket(ioOpts) {
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
-  let { sockets } = pluginOptions // io
-  const { $store: store } = this
+  const { $config, $store: store } = this
 
-  // TBD
-  const mergedOptions = { ...pluginOptions }
-  if (this.$config 
-    && this.$config.io) {
-    Object.assign(mergedOptions, this.$config.io)
-    mergedOptions.sockets = pluginOptions.sockets
-    if (this.$config.io.sockets&& Array.isArray(this.$config.io.sockets)) {
-      this.$config.io.sockets.forEach((socket) => {
-        const fnd = mergedOptions.sockets.find(({ name }) => name === socket.name)
+  const runtimeOptions = { ...pluginOptions }
+  if ($config && $config.io) {
+    Object.assign(runtimeOptions, $config.io)
+    runtimeOptions.sockets = validateSockets(pluginOptions.sockets) 
+      ? pluginOptions.sockets
+      : []
+    if (validateSockets($config.io.sockets)) {
+      $config.io.sockets.forEach((socket) => {
+        const fnd = runtimeOptions.sockets.find(({ name }) => name === socket.name)
         if (fnd === undefined) {
-          mergedOptions.sockets.push(socket)
+          runtimeOptions.sockets.push(socket)
         }
       })
     }
   }
-  console.log('merged io', mergedOptions)
-
-  // To be tested: merge
-  const mergedOpts = Object.assign({}, mergedOptions, ioOpts) // merges build and runtime options. better naming tbd
-  // const mergedOpts = Object.assign({}, pluginOptions, ioOpts)
-  const { warnings = true } = mergedOpts
-
+  
+  const mergedOpts = Object.assign({}, runtimeOptions, ioOpts)
+  const { sockets, warnings = true } = mergedOpts
+  
   warn =
     warnings && process.env.NODE_ENV !== 'production' ? console.warn : () => {}
 
-  if (
-    !sockets ||
-    sockets.constructor.name !== 'Array' ||
-    sockets.length === 0
-  ) {
+  if (!validateSockets(sockets)) {
     throw new Error(
       "Please configure sockets if planning to use nuxt-socket-io: \r\n [{name: '', url: ''}]"
     )
