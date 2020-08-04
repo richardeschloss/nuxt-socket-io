@@ -35,7 +35,7 @@ const register = {
   nspSvc(io, nspDir) {
     return new Promise(async (resolve, reject) => {
       const nspFiles = await glob(`${nspDir}/**/*.js`)
-      const namespaces = nspFiles.map((f) => f.split(nspDir)[1].split('.js')[0])
+      const namespaces = nspFiles.map((f) => f.split(nspDir.replace(/\\/g,'/')[1].split('.js')[0])
       namespaces.forEach(async (namespace, idx) => {
         const { default: Svc } = await import(nspFiles[idx])
         if (Svc && typeof Svc === 'function') {
