@@ -35,8 +35,9 @@ const register = {
   nspSvc(io, nspDir) {
     return new Promise(async (resolve, reject) => {
       const nspFiles = await glob(`${nspDir}/**/*.{js,ts, mjs}`)
+      const nspDirResolved = pResolve(nspDir)
       const namespaces = nspFiles.map(
-        (f) => f.split(nspDir)[1].split(/.(js|ts|mjs)/)[0]
+        (f) => f.split(nspDirResolved)[1].split(/.(js|ts|mjs)/)[0]
       )
       namespaces.forEach(async (namespace, idx) => {
         const { default: Svc } = await import(nspFiles[idx])
@@ -47,7 +48,7 @@ const register = {
           })
         } else {
           consola.info(
-            `io service at ${nspDir}${namespace} does not export a default "Svc()" function. Not registering`
+            `io service at ${nspDirResolved}${namespace} does not export a default "Svc()" function. Not registering`
           )
         }
       })
