@@ -2,6 +2,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.7] - 2020-08-05
+### Added
+- Support for .ts and .mjs namespace files
+
+### Fixed
+- Namespace path resolution on Windows.
+
 ## [1.1.6] - 2020-07-27
 ### Added
 - Support for Nuxt 2.13+ runtime config feature. Experimental feature.
