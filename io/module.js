@@ -5,7 +5,7 @@
 
 import http from 'http'
 import { existsSync } from 'fs'
-import { resolve as pResolve } from 'path'
+import { resolve as pResolve, parse as pParse } from 'path'
 import { promisify } from 'util'
 import consola from 'consola'
 import socketIO from 'socket.io'
@@ -34,8 +34,10 @@ const register = {
   },
   nspSvc(io, nspDir) {
     return new Promise(async (resolve, reject) => {
-      const nspFiles = await glob(`${nspDir}/**/*.js`)
-      const namespaces = nspFiles.map((f) => f.split(nspDir)[1].split('.js')[0])
+      const nspFiles = await glob(`${nspDir}/**/*.{js,ts, mjs}`)
+      const namespaces = nspFiles.map(
+        (f) => f.split(nspDir)[1].split(/.(js|ts|mjs)/)[0]
+      )
       namespaces.forEach(async (namespace, idx) => {
         const { default: Svc } = await import(nspFiles[idx])
         if (Svc && typeof Svc === 'function') {
@@ -70,10 +72,17 @@ const register = {
       host = 'localhost',
       port = 3000
     } = options
-    const ioSvcFull = pResolve(ioSvc.endsWith('.js') ? ioSvc : ioSvc + '.js')
-    const nspDirFull = pResolve(
-      nspDir.endsWith('.js') ? nspDir.substr(nspDir.length - 3) : nspDir
+
+    const { ext: ioSvcExt } = pParse(ioSvc)
+    const { ext: nspDirExt } = pParse(ioSvc)
+    const extList = ['.js', '.ts', '.mjs']
+    const ioSvcFull = pResolve(
+      extList.includes(ioSvcExt) ? ioSvc : ioSvc + '.js'
     )
+    const nspDirFull = pResolve(
+      extList.includes(nspDirExt) ? nspDir.substr(nspDir.length - 3) : nspDir
+    )
+
     const io = socketIO(server)
     const svcs = { ioSvc: ioSvcFull, nspSvc: nspDirFull }
     const p = []
