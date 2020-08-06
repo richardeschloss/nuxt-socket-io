@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.8] - 2020-08-06
+### Fixed
+- Namespace path resolution on Windows for real this time. Merged in the change.
+
 ## [1.1.7] - 2020-08-05
 ### Added
 - Support for .ts and .mjs namespace files
