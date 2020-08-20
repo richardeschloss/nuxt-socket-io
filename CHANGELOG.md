@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.9] - 2020-08-20
+### Fixed
+- Namespace path resolution on Windows for real this time. Merged in the change. (filipepinheiro) 
+
 ## [1.1.8] - 2020-08-06
 ### Fixed
 - Namespace path resolution on Windows for real this time. Merged in the change.
