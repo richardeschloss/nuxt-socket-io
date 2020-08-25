@@ -1,8 +1,8 @@
-[![npm](https://img.shields.io/npm/v/nuxt-socket-io)](https://www.npmjs.com/package/nuxt-socket-io)
-[![npm](https://img.shields.io/npm/dt/nuxt-socket-io)](https://www.npmjs.com/package/nuxt-socket-io)
+[![npm](https://img.shields.io/npm/v/nuxt-socket-io.svg)](https://www.npmjs.com/package/nuxt-socket-io)
+[![npm](https://img.shields.io/npm/dt/nuxt-socket-io.svg)](https://www.npmjs.com/package/nuxt-socket-io)
 [![](https://gitlab.com/richardeschloss/nuxt-socket-io/badges/master/pipeline.svg)](https://gitlab.com/richardeschloss/nuxt-socket-io)
 [![](https://gitlab.com/richardeschloss/nuxt-socket-io/badges/master/coverage.svg)](https://gitlab.com/richardeschloss/nuxt-socket-io)
-[![NPM](https://img.shields.io/npm/l/nuxt-socket-io)](https://github.com/richardeschloss/nuxt-socket-io/blob/development/LICENSE)
+[![NPM](https://img.shields.io/npm/l/nuxt-socket-io.svg)](https://github.com/richardeschloss/nuxt-socket-io/blob/development/LICENSE)
 
 [📖 **Release Notes**](./CHANGELOG.md)
 
