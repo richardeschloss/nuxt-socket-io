@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.11] - 2020-08-28
+### Changed
+- Ran security audit and updated dependencies.
+
 ## [1.1.10] - 2020-08-24
 ### Fixed
 - Badges to improve branding score on npms. (FaCuZ)
