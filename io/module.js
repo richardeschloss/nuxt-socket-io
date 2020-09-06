@@ -60,7 +60,7 @@ const register = {
       server
         .listen(port, host)
         .on('error', reject)
-        .on('listening', () => {
+        .once('listening', () => {
           consola.info(`socket.io server listening on ${host}:${port}`)
           resolve(server)
         })
