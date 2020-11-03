@@ -37,6 +37,7 @@ type EmitBackNotation = MutationNotation;
  * Options to let you sync incoming events to a Vuex store and emit events
  * on Vuex store changes. These options will override settings from your Nuxt
  * configuration.
+ * https://nuxt-socket-io.netlify.app/configuration#vuex-options-per-socket
  */
 interface NuxtSocketVueOptions {
   mutations?: Array<MutationNotation>;
@@ -71,17 +72,58 @@ type EmitterNotation = string | Record<string, string>;
  */
 type ListenerNotation = string | Record<string, string>;
 
+/**
+ * Options to let you configure emitters, listeners and/or
+ * emitBacks for a given namespace (a.k.a. "channel")
+ * https://nuxt-socket-io.netlify.app/configuration#namespace-configuration
+ */
 interface NuxtSocketNspCfg {
   emitters?: Array<EmitterNotation>;
   listeners?: Array<ListenerNotation>;
   emitBacks?: Array<EmitBackNotation>;
 }
 
+/**
+ * Kiss API format used by Nuxt Socket Dynamic API feature.
+ * https://medium.com/swlh/nuxt-socket-io-the-magic-of-dynamic-api-registration-9af180383869
+ */
 interface NuxtSocketKissApi {
   label: string;
   version: number;
   evts?:  Record<string, any>;
   methods?:  Record<string, any>;
+}
+
+/**
+ * Options to use for a socket.io server you want the module
+ * to start
+ * https://nuxt-socket-io.netlify.app/configuration#automatic-io-server-registration
+ */
+interface NuxtSocketIoServerOpts {
+  /**
+   * Path to IO service used for clients that connect to "/"
+   * @default '[projectRoot]/server/io.js'
+   */
+  ioSvc?: string;
+  /**
+   * Directory containing IO services for clients that connect
+   * to the namespace matching the file name
+   * Example: a file "namespace1.js" in this folder will listen
+   * clients that connect to "/namespace1"
+   * 
+   * @default '[projectRoot]/server/io'
+   */
+  nspDir?: string;
+  /**
+   * Socket.io server host 
+   * @default 'localhost'
+   */
+  host?: string;
+  /**
+   * Socket.io server port
+   * @default 3000
+   */
+  port?: number;
 }
 
 interface NuxtSocketOpts extends SocketIOClient.ConnectOpts {
@@ -183,6 +225,21 @@ interface NuxtSocketIoOptions {
    * Minimum one socket required.
    */
   sockets: Array<NuxtSocketConfig>;
+
+  /**
+   * Options for starting a socket.io server
+   * and automatically registering socket io service(s).
+   * By default, registers services in
+   * - [projectRoot]/server/io.js
+   * - [projectRoot]/server/io/*.js
+   */
+  server: boolean | NuxtSocketIoServerOpts
+
+  /**
+   * Console warnings enabled/disabled
+   * @default true
+   */
+  warnings?: boolean;
 }
 
 interface NuxtSocketIoRuntimeOptions {
@@ -190,6 +247,21 @@ interface NuxtSocketIoRuntimeOptions {
    * Minimum one socket required.
    */
   sockets: Array<NuxtSocketRuntimeConfig>;
+
+  /**
+   * Options for starting a socket.io server
+   * and automatically registering socket io service(s).
+   * By default, registers services in
+   * - [projectRoot]/server/io.js
+   * - [projectRoot]/server/io/*.js
+   */
+  server: boolean | NuxtSocketIoServerOpts
+
+  /**
+   * Console warnings enabled/disabled
+   * @default true
+   */
+  warnings?: boolean;
 }
 
 interface NuxtSocket extends SocketIOClient.Socket {};
