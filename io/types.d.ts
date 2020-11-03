@@ -233,7 +233,7 @@ interface NuxtSocketIoOptions {
    * - [projectRoot]/server/io.js
    * - [projectRoot]/server/io/*.js
    */
-  server: boolean | NuxtSocketIoServerOpts
+  server?: boolean | NuxtSocketIoServerOpts
 
   /**
    * Console warnings enabled/disabled
@@ -255,7 +255,7 @@ interface NuxtSocketIoRuntimeOptions {
    * - [projectRoot]/server/io.js
    * - [projectRoot]/server/io/*.js
    */
-  server: boolean | NuxtSocketIoServerOpts
+  server?: boolean | NuxtSocketIoServerOpts
 
   /**
    * Console warnings enabled/disabled
@@ -298,4 +298,4 @@ declare module '@nuxt/types' {
   }
 }
 
-export { NuxtSocket }
+export { NuxtSocket, NuxtSocketIoOptions, NuxtSocketIoRuntimeOptions }
