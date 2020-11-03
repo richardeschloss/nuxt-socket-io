@@ -62,13 +62,15 @@ export default {
       messageRxd: '',
       message2Rxd: '',
       message3Rxd: '',
-      testMsg: { id: 'xyz' }
+      testMsg: { id: 'xyz' },
+      socket: null
     }
   },
   computed: mapState(['chatMessages']),
   mounted() {
     this.socket = this.$nuxtSocket({
       channel: '/index',
+      // @ts-ignore
       reconnection: false
     })
   },
