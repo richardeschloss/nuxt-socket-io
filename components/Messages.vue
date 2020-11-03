@@ -70,7 +70,6 @@ export default {
   mounted() {
     this.socket = this.$nuxtSocket({
       channel: '/index',
-      // @ts-ignore
       reconnection: false
     })
   },

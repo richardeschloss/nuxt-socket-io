@@ -9,7 +9,7 @@ import Vue from 'vue';
  *   2. A string with a double-dashed arrow - the left side of the arrow is the event name, the right side is the mutation
  *   3. An object - the object key is the event, the value is the mutation
  */
-type MutationNotation = string | Record<string | string>;
+type MutationNotation = string | Record<string, string>;
 
 /**
  * The format of each entry in actions can be:
@@ -42,6 +42,46 @@ interface NuxtSocketVueOptions {
   mutations?: Array<MutationNotation>;
   actions?: Array<ActionNotation>;
   emitBacks?: Array<EmitBackNotation>;
+}
+
+/**
+ * The format of each entry in emitters can be:
+ *
+ *   1. A single name string - the method name on [this] component that emits an event of the same name
+ *   2. A string with the following format:
+ *      'preEmit hook] componentMethod + msg --> componentProp [postRx hook'
+ *
+ *      Hooks are optional. calling this[componentMethod] will send the event [componentMethod]
+ *      with data this[msg]. It will save the response to this[componentProp]   
+ *      If the preEmit hook returns false, emitting will be canceled.
+ *   3. An object - the object key is the method name on [this] component, the value is the event to emit
+ */
+type EmitterNotation = string | Record<string, string>;
+
+/**
+ * The format of each entry in listeners can be:
+ *
+ *   1. A single name string - the event name to listen to, whose data will be 
+ *      saved in this[eventName]
+ *   2. A string with the following format:
+ *      'preHook] listenEvent --> componentProp [postRx hook'
+ *
+ *      Hooks are optional. When listenEvent received, it will be saved to this[componentProp]
+ *   3. An object - the object key is the event name to listen to, the value is the property on [this] component that will contain the event's data
+ */
+type ListenerNotation = string | Record<string, string>;
+
+interface NuxtSocketNspCfg {
+  emitters?: Array<EmitterNotation>;
+  listeners?: Array<ListenerNotation>;
+  emitBacks?: Array<EmitBackNotation>;
+}
+
+interface NuxtSocketKissApi {
+  label: string;
+  version: number;
+  evts?:  Record<string, any>;
+  methods?:  Record<string, any>;
 }
 
 interface NuxtSocketOpts extends SocketIOClient.ConnectOpts {
@@ -80,10 +120,10 @@ interface NuxtSocketOpts extends SocketIOClient.ConnectOpts {
    * @default 'emitErrors'
    */
   emitErrorsProp?: string;
-  namespaceCfg?: {
-    emitters?: Array<string | object>;
-    listeners?: Array<string | object>;
-  };
+  /**
+   * Namespace config. Specifies emitters, listeners, and/or emitBacks.
+   */
+  namespaceCfg?: NuxtSocketNspCfg;
   /**
    * @default 'ioApi'
    */
@@ -96,18 +136,8 @@ interface NuxtSocketOpts extends SocketIOClient.ConnectOpts {
    * @default []
    */
   apiIgnoreEvts?: Array<string>;
-  serverAPI?: {
-    label: string;
-    version: number;
-    evts?:  Record<string, any>;
-    methods?:  Record<string, any>;
-  };
-  clientAPI?: {
-    label: string;
-    version: number;
-    evts?: Record<string, any>;
-    methods?: Record<string, any>;
-  };
+  serverAPI?: NuxtSocketKissApi;
+  clientAPI?: NuxtSocketKissApi;
   vuex?: NuxtSocketVueOptions;
 }
 
@@ -137,11 +167,7 @@ interface NuxtSocketConfig {
    * Socket.IO namespaces configuration. Supports an arrow syntax in each entry
    * to help describe the flow (with pre/post hook designation support too).
    */
-  namespaces?: Record<string, {
-    emitters?: Array<string>;
-    listeners?: Array<string>;
-    emitBacks?: Array<string>;
-  }>;
+  namespaces?: Record<string, NuxtSocketNspCfg>;
 }
 
 interface NuxtSocketRuntimeConfig extends NuxtSocketConfig {
