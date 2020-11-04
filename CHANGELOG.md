@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.12] - 2020-11-04
+### Added
+- Types for plugin and module (@wkillerud)
+
 ## [1.1.11] - 2020-08-28
 ### Changed
 - Ran security audit and updated dependencies.
