@@ -1,5 +1,6 @@
 module.exports = {
   publicRuntimeConfig: {
+    /** @type {import('io/types').NuxtSocketIoRuntimeOptions} */
     io: {
       sockets: [
         {
@@ -10,6 +11,7 @@ module.exports = {
     }
   },
   privateRuntimeConfig: {
+    /** @type {import('io/types').NuxtSocketIoRuntimeOptions} */
     io: {
       sockets: [
         {
@@ -63,6 +65,7 @@ module.exports = {
     'bootstrap-vue/nuxt',
     '~/io/module'
   ],
+  /** @type {import('io/types').NuxtSocketIoOptions} */
   io: {
     sockets: [
       {

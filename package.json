@@ -4,6 +4,7 @@
   "description": "Socket.io client and server module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "main": "io/module.js",
+  "types": "io/types.d.ts",
   "license": "MIT",
   "contributors": [
     {
@@ -47,6 +48,8 @@
     "utils"
   ],
   "dependencies": {
+    "@nuxt/types": "^2.14.7",
+    "@types/socket.io-client": "^1.4.34",
     "glob": "^7.1.6",
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0",
