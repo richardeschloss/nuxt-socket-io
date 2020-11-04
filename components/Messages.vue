@@ -62,7 +62,8 @@ export default {
       messageRxd: '',
       message2Rxd: '',
       message3Rxd: '',
-      testMsg: { id: 'xyz' }
+      testMsg: { id: 'xyz' },
+      socket: null
     }
   },
   computed: mapState(['chatMessages']),
