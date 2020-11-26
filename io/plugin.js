@@ -24,7 +24,7 @@ const _pOptions = PluginOptions()
 
 const _sockets = {}
 
-let warn
+let warn, info
 
 function camelCase(str) {
   return str
@@ -823,10 +823,13 @@ function nuxtSocket(ioOpts) {
   }
   
   const mergedOpts = Object.assign({}, runtimeOptions, ioOpts)
-  const { sockets, warnings = true } = mergedOpts
+  const { sockets, warnings = true, info = true } = mergedOpts
   
   warn =
     warnings && process.env.NODE_ENV !== 'production' ? console.warn : () => {}
+
+  infoMsgs =
+    info && process.env.NODE_ENV !== 'production' ? console.info : () => {}
 
   if (!validateSockets(sockets)) {
     throw new Error(
@@ -890,10 +893,10 @@ function nuxtSocket(ioOpts) {
   function connectSocket() {
     if (connectUrl) {
       socket = io(connectUrl, connectOpts)
-      console.info('[nuxt-socket-io]: connect', useSocket.name, connectUrl, connectOpts)
+      infoMsgs('[nuxt-socket-io]: connect', useSocket.name, connectUrl, connectOpts)
     } else {
       socket = io(channel, connectOpts)
-      console.info(
+      infoMsgs(
         '[nuxt-socket-io]: connect',
         useSocket.name,
         window.location,
