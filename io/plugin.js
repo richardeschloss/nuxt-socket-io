@@ -823,13 +823,13 @@ function nuxtSocket(ioOpts) {
   }
   
   const mergedOpts = Object.assign({}, runtimeOptions, ioOpts)
-  const { sockets, warnings = true, infos = true } = mergedOpts
+  const { sockets, warnings = true, info = true } = mergedOpts
   
   warn =
     warnings && process.env.NODE_ENV !== 'production' ? console.warn : () => {}
 
-  info =
-    infos && process.env.NODE_ENV !== 'production' ? console.info : () => {}
+  infoMsgs =
+    info && process.env.NODE_ENV !== 'production' ? console.info : () => {}
 
   if (!validateSockets(sockets)) {
     throw new Error(
@@ -893,10 +893,10 @@ function nuxtSocket(ioOpts) {
   function connectSocket() {
     if (connectUrl) {
       socket = io(connectUrl, connectOpts)
-      info('[nuxt-socket-io]: connect', useSocket.name, connectUrl, connectOpts)
+      infoMsgs('[nuxt-socket-io]: connect', useSocket.name, connectUrl, connectOpts)
     } else {
       socket = io(channel, connectOpts)
-      info(
+      infoMsgs(
         '[nuxt-socket-io]: connect',
         useSocket.name,
         window.location,
