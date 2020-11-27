@@ -1016,8 +1016,8 @@ test('Socket plugin (vuex opts ok)', async (t) => {
   t.pass()
 })
 
-test('IO Opts (warnings disabled)', async (t) => {
-  pOptions.set({ warnings: false, sockets: [{}] })
+test('IO Opts (warnings and info disabled)', async (t) => {
+  pOptions.set({ warnings: false, info: false, sockets: [{}] })
   await loadPlugin({
     t,
     context: {},
@@ -1028,7 +1028,7 @@ test('IO Opts (warnings disabled)', async (t) => {
   await loadPlugin({
     t,
     context: {},
-    ioOpts: { warnings: false }
+    ioOpts: { warnings: false, info: false }
   }).catch(() => {})
   consola.log('Check coverage report')
   t.pass()

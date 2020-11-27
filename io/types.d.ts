@@ -240,6 +240,12 @@ interface NuxtSocketIoOptions {
    * @default true
    */
   warnings?: boolean;
+
+  /**
+   * Console info enabled/disabled
+   * @default true
+   */
+  info?: boolean;
 }
 
 interface NuxtSocketIoRuntimeOptions {
@@ -262,6 +268,12 @@ interface NuxtSocketIoRuntimeOptions {
    * @default true
    */
   warnings?: boolean;
+
+  /**
+   * Console info enabled/disabled
+   * @default true
+   */
+  info?: boolean;
 }
 
 interface NuxtSocket extends SocketIOClient.Socket {};

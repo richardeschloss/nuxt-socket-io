@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.13] - 2020-11-27
+### Added
+- Option to disable the console.info messages (@ArticSeths)
+
 ## [1.1.12] - 2020-11-04
 ### Added
 - Types for plugin and module (@wkillerud)
