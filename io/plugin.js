@@ -24,7 +24,7 @@ const _pOptions = PluginOptions()
 
 const _sockets = {}
 
-let warn, info
+let warn, infoMsgs
 
 function camelCase(str) {
   return str
