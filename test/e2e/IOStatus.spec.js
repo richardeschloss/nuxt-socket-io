@@ -19,10 +19,10 @@ pOptions.set({
 let localVue
 let store
 
-before(() => {
+before(async () => {
   const ports = [3000]
   const p = ports.map((port) => register.server({ port }))
-  return Promise.all(p)
+  await Promise.all(p)
 })
 
 beforeEach(() => {
@@ -47,11 +47,12 @@ test('IO Status Page', async (t) => {
   })
   t.truthy(wrapper.isVueInstance())
   await delay(3500)
-  const children = wrapper.findAll(SocketStatus)
+  const children = wrapper.findAllComponents(SocketStatus)
   const goodChild = children.at(0)
   const badChild = children.at(1)
-
+  // @ts-ignore
   const { statusTbl: goodTbl } = goodChild.vm
+  // @ts-ignore
   const { statusTbl: badTbl } = badChild.vm
   const expected1 = [{ item: 'status', info: 'OK' }]
   expected1.forEach(({ item, info }, idx) => {
@@ -59,12 +60,7 @@ test('IO Status Page', async (t) => {
     t.is(goodTbl[idx].info, info)
   })
 
-  const expectedItems = [
-    'connectError',
-    'reconnectAttempt',
-    'reconnecting',
-    'reconnectError'
-  ]
+  const expectedItems = ['connectError', 'reconnectAttempt', 'reconnectError']
   expectedItems.forEach((i) => {
     const fndItem = badTbl.find(({ item }) => item === i)
     t.truthy(fndItem)

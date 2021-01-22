@@ -734,12 +734,14 @@ const register = {
   },
   socketStatus({ ctx, socket, connectUrl, statusProp }) {
     const socketStatus = { connectUrl }
+    // See also: 
+    // https://socket.io/docs/v3/migrating-from-2-x-to-3-0/index.html#The-Socket-instance-will-no-longer-forward-the-events-emitted-by-its-Manager
     const clientEvts = [
       'connect_error',
       'connect_timeout',
       'reconnect',
       'reconnect_attempt',
-      'reconnecting',
+      'reconnecting', // socket.io-client v2.x only
       'reconnect_error',
       'reconnect_failed',
       'ping',
@@ -748,9 +750,11 @@ const register = {
     clientEvts.forEach((evt) => {
       const prop = camelCase(evt)
       socketStatus[prop] = ''
-      socket.on(evt, (resp) => {
+      function handleEvt(resp) {
         Object.assign(ctx[statusProp], { [prop]: resp })
-      })
+      }
+      socket.on(evt, handleEvt)
+      socket.io.on(evt, handleEvt)
     })
     Object.assign(ctx, { [statusProp]: socketStatus })
   },
