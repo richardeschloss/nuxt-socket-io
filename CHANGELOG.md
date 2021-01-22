@@ -2,6 +2,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.14] - 2021-01-22
+### Updated
+- socket.io and socket.io-client deps to v3
+- Ran security audit fix
+
 ## [1.1.13] - 2020-11-27
 ### Added
 - Option to disable the console.info messages (@ArticSeths)

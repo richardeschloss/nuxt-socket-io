@@ -22,6 +22,11 @@
 - Support for dynamic APIs using the KISS API format
 - Support for the IO config in the new Nuxt runtime config (for Nuxt versions >= 2.13)
 
+# Important update
+
+* v1.1.14+ uses socket.io 3.x. You may find the migration [here](https://socket.io/docs/v3/migrating-from-2-x-to-3-0/index.html)
+* v1.1.13 uses socket.io 2.x . Clamp the version to 1.1.13 if not ready to update.
+
 # Setup
 
 1. Add `nuxt-socket-io` dependency to your project
