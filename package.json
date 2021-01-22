@@ -1,6 +1,6 @@
 {
   "name": "nuxt-socket-io",
-  "version": "1.1.13",
+  "version": "1.1.14",
   "description": "Socket.io client and server module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "main": "io/module.js",
@@ -36,7 +36,7 @@
     "test:specs:watch": "cross-env TEST=specs ava --config specs.config.js --color --watch",
     "test:e2e": "cross-env TEST=e2e ava --config e2e.config.js",
     "test:e2e:cov": "cross-env TEST=e2e nyc --no-clean ava --timeout=10m --config e2e.config.js",
-    "test:e2e:watch": "cross-env TEST=e2e ava --config e2e.config.js --color --watch",
+    "test:e2e:watch": "cross-env TEST=e2e ava --config e2e.config.js --color --watch --timeout=10m",
     "posttest": "rm io/plugin.compiled.js"
   },
   "files": [
@@ -51,8 +51,8 @@
     "@nuxt/types": "^2.14.7",
     "@types/socket.io-client": "^1.4.34",
     "glob": "^7.1.6",
-    "socket.io": "^2.3.0",
-    "socket.io-client": "^2.3.0",
+    "socket.io": "^3.1.0",
+    "socket.io-client": "^3.1.0",
     "vue-template-compiler": "^2.6.12"
   },
   "devDependencies": {
@@ -78,7 +78,7 @@
     "express": "^4.16.4",
     "jsdom-global": "^3.0.2",
     "nodemon": "^1.19.4",
-    "nuxt": "^2.14.4",
+    "nuxt": "^2.14.12",
     "nyc": "^14.1.1",
     "prettier": "^1.19.1",
     "require-extension-hooks": "^0.3.3",

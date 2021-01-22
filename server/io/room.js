@@ -34,6 +34,11 @@ const API = {
   }
 }
 
+/**
+ *
+ * @param {import('socket.io').Socket} socket
+ * @param {import('socket.io').Server} io
+ */
 export default function Svc(socket, io) {
   const roomSvc = Object.freeze({
     getAPI() {
@@ -51,49 +56,45 @@ export default function Svc(socket, io) {
     },
     join({ room, user }) {
       const fndRoom = roomSvc.getRoom({ room })
-      return new Promise((resolve) => {
-        if (!fndRoom.users) {
-          fndRoom.users = []
-        }
-        if (!fndRoom.users.includes(user)) {
-          fndRoom.users.push(user)
-        }
+      if (!fndRoom.users) {
+        fndRoom.users = []
+      }
+      if (!fndRoom.users.includes(user)) {
+        fndRoom.users.push(user)
+      }
 
-        const namespace = `rooms/${room}`
-        socket.join(namespace, () => {
-          socket.to(namespace).emit('userJoined', { data: user })
-          socket.to(namespace).emit('users', { data: fndRoom.users })
-          socket.emit('users', { data: fndRoom.users })
-          resolve({
-            room,
-            channels: fndRoom.channels.map(({ name }) => name)
-          })
-        })
-
-        socket.once('disconnect', () => {
-          roomSvc.leave({ room, user })
-        })
+      const namespace = `rooms/${room}`
+      socket.once('disconnect', () => {
+        roomSvc.leave({ room, user })
       })
+
+      // socket.io v3: socket.join now synchronous
+      socket.join(namespace)
+      socket.to(namespace).emit('userJoined', { data: user })
+      socket.to(namespace).emit('users', { data: fndRoom.users })
+      socket.emit('users', { data: fndRoom.users })
+      return {
+        room,
+        channels: fndRoom.channels.map(({ name }) => name)
+      }
     },
     leave({ room, user }) {
       const fndRoom = roomSvc.getRoom({ room })
       if (!fndRoom) {
         throw new Error(`room ${room} not found`)
       }
-      return new Promise((resolve, reject) => {
-        if (fndRoom.users && fndRoom.users.includes(user)) {
-          const userIdx = fndRoom.users.findIndex((u) => u === user)
-          fndRoom.users.splice(userIdx, 1)
-        }
 
-        const namespace = `rooms/${room}`
-        socket.leave(namespace, () => {
-          socket.to(namespace).emit('userLeft', { data: user })
-          socket.to(namespace).emit('users', { data: fndRoom.users })
-          socket.emit('users', { data: fndRoom.users })
-          resolve()
-        })
-      })
+      if (fndRoom.users && fndRoom.users.includes(user)) {
+        const userIdx = fndRoom.users.findIndex((u) => u === user)
+        fndRoom.users.splice(userIdx, 1)
+      }
+
+      const namespace = `rooms/${room}`
+      // socket.io v3: socket.leave now synchronous
+      socket.leave(namespace)
+      socket.to(namespace).emit('userLeft', { data: user })
+      socket.to(namespace).emit('users', { data: fndRoom.users })
+      socket.emit('users', { data: fndRoom.users })
     }
   })
   return roomSvc
