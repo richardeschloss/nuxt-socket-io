@@ -1,4 +1,5 @@
 module.exports = {
+  telemetry: false,
   publicRuntimeConfig: {
     /** @type {import('io/types').NuxtSocketIoRuntimeOptions} */
     io: {
@@ -21,7 +22,6 @@ module.exports = {
       ]
     }
   },
-  mode: 'universal',
   /*
    ** Headers of the page
    */

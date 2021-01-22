@@ -12,10 +12,10 @@ const { io } = config
 const src = path.resolve('./io/plugin.js')
 const tmpFile = path.resolve('./io/plugin.compiled.js')
 
-before(() => {
+before(async () => {
   const ports = [3000]
   const p = ports.map((port) => register.server({ port }))
-  return Promise.all(p)
+  await Promise.all(p)
 })
 
 function socketConnected(socket) {
@@ -614,10 +614,9 @@ test('API registration (server)', async (t) => {
 })
 
 test('API registration (server; join and leave room)', async (t) => {
-  const ioOpts = { channel: '/room', serverAPI: true }
+  const ioOpts = { channel: '/room', serverAPI: true, multiplex: false }
   const { context: ctx1, socket: s1 } = await waitForAPI({ t, ioOpts })
   await ctx1.ioApi.join({ room: 'vueJS', user: 'userABC' })
-
   const { context: ctx2, socket: s2 } = await waitForAPI({ t, ioOpts })
   await ctx2.ioApi.join({ room: 'vueJS', user: 'userXYZ' })
   t.is(ctx1.ioData.userJoined, 'userXYZ')
