@@ -14,9 +14,19 @@ import Glob from 'glob'
 const glob = promisify(Glob)
 
 const register = {
+  middlewares(io, middlewares) {
+    Object.values(middlewares).forEach((m) => io.use(m))
+  },
   ioSvc(io, ioSvc, nspDir) {
     return new Promise((resolve, reject) => {
-      const { default: Svc } = require(ioSvc)
+      const {
+        default: Svc,
+        middlewares = {},
+        setIO = () => {}
+      } = require(ioSvc)
+      register.middlewares(io, middlewares)
+      setIO(io)
+
       if (Svc && typeof Svc === 'function') {
         io.on('connection', (socket) => {
           const svc = Svc(socket, io)
