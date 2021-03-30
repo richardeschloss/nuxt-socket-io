@@ -2,6 +2,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.15] - 2021-03-30
+### Added
+- Middleware registration feature
+- Feature to access the `io` instance in the root namespace.
+
 ## [1.1.14] - 2021-01-22
 ### Updated
 - socket.io and socket.io-client deps to v3
