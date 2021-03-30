@@ -192,6 +192,15 @@ test('Register.ioSvc (ioSvc exists, ok)', async (t) => {
   serverDflt.close()
 })
 
+test('Register.ioSvc (ioSvc exists, middlewares defined)', async (t) => {
+  const ioSvc = './server/io/middlewares'
+  await register.server({ ioSvc }, serverDflt)
+  const msg = { data: 'hello' }
+  const resp = await sendReceive({ msg })
+  t.is(resp.data, msg.data)
+  serverDflt.close()
+})
+
 test('Register.ioSvc (ioSvc exists, ok, callback undef)', async (t) => {
   const ioSvc = './server/io'
   await register.server({ ioSvc }, serverDflt)
