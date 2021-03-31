@@ -1,4 +1,12 @@
 import consola from 'consola'
+
+export const middlewares = {
+  m1(_, next) {
+    consola.log('m1 in examples namespace')
+    next()
+  }
+}
+
 export default function Svc(socket, io) {
   return Object.freeze({
     getProgress({ period }) {

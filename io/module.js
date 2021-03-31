@@ -50,7 +50,14 @@ const register = {
         (f) => f.split(nspDirResolved)[1].split(/.(js|ts|mjs)/)[0]
       )
       namespaces.forEach(async (namespace, idx) => {
-        const { default: Svc } = await import(nspFiles[idx])
+        const {
+          default: Svc,
+          middlewares = {},
+          setIO = () => {}
+        } = await import(nspFiles[idx])
+        register.middlewares(io.of(namespace), middlewares)
+        setIO(io)
+
         if (Svc && typeof Svc === 'function') {
           io.of(`${namespace}`).on('connection', (socket) => {
             const svc = Svc(socket, io)
