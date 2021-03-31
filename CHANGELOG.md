@@ -2,9 +2,14 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.16] - 2021-03-31
+### Added
+- Middleware registration feature (sub namespaces)
+- Feature to access the `io` instance in the sub namespaces.
+
 ## [1.1.15] - 2021-03-30
 ### Added
-- Middleware registration feature
+- Middleware registration feature (root namespace)
 - Feature to access the `io` instance in the root namespace.
 
 ## [1.1.14] - 2021-01-22
