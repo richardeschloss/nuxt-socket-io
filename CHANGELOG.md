@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [1.1.17] - 2021-03-31
+### Added
+- Support for using $nuxtSocket in the composition api.
+
 ## [1.1.16] - 2021-03-31
 ### Added
 - Middleware registration feature (sub namespaces)
