@@ -1,10 +1,17 @@
 /* eslint-disable no-console */
 /*
- * Copyright 2020 Richard Schloss (https://github.com/richardeschloss/nuxt-socket-io)
+ * Copyright 2021 Richard Schloss (https://github.com/richardeschloss/nuxt-socket-io)
  */
 
 import io from 'socket.io-client'
 import Debug from 'debug'
+import emitter from 'tiny-emitter/instance'
+/*
+ TODO: 
+ 1) will enable when '@nuxtjs/composition-api' reaches stable version:
+ 2) will bump from devDep to dep when stable
+*/
+ // import { watch as vueWatch } from '@nuxtjs/composition-api'
 
 const debug = Debug('nuxt-socket-io')
 
@@ -19,6 +26,8 @@ function PluginOptions() {
     set: (opts) => (_pluginOptions = opts)
   })
 }
+
+const isRefImpl = (any) => any && any.constructor.name === 'RefImpl' 
 
 const _pOptions = PluginOptions()
 
@@ -103,7 +112,17 @@ function assignResp(ctx, prop, resp) {
   if (prop !== undefined) {
     if (ctx[prop] !== undefined) {
       if (typeof ctx[prop] !== 'function') {
-        ctx[prop] = resp
+        // In vue3, it's possible to create
+        // reactive refs on the fly with ref()
+        // so check for that here. 
+        // (this would elimnate the need for v2's
+        // this.$set because we just set the value prop
+        // to trigger the UI changes)
+        if (isRefImpl(ctx[prop])) {
+          ctx[prop].value = resp
+        } else {
+          ctx[prop] = resp
+        }
         debug(`assigned ${resp} to ${prop}`)
       }
     } else {
@@ -520,7 +539,7 @@ const register = {
                 reject(err)
               }
             } else {
-              assignResp(ctx, mapTo, resp)
+              assignResp(ctx.$data || ctx, mapTo, resp)
               runHook(ctx, post, resp)
               resolve(resp)
             }
@@ -550,7 +569,7 @@ const register = {
       socket.on(evt, async (resp) => {
         debug('Local listener received data', { evt, resp })
         await runHook(ctx, pre)
-        assignResp(ctx, mapTo, resp)
+        assignResp(ctx.$data || ctx, mapTo, resp)
         runHook(ctx, post, resp)
       })
     })
@@ -759,17 +778,28 @@ const register = {
     Object.assign(ctx, { [statusProp]: socketStatus })
   },
   teardown({ ctx, socket, useSocket }) {
-    if (ctx.onComponentDestroy === undefined) {
-      ctx.onComponentDestroy = ctx.$destroy
-    }
-
-    ctx.$on('closeSockets', function() {
+    // Setup listener for "closeSockets" in case
+    // multiple instances of nuxtSocket exist in the same
+    // component (only one destroy/unmount event takes place).
+    // When we teardown, we want to remove the listeners of all
+    // the socket.io-client instances
+    ctx.$once('closeSockets', function() {
+      debug('closing socket id=' + socket.id)
       socket.removeAllListeners()
       socket.close()
     })
 
     if (!ctx.registeredTeardown) {
+      // ctx.$destroy is defined in vue2 
+      // but will go away in vue3 (in favor of onUnmounted)
+      // save user's destroy method and honor it after
+      // we run nuxt-socket-io's teardown
+      ctx.onComponentDestroy = ctx.$destroy
       debug('teardown enabled for socket', { name: useSocket.name })
+      // Our $destroy method
+      // Gets called automatically on the destroy lifecycle
+      // in v2. In v3, we have call it with the 
+      // onUnmounted hook
       ctx.$destroy = function() {
         debug('component destroyed, closing socket(s)', {
           name: useSocket.name,
@@ -777,7 +807,16 @@ const register = {
         })
         useSocket.registeredVuexListeners = []
         ctx.$emit('closeSockets')
-        ctx.onComponentDestroy()
+        // Only run the user's destroy method
+        // if it exists
+        if (ctx.onComponentDestroy) {
+          ctx.onComponentDestroy()
+        }
+      }
+
+      // onUnmounted will only exist in v3
+      if (ctx.onUnmounted) {
+        ctx.onUnmounted(ctx.$destroy)
       }
       ctx.registeredTeardown = true
     }
@@ -786,6 +825,33 @@ const register = {
       debug('server disconnected', { name: useSocket.name, url: useSocket.url })
       socket.close()
     })
+  },
+  stubs(ctx) {
+    // Use a tiny event bus now. Can probably
+    // be replaced by watch eventually. For now this works.
+    if (!ctx.$on || !ctx.$emit || !ctx.$once) {
+      ctx.$once = (...args) => emitter.once(...args)
+      ctx.$on = (...args) => emitter.on(...args)
+      ctx.$off = (...args) => emitter.off(...args)
+      ctx.$emit = (...args) => emitter.emit(...args)
+    }
+
+    if (!ctx.$set) {
+      ctx.$set = (obj, key, val) => {
+        if (isRefImpl(obj[key])) {
+          obj[key].value = val
+        } else {
+          obj[key] = val
+        }
+      }
+    }
+
+    if (!ctx.$watch) {
+      ctx.$watch = (label, cb) => {
+        // will enable when '@nuxtjs/composition-api' reaches stable version:
+        // vueWatch(ctx.$data[label], cb)
+      }
+    }
   }
 }
 
@@ -808,8 +874,9 @@ function nuxtSocket(ioOpts) {
     ...connectOpts
   } = ioOpts
   const pluginOptions = _pOptions.get()
-  const { $config, $store: store } = this
-
+  const { $config, $store } = this
+  const store = this.$store || this.store
+  
   const runtimeOptions = { ...pluginOptions }
   if ($config && $config.io) {
     Object.assign(runtimeOptions, $config.io)
@@ -840,6 +907,8 @@ function nuxtSocket(ioOpts) {
       "Please configure sockets if planning to use nuxt-socket-io: \r\n [{name: '', url: ''}]"
     )
   }
+
+  register.stubs(this)
 
   let useSocket = null
 
