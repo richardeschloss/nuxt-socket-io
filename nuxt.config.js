@@ -55,7 +55,8 @@ module.exports = {
    */
   buildModules: [
     // Doc: https://github.com/nuxt-community/eslint-module
-    '@nuxtjs/eslint-module'
+    '@nuxtjs/eslint-module',
+    '@nuxtjs/composition-api'
   ],
   /*
    ** Nuxt.js modules
@@ -158,8 +159,7 @@ module.exports = {
   },
   globals: {
     loadingTimeout: 5000
-  },
-  telemetry: false
+  }
   // ,
   // generate: {
   //   dir: '/tmp/netlify/nuxt-socket-io-standalone'

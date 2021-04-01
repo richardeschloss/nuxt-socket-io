@@ -24,6 +24,10 @@ function socketConnected(socket) {
   })
 }
 
+function RefImpl(arg) {
+  this.value = arg
+}
+
 const ChatMsg = {
   date: new Date(),
   from: '',
@@ -124,12 +128,14 @@ function $set(obj, prop, val) {
 
 function loadPlugin({
   t,
+  storeKey = '$store',
   state,
   mutations = {},
   actions = {},
   context = {},
   ioOpts = {},
   plugin = Plugin,
+  set,
   callCnt = {
     storeWatch: 0,
     storeCommit: 0,
@@ -148,16 +154,16 @@ function loadPlugin({
   }
 
   return new Promise((resolve, reject) => {
-    context.$set = $set
-    context.$store = {
+    context.$set = set !== undefined ? set : $set
+    context[storeKey] = {
       registerModule(moduleName, storeCfg, options) {
         const { namespaced, state, mutations, actions } = storeCfg
         callCnt.registerModule++
         t.true(namespaced)
         t.is(moduleName, '$nuxtSocket')
-        context.$store.state.$nuxtSocket = Object.assign({}, state)
-        context.$store.mutations.$nuxtSocket = Object.assign({}, mutations)
-        context.$store.actions.$nuxtSocket = Object.assign({}, actions)
+        context[storeKey].state.$nuxtSocket = Object.assign({}, state)
+        context[storeKey].mutations.$nuxtSocket = Object.assign({}, mutations)
+        context[storeKey].actions.$nuxtSocket = Object.assign({}, actions)
       },
       state,
       mutations,
@@ -169,8 +175,8 @@ function loadPlugin({
         }
 
         if (label.includes('$nuxtSocket') || label === 'SET_EMIT_ERRORS') {
-          const state = context.$store.state.$nuxtSocket
-          const mutations = context.$store.mutations.$nuxtSocket
+          const state = context[storeKey].state.$nuxtSocket
+          const mutations = context[storeKey].mutations.$nuxtSocket
           const props = label.split('/')
           const fn = props.length > 1 ? props[1] : props[0]
           if (mutations[fn]) {
@@ -184,9 +190,9 @@ function loadPlugin({
           callCnt['storeDispatch_' + label]++
         }
         if (label.includes('$nuxtSocket')) {
-          const { commit } = context.$store
-          const state = context.$store.state.$nuxtSocket
-          const actions = context.$store.actions.$nuxtSocket
+          const { commit } = context[storeKey]
+          const state = context[storeKey].state.$nuxtSocket
+          const actions = context[storeKey].actions.$nuxtSocket
           const fn = label.split('/')[1]
           if (actions[fn]) {
             const resp = await actions[fn]({ state, commit }, msg)
@@ -283,7 +289,11 @@ async function testNamespace({
           if (context[mapTo] !== undefined) {
             if (typeof resp === 'object' && emitEvt !== mapTo) {
               Object.entries(resp).forEach(([key, val]) => {
-                t.is(val, context[mapTo][key])
+                const obj =
+                  context[mapTo].constructor.name !== 'RefImpl'
+                    ? context[mapTo]
+                    : context[mapTo].value
+                t.is(val, obj[key])
               })
             } else if (mapTo && emitEvt !== mapTo) {
               setImmediate(() => {
@@ -1223,7 +1233,7 @@ test('Namespace config (emitters)', async (t) => {
     preEmitVal(arg) {
       return arg
     },
-    hello: false
+    hello: new RefImpl(false)
   }
   const callees = Callees({ t, callItems, context })
   const namespace = {
@@ -1524,6 +1534,86 @@ test('Teardown (enabled)', async (t) => {
   t.false(socket.hasListeners(evt))
   t.false(socket2.hasListeners(evt))
   t.is(componentDestroyCnt, 1)
+})
+
+test('Teardown (enabled, composition api)', async (t) => {
+  let onUnmounted
+  const context = {
+    onUnmounted(cb) {
+      onUnmounted = cb
+    }
+  }
+  const testCfg = {
+    sockets: [
+      {
+        default: true,
+        url: 'http://localhost:3000'
+      }
+    ]
+  }
+  pOptions.set(testCfg)
+  const socket = await loadPlugin({ t, context })
+  const socket2 = context.nuxtSocket({})
+  const evt = 'test'
+  socket.on(evt, () => {})
+  socket2.on(evt, () => {})
+  t.true(socket.hasListeners(evt))
+  t.true(socket2.hasListeners(evt))
+  onUnmounted()
+  t.false(socket.hasListeners(evt))
+  t.false(socket2.hasListeners(evt))
+})
+
+test('Stubs (composition api support)', async (t) => {
+  const context = {}
+  const testCfg = {
+    sockets: [{ url: 'http://localhost:3000' }]
+  }
+  pOptions.set(testCfg)
+  await loadPlugin({ t, storeKey: 'store', context, set: false })
+
+  function validateEventHub() {
+    const props = ['$on', '$off', '$once', '$emit']
+    props.forEach((p) => t.truthy(context[p]))
+    return new Promise(async (resolve) => {
+      let rxCnt = 0
+      let rx2Cnt = 0
+      context.$on('msg', (arg) => {
+        rxCnt++
+        t.is(arg, 'hello')
+      })
+      context.$once('msg2', (arg) => {
+        rx2Cnt++
+        t.is(arg, 'hello 2')
+      })
+      context.$emit('msg', 'hello')
+      context.$off('msg')
+      context.$emit('msg', 'hello again')
+      context.$emit('msg2', 'hello 2')
+      await delay(100)
+      t.is(rxCnt, 1)
+      t.is(rx2Cnt, 1)
+      resolve()
+    })
+  }
+
+  function validateSet() {
+    const obj = {
+      val1: new RefImpl(10),
+      val2: 10
+    }
+    context.$set(obj, 'val1', 22)
+    context.$set(obj, 'val2', 22)
+    t.is(obj.val1.value, 22)
+    t.is(obj.val2, 22)
+  }
+
+  function validateWatch() {
+    context.$watch('someLabel', () => {})
+    t.pass()
+  }
+  const p = [validateEventHub(), validateSet(), validateWatch()]
+  await Promise.all(p)
 })
 
 test('Teardown (disabled)', async (t) => {
