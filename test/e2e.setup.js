@@ -1,8 +1,11 @@
 /* eslint-disable no-console */
+import 'jsdom-global/register'
 import { resolve as pResolve } from 'path'
+import BrowserEnv from 'browser-env'
 import hooks from 'require-extension-hooks'
-import { compilePlugin } from './utils'
 import config from '@/nuxt.config'
+import { compilePlugin } from './utils'
+BrowserEnv()
 
 const { io } = config
 
@@ -13,8 +16,7 @@ compilePlugin({
   options: io,
   overwrite: false
 })
-require('jsdom-global')()
-require('browser-env')()
+
 const Vue = require('vue')
 Vue.config.productionTip = false
 // https://github.com/nuxt/create-nuxt-app/issues/180#issuecomment-463069941
