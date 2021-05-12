@@ -8,7 +8,7 @@ import { existsSync } from 'fs'
 import { resolve as pResolve, parse as pParse } from 'path'
 import { promisify } from 'util'
 import consola from 'consola'
-import socketIO from 'socket.io'
+import { Server as SocketIO } from 'socket.io'
 import Glob from 'glob'
 
 const glob = promisify(Glob)
@@ -88,7 +88,8 @@ const register = {
       ioSvc = './server/io',
       nspDir = ioSvc,
       host = 'localhost',
-      port = 3000
+      port = 3000,
+      ...ioServerOpts // Options that get passed down to SocketIO instance.
     } = options
 
     const { ext: ioSvcExt } = pParse(ioSvc)
@@ -101,7 +102,7 @@ const register = {
       extList.includes(nspDirExt) ? nspDir.substr(nspDir.length - 3) : nspDir
     )
 
-    const io = socketIO(server)
+    const io = new SocketIO(server, ioServerOpts)
     const svcs = { ioSvc: ioSvcFull, nspSvc: nspDirFull }
     const p = []
     Object.entries(svcs).forEach(([svcName, svc]) => {

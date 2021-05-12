@@ -2,6 +2,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.1.18 - 2021-05-11
+### Added
+- Wired up support for the socket.io server options
+
+### Updated
+- Socket.io dependencies to v4
+
 ## [1.1.17] - 2021-03-31
 ### Added
 - Support for using $nuxtSocket in the composition api.

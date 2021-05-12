@@ -68,6 +68,12 @@ module.exports = {
   ],
   /** @type {import('io/types').NuxtSocketIoOptions} */
   io: {
+    // server: {
+    //   cors: {
+    //     origin: 'https://example.com',
+    //     methods: ['GET', 'POST']
+    //   }
+    // },
     sockets: [
       {
         name: 'home',
