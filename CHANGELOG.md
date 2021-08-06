@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.1.19 - 2021-08-06
+### Changed
+- Type definitions file because socket.io-client types changed (credit: matthiasbaldi)
+
 ## 1.1.18 - 2021-05-11
 ### Added
 - Wired up support for the socket.io server options
