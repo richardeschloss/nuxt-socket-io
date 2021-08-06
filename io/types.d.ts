@@ -1,5 +1,7 @@
 import { Module } from '@nuxt/types';
 import * as SocketIOClient from 'socket.io-client';
+import { ManagerOptions } from 'socket.io-client/build/manager';
+import { Socket } from 'socket.io-client/build/socket';
 import Vue from 'vue';
 
 /**
@@ -126,7 +128,7 @@ interface NuxtSocketIoServerOpts {
   port?: number;
 }
 
-interface NuxtSocketOpts extends SocketIOClient.ConnectOpts {
+interface NuxtSocketOpts extends Partial<ManagerOptions> {
   /** Name of the socket. If omitted, the default socket will be used. */
   name?: string;
   /**
@@ -276,7 +278,7 @@ interface NuxtSocketIoRuntimeOptions {
   info?: boolean;
 }
 
-interface NuxtSocket extends SocketIOClient.Socket {};
+interface NuxtSocket extends Partial<Socket> {};
 
 type Factory = (ioOpts: NuxtSocketOpts) => NuxtSocket;
 
