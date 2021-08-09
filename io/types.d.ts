@@ -128,7 +128,7 @@ interface NuxtSocketIoServerOpts {
   port?: number;
 }
 
-interface NuxtSocketOpts extends Partial<ManagerOptions> {
+export interface NuxtSocketOpts extends ManagerOptions {
   /** Name of the socket. If omitted, the default socket will be used. */
   name?: string;
   /**
@@ -278,7 +278,7 @@ interface NuxtSocketIoRuntimeOptions {
   info?: boolean;
 }
 
-interface NuxtSocket extends Partial<Socket> {};
+interface NuxtSocket extends Socket {};
 
 type Factory = (ioOpts: NuxtSocketOpts) => NuxtSocket;
 
