@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.1.20 - 2021-08-09
+### Changed
+- Make NuxtSocketOpts and NuxtSocket non-partial (credit: CS_Birb)
+
 ## 1.1.19 - 2021-08-06
 ### Changed
 - Type definitions file because socket.io-client types changed (credit: matthiasbaldi)
