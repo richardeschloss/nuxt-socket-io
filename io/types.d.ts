@@ -128,7 +128,7 @@ interface NuxtSocketIoServerOpts {
   port?: number;
 }
 
-export interface NuxtSocketOpts extends ManagerOptions {
+export interface NuxtSocketOpts extends Partial<ManagerOptions> {
   /** Name of the socket. If omitted, the default socket will be used. */
   name?: string;
   /**
