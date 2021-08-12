@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.1.21 - 2021-08-12
+### Reverted
+- Reverted changes introduced in 1.1.20
+
 ## 1.1.20 - 2021-08-09
 ### Changed
 - Make NuxtSocketOpts and NuxtSocket non-partial (credit: CS_Birb)
