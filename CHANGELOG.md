@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.1.22 - 2021-08-16
+### Removed
+- Dependency on vue-template-compiler (which should have never been there)
+
 ## 1.1.21 - 2021-08-12
 ### Reverted
 - Reverted changes introduced in 1.1.20

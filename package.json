@@ -1,6 +1,6 @@
 {
   "name": "nuxt-socket-io",
-  "version": "1.1.21",
+  "version": "1.1.22",
   "description": "Socket.io client and server module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "main": "io/module.js",
@@ -52,8 +52,7 @@
     "glob": "^7.1.7",
     "socket.io": "^4.1.1",
     "socket.io-client": "^4.1.1",
-    "tiny-emitter": "^2.1.0",
-    "vue-template-compiler": "^2.6.12"
+    "tiny-emitter": "^2.1.0"
   },
   "devDependencies": {
     "@ava/babel": "^1.0.1",
