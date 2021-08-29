@@ -93,13 +93,17 @@ const register = {
     } = options
 
     const { ext: ioSvcExt } = pParse(ioSvc)
-    const { ext: nspDirExt } = pParse(ioSvc)
+    const { ext: nspDirExt } = pParse(nspDir)
     const extList = ['.js', '.ts', '.mjs']
-    const ioSvcFull = pResolve(
-      extList.includes(ioSvcExt) ? ioSvc : ioSvc + '.js'
-    )
+    const ioSvcFull = ioSvcExt
+      ? pResolve(ioSvc)
+      : extList
+          .map((ext) => pResolve(ioSvc + ext))
+          .find((path) => existsSync(path))
     const nspDirFull = pResolve(
-      extList.includes(nspDirExt) ? nspDir.substr(nspDir.length - 3) : nspDir
+      extList.includes(nspDirExt)
+        ? nspDir.substr(0, nspDir.length - nspDirExt.length)
+        : nspDir
     )
 
     const io = new SocketIO(server, ioServerOpts)
