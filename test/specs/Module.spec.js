@@ -160,8 +160,8 @@ test('Register.ioSvc (ioSvc does not exist)', async (t) => {
 })
 
 test('Register.ioSvc (ioSvc exists, default export undefined)', async (t) => {
-  const ioSvc = './server/io.bad1'
-  const rootSvc = path.resolve(ioSvc + '.js')
+  const ioSvc = './server/io.bad1.js'
+  const rootSvc = path.resolve(ioSvc)
   await register.server({ ioSvc }, serverDflt).catch((err) => {
     t.is(
       err.message,
@@ -172,8 +172,8 @@ test('Register.ioSvc (ioSvc exists, default export undefined)', async (t) => {
 })
 
 test('Register.ioSvc (ioSvc exists, default export not a function)', async (t) => {
-  const ioSvc = './server/io.bad2'
-  const rootSvc = path.resolve(ioSvc + '.js')
+  const ioSvc = './server/io.bad2.js'
+  const rootSvc = path.resolve(ioSvc)
   await register.server({ ioSvc }, serverDflt).catch((err) => {
     t.is(
       err.message,
@@ -189,6 +189,22 @@ test('Register.ioSvc (ioSvc exists, ok)', async (t) => {
   const msg = { data: 'hello' }
   const resp = await sendReceive({ msg })
   t.is(resp.data, msg.data)
+  serverDflt.close()
+})
+
+test('Register.ioSvc (ioSvc exists, .ts extension)', async (t) => {
+  const ioSvc = './server/io.ts'
+  await register.server({ ioSvc }, serverDflt)
+  const resp = await sendReceive({ evt: 'tsTest' })
+  t.is(resp, 'hi from io.ts')
+  serverDflt.close()
+})
+
+test('Register.ioSvc (ioSvc exists, .mjs extension)', async (t) => {
+  const ioSvc = './server/io.mjs'
+  await register.server({ ioSvc }, serverDflt)
+  const resp = await sendReceive({ evt: 'mjsTest' })
+  t.is(resp, 'hi from io.mjs')
   serverDflt.close()
 })
 
