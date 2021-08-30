@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.1.23 - 2021-08-29
+### Fixed
+- Automatic server registration with .ts and .mjs extensions (credit: ohashi14715369)
+
 ## 1.1.22 - 2021-08-16
 ### Removed
 - Dependency on vue-template-compiler (which should have never been there)
