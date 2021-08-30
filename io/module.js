@@ -18,12 +18,10 @@ const register = {
     Object.values(middlewares).forEach((m) => io.use(m))
   },
   ioSvc(io, ioSvc, nspDir) {
-    return new Promise((resolve, reject) => {
-      const {
-        default: Svc,
-        middlewares = {},
-        setIO = () => {}
-      } = require(ioSvc)
+    return new Promise(async (resolve, reject) => {
+      const { default: Svc, middlewares = {}, setIO = () => {} } = await import(
+        ioSvc
+      )
       register.middlewares(io, middlewares)
       setIO(io)
 
