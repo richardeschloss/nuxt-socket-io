@@ -18,12 +18,10 @@ const register = {
     Object.values(middlewares).forEach((m) => io.use(m))
   },
   ioSvc(io, ioSvc, nspDir) {
-    return new Promise((resolve, reject) => {
-      const {
-        default: Svc,
-        middlewares = {},
-        setIO = () => {}
-      } = require(ioSvc)
+    return new Promise(async (resolve, reject) => {
+      const { default: Svc, middlewares = {}, setIO = () => {} } = await import(
+        ioSvc
+      )
       register.middlewares(io, middlewares)
       setIO(io)
 
@@ -95,11 +93,15 @@ const register = {
     const { ext: ioSvcExt } = pParse(ioSvc)
     const { ext: nspDirExt } = pParse(ioSvc)
     const extList = ['.js', '.ts', '.mjs']
-    const ioSvcFull = pResolve(
-      extList.includes(ioSvcExt) ? ioSvc : ioSvc + '.js'
-    )
+    const ioSvcFull = ioSvcExt
+      ? pResolve(ioSvc)
+      : extList
+          .map((ext) => pResolve(ioSvc + ext))
+          .find((path) => existsSync(path))
     const nspDirFull = pResolve(
-      extList.includes(nspDirExt) ? nspDir.substr(nspDir.length - 3) : nspDir
+      extList.includes(nspDirExt)
+        ? nspDir.substr(0, nspDir.length - nspDirExt.length)
+        : nspDir
     )
 
     const io = new SocketIO(server, ioServerOpts)
