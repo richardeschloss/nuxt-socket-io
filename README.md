@@ -93,8 +93,8 @@ There you will see:
 ### Resources
 
 - Follow me and the series on [medium.com](https://medium.com/@richard.e.schloss)
-- Socket.io Client docs [here](https://socket.io/docs/client-api/)
-- Socket.io Server docs [here](https://socket.io/docs/server-api/)
+- Socket.io Client docs [here](https://socket.io/docs/v4/client-api/)
+- Socket.io Server docs [here](https://socket.io/docs/v4/server-api/)
 
 
 ## Development
