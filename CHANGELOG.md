@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.1.24 - 2021-10-01
+### Fixed
+- Namespace regex patterns and documentation links (credit: PitPietro)
+
 ## 1.1.23 - 2021-08-29
 ### Fixed
 - Automatic server registration with .ts and .mjs extensions (credit: ohashi14715369)
