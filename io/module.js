@@ -45,7 +45,7 @@ const register = {
       const nspFiles = await glob(`${nspDir}/**/*.{js,ts,mjs}`)
       const nspDirResolved = pResolve(nspDir).replace(/\\/g, '/')
       const namespaces = nspFiles.map(
-        (f) => f.split(nspDirResolved)[1].split(/.(js|ts|mjs)/)[0]
+        (f) => f.split(nspDirResolved)[1].split(/\.(js|ts|mjs)$/)[0]
       )
       namespaces.forEach(async (namespace, idx) => {
         const {
