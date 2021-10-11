@@ -78,12 +78,11 @@ export default function(socket, io) {
 
         const { users, chats } = fndChannel
         const namespace = `rooms/${room}/${channel}`
-        socket.join(namespace, () => {
-          socket.to(namespace).emit('userJoined', { data: user })
-          socket.to(namespace).emit('users', { data: users })
-          socket.emit('users', { data: users })
-          resolve({ room, channel, chats })
-        })
+        // socket.io v3: socket.join now synchronous
+        socket.join(namespace)
+        socket.to(namespace).emit('userJoined', { data: user })
+        socket.to(namespace).emit('users', { data: users })
+        socket.emit('users', { data: users })
         socket.once('disconnect', () => {
           channelSvc.leave({ room, channel, user })
         })
@@ -99,12 +98,11 @@ export default function(socket, io) {
 
         const { users } = fndChannel
         const namespace = `rooms/${room}/${channel}`
-        socket.leave(namespace, () => {
-          socket.to(namespace).emit('userLeft', { data: user })
-          socket.to(namespace).emit('users', { data: users })
-          socket.emit('users', { data: users })
-          resolve()
-        })
+        // socket.io v3: socket.leave now synchronous
+        socket.leave(namespace)
+        socket.to(namespace).emit('userLeft', { data: user })
+        socket.to(namespace).emit('users', { data: users })
+        socket.emit('users', { data: users })
       })
     },
     sendMsg({ inputMsg, room, channel, user }) {
