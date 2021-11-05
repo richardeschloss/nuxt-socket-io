@@ -1,4 +1,5 @@
-const debug = require('debug')('nuxt-socket-io:dynamic')
+import Debug from 'debug'
+const debug = Debug('nuxt-socket-io:dynamic')
 
 /* Schemas */
 const Item = {
@@ -13,8 +14,11 @@ const api = {
   evts: {
     ignoreMe: {},
     someList: {
+      data: ['']
+    },
+    someList2: {
       methods: ['getList'],
-      data: []
+      data: ['']
     },
     itemRxd: {
       methods: ['getItems', 'toBeAdded'],
@@ -40,14 +44,17 @@ const api = {
       },
       resp: Item
     },
+    getList: {
+      resp: [{ user: '' }]
+    },
     noResp: {}
   }
 }
 
 /* SVC */
-export default function(socket) {
+export default function (socket) {
   return Object.freeze({
-    getAPI(data) {
+    getAPI (data) {
       socket.emit('getAPI', {}, (clientApi) => {
         socket.emit(
           'receiveMsg',
@@ -69,7 +76,7 @@ export default function(socket) {
     },
 
     /* Methods */
-    getItems() {
+    getItems () {
       const items = Array(4)
       let idx = 0
       return new Promise((resolve) => {
@@ -98,7 +105,7 @@ export default function(socket) {
         }, 500)
       })
     },
-    getItem({ id }) {
+    getItem ({ id }) {
       const data = {
         date: new Date(),
         msg: id
@@ -116,10 +123,15 @@ export default function(socket) {
       )
       return ItemOut
     },
-    noResp() {
+    getList () {
+      socket.emit('someList', ['user1'])
+      socket.emit('someList2', ['user1', 'user2'])
+      // return [{ user: 'user1' }]
+    },
+    noResp () {
       return {}
     },
-    badRequest() {
+    badRequest () {
       throw new Error('badRequest...Input does not match schema')
     }
   })

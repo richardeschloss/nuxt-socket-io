@@ -12,23 +12,25 @@ export const state = () => ({
 })
 
 export const mutations = {
-  SET_PROGRESS(state, progress) {
+  SET_PROGRESS (state, progress) {
     state.progress = progress
   },
 
-  SET_SAMPLE(state, sample) {
+  SET_SAMPLE (state, sample) {
     state.sample = sample
   },
 
-  SET_SAMPLE2(state, sample2) {
+  SET_SAMPLE2 (state, sample2) {
     state.sample2 = sample2
   },
 
-  SET_SAMPLE2B(state, sample2b) {
+  SET_SAMPLE2B (state, sample2b) {
     state.sample2b = sample2b
   },
 
-  SET_SOMEOBJ(state, someObj) {
+  SET_SOMEOBJ (state, someObj) {
     Object.assign(state, { someObj })
   }
 }
+
+export const actions = {}

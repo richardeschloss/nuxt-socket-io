@@ -1,37 +1,47 @@
 <template>
-  <div>
-    <b-input-group prepend="Refresh Period" class="w-50 mt-3 example-input">
-      <b-form-input v-model="refreshInfo.period" type="text"></b-form-input>
-      <b-button @click="getProgress()">Get Progress</b-button>
-    </b-input-group>
-    <div>
-      <label>Event 'progress' listened locally in this script</label>
-      <b-progress
-        :value="progress"
-        v-show="showProgress"
-        class="examples-progress-bar"
-        height="30px"
-        show-progress
-        animated
-      >
-      </b-progress>
-    </div>
-    <div>
-      <label>Consume progress from Vuex 'progress' state:</label>
-      <b-progress
-        v-show="showProgress"
-        :value="progressVuex"
-        class="examples-progress-bar"
-        height="30px"
-        show-progress
-        animated
-      >
-      </b-progress>
-    </div>
-    <div>
-      <span v-show="congratulate" class="example-congratulations"
-        >All done! Way to go champ!</span
-      >
+  <div class="card ">
+    <div class="card-body">
+      <h5 class="card-title" v-text="'Listening for events'" />
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span id="basic-addon1" class="input-group-text" v-text="'Refresh Period'" />
+        </div>
+        <input v-model="refreshInfo.period" type="text" class="form-control">
+        <button class="btn btn-primary" @click="getProgress()" v-text="'Get Progress'" />
+      </div>
+      <div>
+        <label>This component, via nuxt.config listeners, subscribed to the 'progress' event:</label>
+        <div v-show="showProgress" class="progress" style="height: 30px;">
+          <div
+            class="progress-bar progress-bar-striped progress-bar-animated"
+            role="progressbar"
+            :style="`width: ${progress}%;`"
+            v-text="`${progress}%`"
+          />
+        </div>
+      </div>
+      <hr>
+      <div>
+        <label>Vuex Options in nuxt.config also has an entry for the progress event.
+          When the progress event is received, the specified mutation "examples/SET_PROGRESS"
+          will handle it, and this component will consume it from the Vuex state:
+        </label>
+        <div v-show="showProgress" class="progress" style="height: 30px;">
+          <div
+            class="progress-bar progress-bar-striped progress-bar-animated"
+            role="progressbar"
+            :style="`width: ${progressVuex}%;`"
+          >
+            {{ progressVuex }}%
+          </div>
+        </div>
+      </div>
+      <div>
+        <span
+          v-show="congratulate"
+          class=""
+        >All done! Way to go champ!</span>
+      </div>
     </div>
   </div>
 </template>
@@ -39,32 +49,33 @@
 <script>
 import { mapState } from 'vuex'
 export default {
-  data() {
+  data () {
     return {
       progress: 0,
       congratulate: false,
       showProgress: false,
       refreshInfo: {
         period: 500
-      }
+      },
+      socket: null
     }
   },
   computed: mapState({
-    progressVuex: (state) => state.examples.progress
+    progressVuex: state => state.examples.progress
   }),
-  mounted() {
+  mounted () {
     this.socket = this.$nuxtSocket({
       channel: '/examples'
     })
   },
   methods: {
-    handleDone(resp) {
+    handleDone (resp) {
       this.showProgress = false
       this.congratulate = true
       this.progress = 100
       this.$store.commit('examples/SET_PROGRESS', this.progress)
     },
-    reset() {
+    reset () {
       this.showProgress = true
       this.congratulate = false
       this.progress = 0

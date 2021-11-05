@@ -10,12 +10,8 @@
 </template>
 
 <script>
-import RoomSelect from '@/components/RoomSelect'
 export default {
-  components: {
-    RoomSelect
-  },
-  data() {
+  data () {
     return {
       ioApi: {},
       ioData: {},
@@ -26,11 +22,11 @@ export default {
     }
   },
   watch: {
-    async 'ioApi.ready'(n, o) {
+    async 'ioApi.ready' (n, o) {
       this.rooms = await this.ioApi.getRooms()
     }
   },
-  mounted() {
+  mounted () {
     this.socket = this.$nuxtSocket({
       name: 'chatSvc',
       channel: '/rooms',

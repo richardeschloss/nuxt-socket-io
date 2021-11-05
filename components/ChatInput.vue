@@ -1,14 +1,17 @@
 <template>
   <div class="row">
     <div class="col-md-10 col-8">
-      <b-form-input
+      <input
         v-model="inputMsg"
-        @keyup.enter="$emit('sendMsg')"
+        class="form-control"
         type="text"
-      />
+        @keyup.enter="$emit('sendMsg')"
+      >
     </div>
     <div class="col-md0 col-1">
-      <b-button @click="$emit('sendMsg')" type="button">Submit</b-button>
+      <button type="button" class="btn btn-default" @click="$emit('sendMsg')">
+        Submit
+      </button>
     </div>
   </div>
 </template>
@@ -23,10 +26,10 @@ export default {
   },
   computed: {
     inputMsg: {
-      get() {
+      get () {
         return this.value
       },
-      set(val) {
+      set (val) {
         this.$emit('input', val)
       }
     }
