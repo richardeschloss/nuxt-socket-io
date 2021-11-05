@@ -1,12 +1,12 @@
 // @ts-nocheck
 /* eslint-disable no-console */
 export const middlewares = {
-  m1(socket, next) {
+  m1 (socket, next) {
     console.log('m1 hit')
     // Must call next:
     next()
   },
-  m2(socket, next) {
+  m2 (socket, next) {
     console.log('m2 hit')
     // Must call next:
     next()
@@ -14,15 +14,15 @@ export const middlewares = {
 }
 
 export const setIO = (io) => {
-  console.log('setIO')
+  // console.log('setIO')
 }
 
-export default function(socket, io) {
+export default function (socket, io) {
   return {
-    getNamespaces() {
+    getNamespaces () {
       return Object.keys(io.nsps)
     },
-    echo(msg) {
+    echo (msg) {
       console.log('echo rxd', msg)
       return msg
     }

@@ -9,13 +9,7 @@ import { register } from '@/io/module'
 const oneSecond = 1000
 const oneMinute = 60 * oneSecond
 
-export function delay(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
-
-export function compilePlugin({ src, tmpFile, options, overwrite = false }) {
+export function compilePlugin ({ src, tmpFile, options, overwrite = false }) {
   if (!overwrite && fs.existsSync(tmpFile)) {
     console.info(`compiled plugin ${tmpFile} already exists`)
     return
@@ -32,7 +26,7 @@ export function compilePlugin({ src, tmpFile, options, overwrite = false }) {
   }
 }
 
-export async function importPlugin({
+export async function importPlugin ({
   tmpFile,
   setOptions = false,
   options = {}
@@ -51,7 +45,7 @@ export async function importPlugin({
   }
 }
 
-export async function compileAndImportPlugin({
+export async function compileAndImportPlugin ({
   src,
   tmpFile,
   options,
@@ -68,7 +62,7 @@ export async function compileAndImportPlugin({
   return imported
 }
 
-export function injectPlugin(context = {}, Plugin) {
+export function injectPlugin (context = {}, Plugin) {
   return new Promise((resolve) => {
     Plugin(context, (label, nuxtSocket) => {
       context[`$${label}`] = nuxtSocket
@@ -77,38 +71,12 @@ export function injectPlugin(context = {}, Plugin) {
   })
 }
 
-export function getModuleOptions(moduleName, optsContainer) {
-  const opts = {}
-  const containers = ['buildModules', 'modules', optsContainer]
-  containers.some((container) => {
-    if (container === optsContainer) {
-      Object.assign(opts, { [optsContainer]: config[container] })
-      return true
-    }
-    const arr = config[container]
-    const mod = arr.find((item) => {
-      if (typeof item === 'string') {
-        return item === moduleName
-      } else if (item.length) {
-        return item[0] === moduleName
-      }
-    })
-    if (mod) {
-      if (mod.length) {
-        Object.assign(opts, mod[1])
-      }
-      return true
-    }
-  })
-  return opts
-}
-
-export function ioServerInit(ports = [3000]) {
-  const p = ports.map((port) => register.server({ port }))
+export function ioServerInit (ports = [3000]) {
+  const p = ports.map(port => register.server({ port }))
   return Promise.all(p)
 }
 
-export async function nuxtInit(t) {
+export async function nuxtInit (t) {
   t.timeout(3 * oneMinute)
   console.time('nuxtInit')
   console.log('Building Nuxt with config', config)
@@ -119,18 +87,18 @@ export async function nuxtInit(t) {
   console.timeEnd('nuxtInit')
 }
 
-export function nuxtClose(t) {
+export function nuxtClose (t) {
   const { nuxt } = t.context
   nuxt.close()
 }
 
-export function waitForEvt(ctx, evt) {
+export function waitForEvt (ctx, evt) {
   return new Promise((resolve) => {
     ctx.$on(evt, resolve)
   })
 }
 
-export function watchP(ctx, prop) {
+export function watchP (ctx, prop) {
   return new Promise((resolve) => {
     ctx.$watch(prop, resolve)
   })

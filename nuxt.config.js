@@ -1,7 +1,7 @@
-module.exports = {
+export default {
   telemetry: false,
   publicRuntimeConfig: {
-    /** @type {import('io/types').NuxtSocketIoRuntimeOptions} */
+    /** @type {import('lib/types').NuxtSocketIoRuntimeOptions} */
     io: {
       sockets: [
         {
@@ -12,7 +12,7 @@ module.exports = {
     }
   },
   privateRuntimeConfig: {
-    /** @type {import('io/types').NuxtSocketIoRuntimeOptions} */
+    /** @type {import('lib/types').NuxtSocketIoRuntimeOptions} */
     io: {
       sockets: [
         {
@@ -66,7 +66,7 @@ module.exports = {
     'bootstrap-vue/nuxt',
     '~/io/module'
   ],
-  /** @type {import('io/types').NuxtSocketIoOptions} */
+  /** @type {import('lib/types').NuxtSocketIoOptions} */
   io: {
     // server: {
     //   cors: {
@@ -158,7 +158,7 @@ module.exports = {
     /*
      ** You can extend webpack config here
      */
-    extend(config, ctx) {},
+    extend (config, ctx) {},
     parallel: false,
     cache: false,
     hardSource: false

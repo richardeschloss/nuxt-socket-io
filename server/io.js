@@ -1,9 +1,9 @@
-export default function(socket, io) {
+export default function (socket, io) {
   return {
-    getNamespaces() {
+    getNamespaces () {
       return Object.keys(io.nsps)
     },
-    echo(msg) {
+    echo (msg) {
       return msg
     }
   }
