@@ -12,7 +12,7 @@
 
 ## Features
 - Configuration of multiple IO sockets
-- Configuration of per-socket namespaces
+- Configuration of per-socket namespaces (simplified format)
 - Automatic IO Server Registration
 - Socket IO Status
 - Automatic Error Handling
@@ -24,14 +24,15 @@
 - Automatic middleware registration
 - ES module
 
-# Important update
+# Important updates
 
 * v2.x may contain breaking changes in it's attempt to get Nuxt3 reaady. `npm i nuxt-socket@1` should help revert any breaking changes in your code.
   * VuexOpts types and Namespace configuration types changed. Entries with the `Record<string, string>` have been deprecated in favor of string-only entries, which are easier to work with.
   * Package type is now "module". Entirely ESM.
   * Tested against node lts (16.x). 
-* v1.1.14+ uses socket.io 3.x. You may find the migration [here](https://socket.io/docs/v3/migrating-from-2-x-to-3-0/index.html)
-* v1.1.13 uses socket.io 2.x . Clamp the version to 1.1.13 if not ready to update.
+* v1.1.17+ uses socket.io 4.x. You may find the migration [here](https://socket.io/docs/v4/migrating-from-3-x-to-4-0/)
+* v1.1.14+ uses socket.io 3.x. You may find the migration [here](https://socket.io/docs/v4/migrating-from-2-x-to-3-0/)
+* v1.1.13 uses socket.io 2.x.
 
 # Setup
 
