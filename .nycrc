@@ -2,6 +2,6 @@
   "all": false,
   "reporter": ["html", "text"],
   "exclude": ["node_modules"],
-  "include": ["lib/module.js", "lib/plugin.js", "components/SocketStatus.js"],
+  "include": ["lib/**/*.js"],
   "extension": [".js", ".vue"]
 }

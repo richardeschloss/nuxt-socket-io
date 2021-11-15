@@ -1,11 +1,11 @@
 import 'jsdom-global/register.js'
 import Vue from 'vue'
 import ava from 'ava'
-import SocketStatus from '#root/components/SocketStatus.js'
+import SocketStatus from '#root/lib/components/SocketStatus.js'
 
 const { serial: test } = ava
 
-test('IO Status', async (t) => {
+test('IO Status', (t) => {
   const badStatus = {
     connectUrl: 'http://localhost:3001/index',
     connectError: 'Connect Error',
@@ -45,11 +45,10 @@ test('IO Status', async (t) => {
   })
   t.is(comp2.statusTbl[0].item, 'status')
   t.is(comp2.statusTbl[0].info, 'OK')
+  t.is(comp2.statusTbl[0].item, 'status')
+  t.is(comp2.statusTbl[0].info, 'OK')
 
   comp.$mount()
-  const socketStatusEl = comp.$el.querySelector('.socket-status')
-  t.truthy(socketStatusEl)
-
+  comp2.$mount()
   comp3.$mount()
-  t.falsy(comp3.$el.innerHTML)
 })
