@@ -1,47 +1,49 @@
 <template>
   <div class="container">
-    <h2 id="hdr">Dynamic API Examples</h2>
+    <h2 id="hdr">
+      Dynamic API Examples
+    </h2>
     <h3>Server API Examples</h3>
     <div v-if="ioApi.ready" style="border: 1px solid; width:100%;">
       <span style="width: 40%; display:inline-block;">
         <label>IO server API (for "home" socket on "/dynamic" channel)</label>
-        <div v-text="ioApi" style="white-space:pre-wrap;"></div>
+        <div style="white-space:pre-wrap;" v-text="ioApi" />
       </span>
       <span style="width: 50%; display:inline-block; vertical-align:top;">
         <label>Actions Pane</label>
-        <br />
+        <br>
         <button @click="ioApi.getItems()">Get Items</button>
-        <br />
+        <br>
         Events:
-        <div v-text="ioData.getItems.itemRxd" style="white-space:pre-wrap;" />
-        <br />
+        <div style="white-space:pre-wrap;" v-text="ioData.getItems.itemRxd" />
+        <br>
         Items:
-        <div v-text="ioData.getItems.resp" style="white-space:pre-wrap;" />
-        <br />
-        <input v-model="ioData.getItem.msg.id" placeholder="Item id" />
+        <div style="white-space:pre-wrap;" v-text="ioData.getItems.resp" />
+        <br>
+        <input v-model="ioData.getItem.msg.id" placeholder="Item id">
         <button @click="ioApi.getItem()">Get Item</button>
         Events: Msg Rxd: <span v-text="ioData.msgRxd" />
-        <div v-text="ioData.getItem.resp" style="white-space:pre-wrap;" />
-        <br />
+        <div style="white-space:pre-wrap;" v-text="ioData.getItem.resp" />
+        <br>
         Warnings:
         <div>
-          <input v-model.number="warnings.battery" type="number" />
+          <input v-model.number="warnings.battery" type="number">
         </div>
         <button @click="warningsEmit({ label: 'home/dynamic' })">
           Emit Warnings
         </button>
       </span>
     </div>
-    <br />
+    <br>
     <h3>Peer-to-Peer Examples</h3>
     <div v-if="peerApi.ready" style="border: 1px solid; width:100%;">
       <span style="width: 40%; display:inline-block;">
         <label>Peer/Client API (for "home" socket on "/p2p" channel)</label>
-        <div v-text="peerApi" style="white-space:pre-wrap;"></div>
+        <div style="white-space:pre-wrap;" v-text="peerApi" />
       </span>
       <span style="width: 50%; display:inline-block; vertical-align:top;">
         <label>Actions Pane</label>
-        <br />
+        <br>
         <button
           @click="
             peerApi.receiveMsg({
@@ -54,8 +56,8 @@
         >
           Tell Peer to Receive message
         </button>
-        <br />
-        Peer's Response: <span v-text="peerData.receiveMsg.resp"></span>
+        <br>
+        Peer's Response: <span v-text="peerData.receiveMsg.resp" />
       </span>
     </div>
   </div>
@@ -91,7 +93,7 @@ const clientAPI = {
 }
 
 export default {
-  data() {
+  data () {
     return {
       ioApi: {},
       ioData: {},
@@ -102,7 +104,7 @@ export default {
       warnings: {}
     }
   },
-  mounted() {
+  mounted () {
     this.socket = this.$nuxtSocket({
       channel: '/dynamic',
       serverAPI: {
@@ -123,7 +125,7 @@ export default {
     })
   },
   methods: {
-    receiveMsg(msg) {
+    receiveMsg (msg) {
       return Promise.resolve({
         status: 'ok'
       })

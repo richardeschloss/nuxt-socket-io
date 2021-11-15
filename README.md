@@ -22,9 +22,14 @@
 - Support for dynamic APIs using the KISS API format
 - Support for the IO config in the new Nuxt runtime config (for Nuxt versions >= 2.13)
 - Automatic middleware registration
+- ES module
 
 # Important update
 
+* v2.x may contain breaking changes in it's attempt to get Nuxt3 reaady. `npm i nuxt-socket@1` should help revert any breaking changes in your code.
+  * VuexOpts types and Namespace configuration types changed. Entries with the `Record<string, string>` have been deprecated in favor of string-only entries, which are easier to work with.
+  * Package type is now "module". Entirely ESM.
+  * Tested against node lts (16.x). 
 * v1.1.14+ uses socket.io 3.x. You may find the migration [here](https://socket.io/docs/v3/migrating-from-2-x-to-3-0/index.html)
 * v1.1.13 uses socket.io 2.x . Clamp the version to 1.1.13 if not ready to update.
 

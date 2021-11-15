@@ -1,6 +1,8 @@
 <template>
   <transition name="fade-msg-event">
-    <p v-show="msg && msg !== ''">{{ msg }}</p>
+    <p v-show="msg && msg !== ''">
+      {{ msg }}
+    </p>
   </transition>
 </template>
 
@@ -17,7 +19,7 @@ export default {
     }
   },
   watch: {
-    msg(n, o) {
+    msg (n, o) {
       if (n !== '') {
         setTimeout(() => {
           this.$emit('toastExpired', n)

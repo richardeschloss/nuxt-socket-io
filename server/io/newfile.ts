@@ -1,4 +1,4 @@
-module.exports = function(socket, io) {
+export default function(socket, io) {
   return Object.freeze({
     hi() {
       return 'world'

@@ -1,30 +1,29 @@
 <template>
   <div class="status-container">
-    <nuxt-link to="/">Go Home</nuxt-link>
-    <socket-status :status="socketStatus"></socket-status>
-    <hr />
-    <socket-status :status="badStatus"></socket-status>
+    <nuxt-link to="/">
+      Go Home
+    </nuxt-link>
+    <io-socket-status :status="socketStatus" />
+    <hr>
+    <io-socket-status :status="badStatus" />
 
-    <hr />
+    <hr>
     (No status here)
-    <socket-status></socket-status>
+    <io-socket-status />
   </div>
 </template>
 
 <script>
-import SocketStatus from '@/components/SocketStatus.vue'
-
 export default {
-  components: {
-    SocketStatus
-  },
-  data() {
+  data () {
     return {
       socketStatus: {},
-      badStatus: {}
+      badStatus: {},
+      goodSocket: {},
+      badSocket: {}
     }
   },
-  mounted() {
+  mounted () {
     this.goodSocket = this.$nuxtSocket({
       channel: '/index',
       reconnection: false

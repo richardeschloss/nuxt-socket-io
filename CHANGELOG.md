@@ -2,6 +2,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.0.0 - 2021-11-13
+### Changed (major)
+- VuexOpts types and Namespace configuration types changed. Entries with the `Record<string, string>` have been deprecated in favor of string-only entries, which are easier to work with.
+- Package type is now "module". Entirely ESM.
+- Tested against node lts (16.x). 
+- Code reorganization and cleanup across the project.
+
 ## 1.1.24 - 2021-10-01
 ### Fixed
 - Namespace regex patterns and documentation links (credit: PitPietro)

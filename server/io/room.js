@@ -1,5 +1,4 @@
-import { resolve as pResolve } from 'path'
-const { default: Data } = require(pResolve('./server/db'))
+import Data from '../db.js'
 
 const API = {
   version: 1.0,
@@ -36,17 +35,17 @@ const API = {
 
 /**
  *
- * @param {import('socket.io').Socket} socket
- * @param {import('socket.io').Server} io
+ * @param {import('socket.io').Socket} [socket]
+ * @param {import('socket.io').Server} [io]
  */
-export default function Svc(socket, io) {
+export default function Svc (socket, io) {
   const roomSvc = Object.freeze({
-    getAPI() {
+    getAPI () {
       return API
     },
-    getRoom({ room }) {
+    getRoom ({ room }) {
       if (room === undefined) {
-        throw new Error(`Room name not specified`)
+        throw new Error('Room name not specified')
       }
       const fndRoom = Data.rooms.find(({ name }) => name === room)
       if (fndRoom === undefined) {
@@ -54,7 +53,7 @@ export default function Svc(socket, io) {
       }
       return fndRoom
     },
-    join({ room, user }) {
+    join ({ room, user }) {
       const fndRoom = roomSvc.getRoom({ room })
       if (!fndRoom.users) {
         fndRoom.users = []
@@ -78,14 +77,14 @@ export default function Svc(socket, io) {
         channels: fndRoom.channels.map(({ name }) => name)
       }
     },
-    leave({ room, user }) {
+    leave ({ room, user }) {
       const fndRoom = roomSvc.getRoom({ room })
       if (!fndRoom) {
         throw new Error(`room ${room} not found`)
       }
 
       if (fndRoom.users && fndRoom.users.includes(user)) {
-        const userIdx = fndRoom.users.findIndex((u) => u === user)
+        const userIdx = fndRoom.users.findIndex(u => u === user)
         fndRoom.users.splice(userIdx, 1)
       }
 

@@ -1,0 +1,33 @@
+.socket-status.label {
+  width: 100%;
+  text-align: left;
+}
+
+.socket-status.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.socket-status.grid:hover {
+  color: #212529;
+  background-color: rgba(0, 0, 0, 0.075);
+}
+
+.socket-status.striped:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.socket-status.col-key {
+  grid-column: 1;
+  font-weight: bold;
+  text-align: right;
+  padding: 0.75rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.socket-status.col-val {
+  grid-column: 2;
+  text-align: left;
+  padding: 0.75rem;
+  border-top: 1px solid #dee2e6;
+}

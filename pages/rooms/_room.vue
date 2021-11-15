@@ -19,21 +19,14 @@
 </template>
 
 <script>
-import ChannelSelect from '@/components/ChannelSelect'
-import Toaster from '@/components/Toaster'
-
 export default {
-  components: {
-    ChannelSelect,
-    Toaster
-  },
   props: {
     user: {
       type: String,
       default: () => ''
     }
   },
-  data() {
+  data () {
     return {
       ioApi: {},
       ioData: {},
@@ -43,20 +36,20 @@ export default {
     }
   },
   computed: {
-    userJoinedMsg() {
+    userJoinedMsg () {
       return this.ioData.userJoined !== ''
         ? `User ${this.ioData.userJoined} joined room!`
         : ''
     },
 
-    userLeftMsg() {
+    userLeftMsg () {
       return this.ioData.userLeft !== ''
         ? `User ${this.ioData.userLeft} left room!`
         : ''
     }
   },
   watch: {
-    async 'ioApi.ready'(ready) {
+    async 'ioApi.ready' (ready) {
       if (ready) {
         const { room, channels } = await this.ioApi.join({
           room: this.room,
@@ -67,11 +60,11 @@ export default {
         }
       }
     },
-    'ioData.users'(users) {
+    'ioData.users' (users) {
       this.users = users
     }
   },
-  mounted() {
+  mounted () {
     this.socket = this.$nuxtSocket({
       name: 'chatSvc',
       channel: '/room',

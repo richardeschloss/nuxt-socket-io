@@ -1,10 +1,12 @@
 <template>
   <div v-show-recent="chats ? chats.length : 0" class="chats-container">
     <div v-for="(chat, idx) in chats" :key="idx">
-      <hr v-show="idx > 0" class="chat-separator" />
+      <hr v-show="idx > 0" class="chat-separator">
       <span class="chat-user"> {{ chat.user }} </span>
       <span class="chat-time"> {{ chatTimeStr(chat) }} </span>
-      <div class="chat-msg">{{ chat.inputMsg }}</div>
+      <div class="chat-msg">
+        {{ chat.inputMsg }}
+      </div>
     </div>
   </div>
 </template>
@@ -13,7 +15,7 @@
 export default {
   directives: {
     showRecent: {
-      update(elm, binding) {
+      update (elm, binding) {
         const { value: chatsLength, oldValue: oldChatsLength } = binding
         if (chatsLength !== oldChatsLength) {
           setTimeout(() => {
@@ -30,12 +32,12 @@ export default {
     }
   },
   computed: {
-    chatTimeStr() {
-      return (chat) =>
+    chatTimeStr () {
+      return chat =>
         chat.timestamp ? new Date(chat.timestamp).toLocaleString() : ''
     }
   },
-  mounted() {
+  mounted () {
     // eslint-disable-next-line no-console
     console.log('chats', this.chats, this.chats.length)
   }

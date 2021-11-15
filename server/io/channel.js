@@ -1,6 +1,5 @@
-import { resolve as pResolve } from 'path'
-const { ChatMsg } = require(pResolve('./server/apis'))
-const { default: RoomSvc } = require(pResolve('./server/io/room'))
+import { ChatMsg } from '../apis.js'
+import RoomSvc from './room.js'
 
 const API = {
   version: 1.0,
@@ -52,12 +51,12 @@ const API = {
 const roomSvc = RoomSvc()
 const chatLimit = 100
 
-export default function(socket, io) {
+export default function (socket, io) {
   const channelSvc = Object.freeze({
-    getAPI() {
+    getAPI () {
       return API
     },
-    getChannel(room, channel) {
+    getChannel (room, channel) {
       const fndRoom = roomSvc.getRoom({ room })
       if (fndRoom.channels === undefined) {
         throw new Error(`Channels not found in ${room}`)
@@ -68,7 +67,7 @@ export default function(socket, io) {
       }
       return fndChannel
     },
-    join({ room, channel, user }) {
+    join ({ room, channel, user }) {
       const fndChannel = channelSvc.getChannel(room, channel)
 
       return new Promise((resolve, reject) => {
@@ -88,11 +87,11 @@ export default function(socket, io) {
         })
       })
     },
-    leave({ room, channel, user }) {
+    leave ({ room, channel, user }) {
       const fndChannel = channelSvc.getChannel(room, channel)
       return new Promise((resolve, reject) => {
         if (fndChannel.users.includes(user)) {
-          const userIdx = fndChannel.users.findIndex((u) => u === user)
+          const userIdx = fndChannel.users.findIndex(u => u === user)
           fndChannel.users.splice(userIdx, 1)
         }
 
@@ -105,7 +104,7 @@ export default function(socket, io) {
         socket.emit('users', { data: users })
       })
     },
-    sendMsg({ inputMsg, room, channel, user }) {
+    sendMsg ({ inputMsg, room, channel, user }) {
       if (!inputMsg || inputMsg === '') {
         throw new Error('no input msg rxd')
       }

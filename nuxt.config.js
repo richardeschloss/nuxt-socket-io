@@ -1,7 +1,8 @@
-module.exports = {
+export default {
   telemetry: false,
+  components: true,
   publicRuntimeConfig: {
-    /** @type {import('io/types').NuxtSocketIoRuntimeOptions} */
+    /** @type {import('lib/types').NuxtSocketIoRuntimeOptions} */
     io: {
       sockets: [
         {
@@ -12,7 +13,7 @@ module.exports = {
     }
   },
   privateRuntimeConfig: {
-    /** @type {import('io/types').NuxtSocketIoRuntimeOptions} */
+    /** @type {import('lib/types').NuxtSocketIoRuntimeOptions} */
     io: {
       sockets: [
         {
@@ -45,7 +46,10 @@ module.exports = {
   /*
    ** Global CSS
    */
-  css: ['~/assets/main.css'],
+  css: [
+    'bootstrap/dist/css/bootstrap.min.css',
+    '~/assets/main.css'
+  ],
   /*
    ** Plugins to load before mounting the App
    */
@@ -54,19 +58,17 @@ module.exports = {
    ** Nuxt.js dev-modules
    */
   buildModules: [
-    // Doc: https://github.com/nuxt-community/eslint-module
-    '@nuxtjs/eslint-module',
-    '@nuxtjs/composition-api'
+    // '@nuxtjs/composition-api'
   ],
   /*
    ** Nuxt.js modules
    */
   modules: [
     // Doc: https://bootstrap-vue.js.org
-    'bootstrap-vue/nuxt',
-    '~/io/module'
+    // 'bootstrap-vue/nuxt',
+    '~/lib/module.js'
   ],
-  /** @type {import('io/types').NuxtSocketIoOptions} */
+  /** @type {import('lib/types').NuxtSocketIoOptions} */
   io: {
     // server: {
     //   cors: {
@@ -82,12 +84,12 @@ module.exports = {
             ? 'https://nuxt-socket-io.herokuapp.com'
             : 'http://localhost:3000',
         vuex: {
-          mutations: [{ progress: 'examples/SET_PROGRESS' }],
-          actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
+          mutations: ['progress --> examples/SET_PROGRESS'],
+          actions: ['chatMessage --> FORMAT_MESSAGE'],
           emitBacks: [
             'examples/someObj',
             'examples/sample',
-            { 'examples/sample2': 'sample2' },
+            'sample2 <-- examples/sample2',
             'titleFromUser'
           ]
         },
@@ -111,29 +113,6 @@ module.exports = {
           process.env.NODE_ENV === 'production'
             ? 'https://nuxt-socket-io.herokuapp.com'
             : 'http://localhost:3000'
-        // vuex: {
-        //   mutations: [{ progress: 'examples/SET_PROGRESS' }],
-        //   actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
-        //   emitBacks: [
-        //     'examples/someObj',
-        //     'examples/sample',
-        //     { 'examples/sample2': 'sample2' },
-        //     'titleFromUser'
-        //   ]
-        // },
-        // namespaces: {
-        //   '/index': {
-        //     emitters: ['getMessage2 + testMsg --> message2Rxd'],
-        //     listeners: ['chatMessage2', 'chatMessage3 --> message3Rxd']
-        //   },
-        //   '/examples': {
-        //     emitBacks: ['sample3', 'sample4 <-- myObj.sample4'],
-        //     emitters: [
-        //       'reset] getProgress + refreshInfo --> progress [handleDone'
-        //     ],
-        //     listeners: ['progress']
-        //   }
-        // }
       },
       { name: 'goodSocket', url: 'http://localhost:3000' },
       { name: 'badSocket', url: 'http://localhost:3001' },
@@ -144,9 +123,9 @@ module.exports = {
         name: 'test',
         url: 'http://localhost:4000',
         vuex: {
-          mutations: [{ progress: 'examples/SET_PROGRESS' }],
-          actions: [{ chatMessage: 'FORMAT_MESSAGE' }],
-          emitBacks: ['examples/sample', { 'examples/sample2': 'sample2' }]
+          mutations: ['progress --> examples/SET_PROGRESS'],
+          actions: ['chatMessage --> FORMAT_MESSAGE'],
+          emitBacks: ['examples/sample', 'sample2 <-- examples/sample2']
         }
       }
     ]
@@ -158,7 +137,7 @@ module.exports = {
     /*
      ** You can extend webpack config here
      */
-    extend(config, ctx) {},
+    extend (config, ctx) {},
     parallel: false,
     cache: false,
     hardSource: false

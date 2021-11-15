@@ -20,23 +20,14 @@
 </template>
 
 <script>
-import ChannelUsers from '@/components/ChannelUsers'
-import ChatInput from '@/components/ChatInput'
-import Chats from '@/components/Chats'
-
 export default {
-  components: {
-    ChannelUsers,
-    ChatInput,
-    Chats
-  },
   props: {
     user: {
       type: String,
       default: ''
     }
   },
-  data() {
+  data () {
     return {
       ioApi: {},
       ioData: {},
@@ -47,33 +38,33 @@ export default {
     }
   },
   computed: {
-    channel() {
+    channel () {
       return this.$route.params.channel
     },
 
-    room() {
+    room () {
       return this.$route.params.room
     },
 
-    userMsg() {
+    userMsg () {
       const { inputMsg, room, channel, user } = this
       return { inputMsg, user, room, channel }
     },
 
-    userJoinedMsg() {
+    userJoinedMsg () {
       return this.ioData.userJoined !== ''
         ? `User ${this.ioData.userJoined} joined channel!`
         : ''
     },
 
-    userLeftMsg() {
+    userLeftMsg () {
       return this.ioData.userLeft !== ''
         ? `User ${this.ioData.userLeft} left channel!`
         : ''
     }
   },
   watch: {
-    channel(n, o) {
+    channel (n, o) {
       this.chats = []
       this.socket.close()
       this.socket = this.$nuxtSocket({
@@ -83,7 +74,7 @@ export default {
       })
     },
 
-    async 'ioApi.ready'(ready) {
+    async 'ioApi.ready' (ready) {
       if (ready) {
         const { room, channel, chats } = await this.ioApi.join({
           room: this.room,
@@ -96,18 +87,18 @@ export default {
       }
     },
 
-    'ioData.chat'(chat) {
+    'ioData.chat' (chat) {
       if (chat) {
         this.inputMsg = ''
         this.chats.push(chat)
       }
     },
 
-    'ioData.users'(users) {
+    'ioData.users' (users) {
       this.users = users
     }
   },
-  mounted() {
+  mounted () {
     this.socket = this.$nuxtSocket({
       name: 'chatSvc',
       channel: '/channel',

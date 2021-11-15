@@ -20,7 +20,7 @@ cache:
 test_unit:
   script:
     - npm install
-    - npm test
+    - npm run test:cov
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   artifacts:
     paths:

@@ -1,7 +1,10 @@
-export default function Svc(socket, io) {
+export default function Svc (socket, io) {
   return Object.freeze({
-    getMessage(data) {
-      return new Promise((resolve, reject) => {
+    getItems (ids) {
+      return ids
+    },
+    getMessage (data) {
+      return new Promise((resolve) => {
         const msgs = [
           'Hi, this is a chat message from IO server!',
           'Hi, this is another chat message from IO server!'
@@ -16,8 +19,8 @@ export default function Svc(socket, io) {
         }, 500)
       })
     },
-    getMessage2(data) {
-      return new Promise((resolve, reject) => {
+    getMessage2 (data) {
+      return new Promise((resolve) => {
         const msgs = [
           'Hi, this is a chat message from IO server!',
           'Hi, this is another chat message from IO server!'
@@ -35,13 +38,25 @@ export default function Svc(socket, io) {
         }, 500)
       })
     },
-    echoBack({ evt, data }) {
+    echo (msg) {
+      return msg
+    },
+    echoBack ({ evt, data }) {
       socket.emit(evt, data)
       return { evt, data }
     },
-    titleFromUser(msg) {
+    echoHello () {
+      return { evt: 'echoHello', data: 'hello' }
+    },
+    echoError () {
+      throw new Error('SomeError')
+    },
+    echoUndefMsg (msg) {
+      return msg
+    },
+    titleFromUser (msg) {
       return {
-        data: `received msg ${msg}!`
+        data: `received msg ${msg.name}!`
       }
     }
   })

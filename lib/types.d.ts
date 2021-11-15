@@ -9,16 +9,14 @@ import Vue from 'vue';
  *
  *   1. A single name string - the event name acts as the mutation
  *   2. A string with a double-dashed arrow - the left side of the arrow is the event name, the right side is the mutation
- *   3. An object - the object key is the event, the value is the mutation
  */
-type MutationNotation = string | Record<string, string>;
+type MutationNotation = string;
 
 /**
  * The format of each entry in actions can be:
  *
  *   1. A single name string - the event name acts as the action
  *   2. A string with a double-dashed arrow - the left side of the arrow is the event name, the right side is the action
- *   3. An object - the object key is the event, the value is the action
  */
 type ActionNotation = MutationNotation;
 
@@ -29,8 +27,6 @@ type ActionNotation = MutationNotation;
  *
  *   1. A single name string - the event name acts as the mutation
  *   2. A string with a double-dashed arrow - the **right** side of the arrow is the event name, the **left** side is the mutation
- *   3. An object - the object **key** is the mutation, the **value** is the event
-
  */
 type EmitBackNotation = MutationNotation;
 
@@ -57,9 +53,8 @@ interface NuxtSocketVueOptions {
  *      Hooks are optional. calling this[componentMethod] will send the event [componentMethod]
  *      with data this[msg]. It will save the response to this[componentProp]   
  *      If the preEmit hook returns false, emitting will be canceled.
- *   3. An object - the object key is the method name on [this] component, the value is the event to emit
  */
-type EmitterNotation = string | Record<string, string>;
+type EmitterNotation = string;
 
 /**
  * The format of each entry in listeners can be:
@@ -70,9 +65,8 @@ type EmitterNotation = string | Record<string, string>;
  *      'preHook] listenEvent --> componentProp [postRx hook'
  *
  *      Hooks are optional. When listenEvent received, it will be saved to this[componentProp]
- *   3. An object - the object key is the event name to listen to, the value is the property on [this] component that will contain the event's data
  */
-type ListenerNotation = string | Record<string, string>;
+type ListenerNotation = string;
 
 /**
  * Options to let you configure emitters, listeners and/or
