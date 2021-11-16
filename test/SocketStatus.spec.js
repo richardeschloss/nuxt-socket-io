@@ -1,5 +1,5 @@
 import 'jsdom-global/register.js'
-import Vue from 'vue'
+import Vue from 'vue/dist/vue.runtime.esm.js'
 import ava from 'ava'
 import SocketStatus from '#root/lib/components/SocketStatus.js'
 
@@ -22,17 +22,17 @@ test('IO Status', (t) => {
     propsData: {
       status: badStatus
     }
-  })
+  }).$mount()
   const comp2 = new Comp({
     propsData: {
       status: {
         connectUrl: 'http://localhost:3001/index'
       }
     }
-  })
+  }).$mount()
   const comp3 = new Comp({
     propsData: {}
-  })
+  }).$mount()
   const expTbl = [
     { item: 'connectError', info: 'Connect Error' },
     { item: 'reconnectAttempt', info: '5' },
@@ -48,7 +48,7 @@ test('IO Status', (t) => {
   t.is(comp2.statusTbl[0].item, 'status')
   t.is(comp2.statusTbl[0].info, 'OK')
 
-  comp.$mount()
-  comp2.$mount()
-  comp3.$mount()
+  t.truthy(comp.$el.querySelector('.socket-status'))
+  t.truthy(comp2.$el.querySelector('.socket-status'))
+  t.falsy(comp3.$el.innerHTML)
 })
