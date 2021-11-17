@@ -678,7 +678,7 @@ test('Vuex Opts', async (t) => {
       mutations: ['SET_MESSAGE', 'someMutation --> examples/SET_SAMPLE'],
       emitBacks: [
         'noPre] examples/sample [noPost',
-        'sample2 <-- examples/sample2', // TBD
+        'sample2 <-- examples/sample2',
         'preEmit] sample2b <-- examples/sample2b [postAck',
         'titleFromUser', // defined in store/index.js (for issue #35)
         'preEmitVal] echoHello <-- examples/hello [postEmitHook',
