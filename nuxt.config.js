@@ -82,7 +82,9 @@ export default {
             // 'http://localhost:3001', // Works for local dev
             'https://nuxt-socket-io.netlify.app'
           ]
+          console.log('origin', origin)
           if (whitelist.includes(origin)) {
+            console.log('white list includes origin!', origin)
             callback(null, true)
           } else {
             callback(new Error('Not allowed by CORS'))
