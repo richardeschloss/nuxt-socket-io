@@ -77,7 +77,7 @@ export default {
     server: {
       // @ts-ignore
       cors: {
-        // credentials: true,
+        credentials: true,
         origin: 'https://nuxt-socket-io.netlify.app',
         methods: ['GET', 'POST']
         // origin (origin, callback) {
