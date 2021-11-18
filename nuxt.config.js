@@ -78,9 +78,9 @@ export default {
       // @ts-ignore
       cors: {
         credentials: true,
-        allowedHeaders: ['Content-Type', 'Authorization'],
-        origin: 'https://nuxt-socket-io.netlify.app',
-        methods: ['GET', 'POST']
+        // allowedHeaders: ['Content-Type', 'Authorization'],
+        origin: ['https://nuxt-socket-io.netlify.app'],
+        // methods: ['GET', 'POST']
         // origin (origin, callback) {
         //   const whitelist = [
         //     // 'http://localhost:3001', // Works for local dev
