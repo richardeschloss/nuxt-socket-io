@@ -77,8 +77,9 @@ export default {
     server: {
       // @ts-ignore
       cors: {
-        credentials: true,
-        origin: ['https://nuxt-socket-io.netlify.app']
+        // credentials: true,
+        origin: 'https://nuxt-socket-io.netlify.app',
+        methods: ['GET', 'POST']
         // origin (origin, callback) {
         //   const whitelist = [
         //     // 'http://localhost:3001', // Works for local dev
