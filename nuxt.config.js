@@ -70,12 +70,22 @@ export default {
   ],
   /** @type {import('lib/types').NuxtSocketIoOptions} */
   io: {
-    // server: {
-    //   cors: {
-    //     origin: 'https://example.com',
-    //     methods: ['GET', 'POST']
-    //   }
-    // },
+    server: {
+      // @ts-ignore
+      cors: {
+        origin (origin, callback) {
+          const whitelist = [
+            // 'http://localhost:3001', // Works for local dev
+            'https://nuxt-socket-io.netlify.app'
+          ]
+          if (whitelist.includes(origin)) {
+            callback(null, true)
+          } else {
+            callback(new Error('Not allowed by CORS'))
+          }
+        }
+      }
+    },
     sockets: [
       {
         name: 'home',
