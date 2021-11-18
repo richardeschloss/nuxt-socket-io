@@ -77,6 +77,7 @@ export default {
     server: {
       // @ts-ignore
       cors: {
+        credentials: true,
         origin: ['https://nuxt-socket-io.netlify.app']
         // origin (origin, callback) {
         //   const whitelist = [
