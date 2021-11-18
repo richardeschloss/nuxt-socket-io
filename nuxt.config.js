@@ -78,22 +78,7 @@ export default {
       // @ts-ignore
       cors: {
         credentials: true,
-        // allowedHeaders: ['Content-Type', 'Authorization'],
-        origin: ['https://nuxt-socket-io.netlify.app'],
-        // methods: ['GET', 'POST']
-        // origin (origin, callback) {
-        //   const whitelist = [
-        //     // 'http://localhost:3001', // Works for local dev
-        //     'https://nuxt-socket-io.netlify.app'
-        //   ]
-        //   console.log('origin', origin)
-        //   if (whitelist.includes(origin)) {
-        //     console.log('white list includes origin!', origin)
-        //     callback(null, true)
-        //   } else {
-        //     callback(new Error('Not allowed by CORS'))
-        //   }
-        // }
+        origin: ['https://nuxt-socket-io.netlify.app']
       }
     },
     sockets: [
