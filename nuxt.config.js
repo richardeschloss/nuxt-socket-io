@@ -1,4 +1,16 @@
-export default {
+import { defineNuxtConfig } from '@nuxt/bridge'
+
+export default defineNuxtConfig({
+  bridge: {
+    vite: true
+  },
+  vite: {
+    server: {
+      hmr: {
+        overlay: false
+      }
+    }
+  },
   server: {
     host: process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost',
     port: process.env.PORT || 3000
@@ -70,7 +82,7 @@ export default {
   modules: [
     // Doc: https://bootstrap-vue.js.org
     // 'bootstrap-vue/nuxt',
-    '~/lib/module.js'
+    // '~/lib/module.js'
   ],
   /** @type {import('lib/types').NuxtSocketIoOptions} */
   io: {
@@ -135,23 +147,11 @@ export default {
       }
     ]
   },
-  /*
-   ** Build configuration
-   */
-  build: {
-    /*
-     ** You can extend webpack config here
-     */
-    extend (config, ctx) {},
-    parallel: false,
-    cache: false,
-    hardSource: false
-  },
   globals: {
-    loadingTimeout: 5000
+    loadingTimeout: 5000 // TBD: why am I using this again?
   }
   // ,
   // generate: {
   //   dir: '/tmp/netlify/nuxt-socket-io-standalone'
   // }
-}
+})

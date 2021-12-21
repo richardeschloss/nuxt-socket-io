@@ -25,8 +25,8 @@
   },
   "repository": "https://github.com/richardeschloss/nuxt-socket-io",
   "scripts": {
-    "dev": "nuxt",
-    "build": "nuxt build",
+    "dev": "nuxi dev",
+    "build": "nuxi build",
     "start": "nuxt start",
     "generate:local": "nuxt generate",
     "generate:gh-pages": "cross-env nuxt generate",
@@ -44,12 +44,14 @@
   "dependencies": {
     "@nuxt/types": "^2.15.5",
     "glob": "^7.1.7",
+    "nuxt-edge": "^2.16.0-27334095.777a4b7f",
     "socket.io": "^4.1.1",
     "socket.io-client": "^4.1.1",
     "tiny-emitter": "^2.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.15.8",
+    "@nuxt/bridge": "npm:@nuxt/bridge-edge@^3.0.0-27335068.804b323",
     "@nuxtjs/eslint-config": "^6.0.1",
     "ava": "^3.15.0",
     "bootstrap": "^4.6.1",
@@ -61,7 +63,6 @@
     "eslint-plugin-unicorn": "^37.0.1",
     "jsdom": "^16.7.0",
     "jsdom-global": "^3.0.2",
-    "les-utils": "^2.0.4",
-    "nuxt": "^2.15.8"
+    "les-utils": "^2.0.4"
   }
 }
