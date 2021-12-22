@@ -107,12 +107,12 @@ export default defineNuxtConfig({
             : 'http://localhost:3001', // Updated
         vuex: {
           mutations: ['progress --> examples/SET_PROGRESS'],
-          actions: ['chatMessage --> mynsp/FORMAT_MESSAGE'],
+          actions: ['chatMessage --> io/FORMAT_MESSAGE'],
           emitBacks: [
             'examples/someObj',
             'examples/sample',
-            'sample2 <-- examples/sample2'
-            // 'titleFromUser' // TBD: update
+            'sample2 <-- examples/sample2',
+            'io/titleFromUser' // TBD: update tests
           ]
         },
         namespaces: {

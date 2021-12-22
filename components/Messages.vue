@@ -110,7 +110,9 @@ export default {
       socket: null
     }
   },
-  computed: mapState(['chatMessages']),
+  computed: mapState({
+    chatMessages: state => state.io.chatMessages
+  }),
   mounted () {
     this.socket = this.$nuxtSocket({
       channel: '/index',
