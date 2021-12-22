@@ -13,7 +13,9 @@ export default defineNuxtConfig({
   },
   server: {
     host: process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost',
-    port: process.env.PORT || 3000
+    port: process.env.PORT !== undefined
+      ? parseInt(process.env.PORT)
+      : 3000
   },
   telemetry: false,
   components: true,
@@ -82,7 +84,7 @@ export default defineNuxtConfig({
   modules: [
     // Doc: https://bootstrap-vue.js.org
     // 'bootstrap-vue/nuxt',
-    // '~/lib/module.js'
+    '~/lib/module.js'
   ],
   /** @type {import('lib/types').NuxtSocketIoOptions} */
   io: {
@@ -90,7 +92,10 @@ export default defineNuxtConfig({
       // @ts-ignore
       cors: {
         credentials: true,
-        origin: ['https://nuxt-socket-io.netlify.app']
+        origin: [
+          'https://nuxt-socket-io.netlify.app',
+          'http://localhost:3000' // TBD: added
+        ]
       }
     },
     sockets: [
@@ -99,15 +104,15 @@ export default defineNuxtConfig({
         url:
           process.env.NODE_ENV === 'production'
             ? 'https://nuxt-socket-io.herokuapp.com'
-            : 'http://localhost:3000',
+            : 'http://localhost:3001', // Updated
         vuex: {
           mutations: ['progress --> examples/SET_PROGRESS'],
-          actions: ['chatMessage --> FORMAT_MESSAGE'],
+          actions: ['chatMessage --> mynsp/FORMAT_MESSAGE'],
           emitBacks: [
             'examples/someObj',
             'examples/sample',
-            'sample2 <-- examples/sample2',
-            'titleFromUser'
+            'sample2 <-- examples/sample2'
+            // 'titleFromUser' // TBD: update
           ]
         },
         namespaces: {
@@ -125,7 +130,7 @@ export default defineNuxtConfig({
         }
       },
       {
-        name: 'chatSvc',
+        name: 'chatSvc', // TBD: redundant?
         url:
           process.env.NODE_ENV === 'production'
             ? 'https://nuxt-socket-io.herokuapp.com'
@@ -146,12 +151,5 @@ export default defineNuxtConfig({
         }
       }
     ]
-  },
-  globals: {
-    loadingTimeout: 5000 // TBD: why am I using this again?
   }
-  // ,
-  // generate: {
-  //   dir: '/tmp/netlify/nuxt-socket-io-standalone'
-  // }
 })
