@@ -10,7 +10,7 @@
       <nuxt-link to="/rooms" v-text="'Chat Rooms'" /> |
       <nuxt-link to="/ioStatus" v-text="'IO Status'" /> |
       <a href="https://nuxt-socket-io.netlify.app" target="_blank" v-text="'Docs'" /> |
-      <a href="https://nuxt-socket-io.netlify.app" target="_blank">
+      <a href="https://github.com/richardeschloss/nuxt-socket-io" target="_blank">
         <svg
           width="25"
           xmlns="http://www.w3.org/2000/svg"
