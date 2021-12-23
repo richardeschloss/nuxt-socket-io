@@ -36,20 +36,17 @@ export function wrapModule (Module) {
   const ctx = {
     nuxt: {
       version: '2.x',
-      hooks: {},
+      // hooks: {},
       hook (evt, cb) {
-        ctx.nuxt.hooks[evt] = cb
+        if (!ctx.nuxt.hooks[evt]) {
+          ctx.nuxt.hooks[evt] = []
+        }
+        ctx.nuxt.hooks[evt].push(cb)
+      },
+      options: {
+        plugins: [],
+        publicRuntimeConfig: {}
       }
-    },
-    options: {
-      plugins: [],
-      publicRuntimeConfig: {}
-    },
-    /**
-     * @param {any} plugin
-     */
-    addPlugin (plugin) {
-      ctx.options.plugins.push(plugin)
     },
     Module
   }

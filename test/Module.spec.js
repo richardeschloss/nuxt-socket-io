@@ -67,19 +67,9 @@ function sendReceive ({
   })
 }
 
-function validatePlugin ({ pluginInfo, options, t, moduleOptions }) {
-  const { ssr, src, fileName } = pluginInfo
-  t.true(ssr)
-  t.is(src, path.resolve(srcDir, 'lib/plugin.js'))
-  t.is(fileName, 'nuxt-socket-io.js')
-  t.truthy(options.sockets)
-  t.true(options.sockets.length > 0)
-  options.sockets.forEach((s, idx) => {
-    Object.entries(s).forEach(([key, entry]) => {
-      t.is(entry, moduleOptions.sockets[idx][key])
-    })
-  })
-}
+const waitForListening = server => new Promise(
+  resolve => server.on('listening', resolve)
+)
 
 const waitForClose = server => new Promise(
   resolve => server.listening ? server.on('close', resolve) : resolve()
@@ -260,54 +250,32 @@ test('Register.nspSvc (nspDir exists, some nsp malformed)', async (t) => {
   await waitForClose(server)
 })
 
-test('Module: adds plugin, does not register IO server (simple config)', (t) => {
-  const ctx = wrapModule(Module)
-  const moduleOptions = {
-    server: false,
-    sockets: [{ name: 'home', url: 'https://localhost:3000' }]
-  }
-  ctx.Module(moduleOptions)
-  const [pluginInfo] = ctx.options.plugins
-  const { nuxtSocketIO: options } = ctx.options.publicRuntimeConfig
-  validatePlugin({ pluginInfo, options, t, moduleOptions })
-})
-
-test('Module: adds plugin, registers IO server, if undef', (t) => {
-  const ctx = wrapModule(Module)
-  const moduleOptions = Object.assign({}, io)
-  ctx.Module(moduleOptions)
-  const [pluginInfo] = ctx.options.plugins
-  const { nuxtSocketIO: options } = ctx.options.publicRuntimeConfig
-  validatePlugin({ pluginInfo, options, t, moduleOptions })
-})
-
-test('Module: adds plugin, registers IO server (nuxt config)', (t) => {
-  const ctx = wrapModule(Module)
-  const serverIn = http.createServer()
-  const moduleOptions = Object.assign({}, io)
-  ctx.Module(moduleOptions)
-  const [pluginInfo] = ctx.options.plugins
-  const { nuxtSocketIO: options } = ctx.options.publicRuntimeConfig
-  validatePlugin({ pluginInfo, options, t, moduleOptions })
-  t.truthy(ctx.nuxt.hooks.listen)
-  ctx.nuxt.hooks.listen(serverIn)
-
-  return new Promise((resolve) => {
-    serverIn.on('listening', () => {
-      setTimeout(() => {
-        t.truthy(ctx.nuxt.hooks.close)
-        ctx.nuxt.hooks.close()
-      }, 100)
-    })
-    serverIn.on('close', resolve)
-  })
-})
-
-test('Module: adds components directory for this library', (t) => {
+test('Module: various options', async (t) => {
   const dirs = []
   const ctx = wrapModule(Module)
-  ctx.Module({})
-  ctx.nuxt.hooks['components:dirs'](dirs)
+  await ctx.Module({
+    server: false,
+    sockets: [{ name: 'home', url: 'https://localhost:3000' }]
+  })
+  t.truthy(ctx.nuxt.hooks['components:dirs'])
+  ctx.nuxt.hooks['components:dirs'][0](dirs)
   t.is(dirs[0].path, path.resolve('./lib/components'))
   t.is(dirs[0].prefix, 'io')
+  const [pluginInfo] = ctx.nuxt.options.plugins
+  t.is(pluginInfo.src, path.resolve(srcDir, 'lib/plugin.js'))
+  const { nuxtSocketIO } = ctx.nuxt.options.publicRuntimeConfig
+  t.is(nuxtSocketIO.sockets[0].name, 'home')
+  t.is(nuxtSocketIO.sockets[0].url, 'https://localhost:3000')
+
+  const serverInst = http.createServer()
+  const p = waitForListening(serverInst)
+  const p2 = waitForClose(serverInst)
+  await ctx.Module({
+    ...io,
+    server: { serverInst }
+  })
+  await p
+  t.truthy(ctx.nuxt.hooks.close)
+  ctx.nuxt.hooks.close[0]()
+  await p2
 })
