@@ -1,10 +1,11 @@
 import ava from 'ava'
 import { delay } from 'les-utils/utils/promise.js'
 import { register } from '../lib/module.js'
-import Plugin from '../lib/plugin.js'
-import * as indexStore from '../store/index.js'
+// eslint-disable-next-line no-unused-vars
+import Plugin from '../lib/plugin.js' // It actually is used by the mock defineNuxtPlugin
+import * as indexStore from '../store/io.js'
 import * as examplesStore from '../store/examples.js'
-import { wrapPlugin } from './utils/plugin.js'
+import { pluginCtx } from './utils/plugin.js'
 
 const { serial: test, before, after } = ava
 let ioServerObj
@@ -53,9 +54,8 @@ const clientAPI = {
   }
 }
 
-const ctx = wrapPlugin(Plugin)
+const ctx = pluginCtx()
 ctx.$config.nuxtSocketIO = {}
-ctx.Plugin(null, ctx.inject)
 
 /**
  * @param {import('socket.io-client').Socket} s
@@ -257,6 +257,7 @@ test('Socket Persistence (persist = true, persisted socket disconnected)', async
 })
 
 test('Vuex module', async (t) => {
+  const ctx = pluginCtx()
   ctx.$config = {
     nuxtSocketIO: {
       sockets: [
@@ -630,6 +631,7 @@ test('Namespace config (emitBacks)', async (t) => {
 })
 
 test('Vuex Opts', async (t) => {
+  const ctx = pluginCtx()
   ctx.$config = {
     nuxtSocketIO: {
       sockets: [
@@ -736,9 +738,8 @@ test('Vuex Opts', async (t) => {
 })
 
 test('Teardown', (t) => {
-  const ctx = wrapPlugin(Plugin)
+  const ctx = pluginCtx()
   ctx.$config.nuxtSocketIO = {}
-  ctx.Plugin(null, ctx.inject)
   let componentDestroyCnt = 0
   ctx.$config = {
     nuxtSocketIO: {
@@ -779,9 +780,9 @@ test('Teardown', (t) => {
 })
 
 test('Stubs (composition api support)', async (t) => {
-  const ctx = wrapPlugin(Plugin)
+  const ctx = pluginCtx()
   ctx.$config.nuxtSocketIO = { sockets: [{ url: 'http://localhost:3000' }] }
-  ctx.Plugin(null, ctx.inject)
+  // ctx.Plugin(null, ctx.inject)
 
   async function validateEventHub () {
     const props = ['$on', '$off', '$once', '$emit']
@@ -827,6 +828,7 @@ test('Stubs (composition api support)', async (t) => {
 })
 
 test('Dynamic API Feature (Server)', async (t) => {
+  const ctx = pluginCtx()
   ctx.$config = {
     nuxtSocketIO: {
       sockets: [
@@ -902,6 +904,7 @@ test('Dynamic API Feature (Server)', async (t) => {
 })
 
 test('Dynamic API Feature (Client)', async (t) => {
+  const ctx = pluginCtx()
   ctx.$config = {
     nuxtSocketIO: {
       sockets: [
@@ -981,9 +984,8 @@ test('Dynamic API Feature (Client)', async (t) => {
 })
 
 test('Promisified emit and once', async (t) => {
-  const ctx = wrapPlugin(Plugin)
+  const ctx = pluginCtx()
   ctx.$config.nuxtSocketIO = { sockets: [{ url: 'http://localhost:3000' }] }
-  ctx.Plugin(null, ctx.inject)
   const s = ctx.$nuxtSocket({ channel: '/index', teardown: false, reconnection: true })
   t.truthy(s.emitP)
   t.truthy(s.onceP)

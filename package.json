@@ -39,7 +39,8 @@
     "utils"
   ],
   "imports": {
-    "#root/*": "./*"
+    "#root/*": "./*",
+    "#app": "./test/utils/plugin.js"
   },
   "dependencies": {
     "@nuxt/types": "^2.15.5",
