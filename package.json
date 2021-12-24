@@ -45,7 +45,6 @@
   "dependencies": {
     "@nuxt/types": "^2.15.5",
     "glob": "^7.1.7",
-    "nuxt-edge": "^2.16.0-27334095.777a4b7f",
     "socket.io": "^4.1.1",
     "socket.io-client": "^4.1.1",
     "tiny-emitter": "^2.1.0"
@@ -63,6 +62,7 @@
     "eslint-plugin-unicorn": "^37.0.1",
     "jsdom": "^16.7.0",
     "jsdom-global": "^3.0.2",
-    "les-utils": "^2.0.4"
+    "les-utils": "^2.0.4",
+    "nuxt-edge": "^2.16.0-27338416.777a4b7f"
   }
 }
