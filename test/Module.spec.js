@@ -5,11 +5,12 @@ import ava from 'ava'
 import ioClient from 'socket.io-client'
 import { delay } from 'les-utils/utils/promise.js'
 import Module, { register } from '../lib/module.js'
-import { getModuleOptions, wrapModule } from './utils/module.js'
+import { getModuleOptions, initNuxt, useNuxt } from './utils/module.js'
 
 const { serial: test } = ava
 const srcDir = path.resolve('.')
 const { io } = getModuleOptions('io/module', 'io')
+
 const { listener: listen } = register
 
 async function send ({
@@ -252,30 +253,33 @@ test('Register.nspSvc (nspDir exists, some nsp malformed)', async (t) => {
 
 test('Module: various options', async (t) => {
   const dirs = []
-  const ctx = wrapModule(Module)
-  await ctx.Module({
+  initNuxt()
+  await Module({
     server: false,
     sockets: [{ name: 'home', url: 'https://localhost:3000' }]
-  })
-  t.truthy(ctx.nuxt.hooks['components:dirs'])
-  ctx.nuxt.hooks['components:dirs'][0](dirs)
+  }, useNuxt())
+  const nuxt1 = useNuxt()
+  t.truthy(nuxt1.hooks['components:dirs'])
+  nuxt1.hooks['components:dirs'](dirs)
   t.is(dirs[0].path, path.resolve('./lib/components'))
   t.is(dirs[0].prefix, 'io')
-  const [pluginInfo] = ctx.nuxt.options.plugins
+  const [pluginInfo] = nuxt1.options.plugins
   t.is(pluginInfo.src, path.resolve(srcDir, 'lib/plugin.js'))
-  const { nuxtSocketIO } = ctx.nuxt.options.publicRuntimeConfig
+  const { nuxtSocketIO } = nuxt1.options.publicRuntimeConfig
   t.is(nuxtSocketIO.sockets[0].name, 'home')
   t.is(nuxtSocketIO.sockets[0].url, 'https://localhost:3000')
 
   const serverInst = http.createServer()
   const p = waitForListening(serverInst)
   const p2 = waitForClose(serverInst)
-  await ctx.Module({
+  initNuxt()
+  await Module({
     ...io,
     server: { serverInst }
-  })
+  }, useNuxt())
   await p
-  t.truthy(ctx.nuxt.hooks.close)
-  ctx.nuxt.hooks.close[0]()
+  const nuxt2 = useNuxt()
+  t.truthy(nuxt2.hooks.close)
+  nuxt2.hooks.close()
   await p2
 })

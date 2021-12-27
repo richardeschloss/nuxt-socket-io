@@ -1,4 +1,10 @@
+import path from 'path'
+import { nuxtCtx, useNuxt } from '@nuxt/kit'
 import config from '#root/nuxt.config.js'
+
+const srcDir = path.resolve('.')
+
+export { useNuxt }
 
 export function getModuleOptions (moduleName, optsContainer) {
   const opts = {}
@@ -32,23 +38,30 @@ export function getModuleOptions (moduleName, optsContainer) {
   return opts
 }
 
-export function wrapModule (Module) {
-  const ctx = {
-    nuxt: {
-      version: '2.x',
-      // hooks: {},
-      hook (evt, cb) {
-        if (!ctx.nuxt.hooks[evt]) {
-          ctx.nuxt.hooks[evt] = []
-        }
-        ctx.nuxt.hooks[evt].push(cb)
-      },
-      options: {
-        plugins: [],
-        publicRuntimeConfig: {}
-      }
+export function initNuxt () {
+  nuxtCtx.unset()
+  const nuxt = {
+    __nuxt2_shims_key__: true,
+    version: '2.x',
+    hooks: {
+      addHooks: () => {}
     },
-    Module
+    hook (evt, cb) {
+      nuxtCtx.use().hooks[evt] = cb
+    },
+    options: {
+      css: [],
+      srcDir,
+      plugins: [],
+      modules: [],
+      serverMiddleware: [],
+      build: {
+        transpile: [],
+        templates: []
+      },
+      publicRuntimeConfig: {}
+    }
   }
-  return ctx
+  // @ts-ignore
+  nuxtCtx.set(nuxt)
 }
