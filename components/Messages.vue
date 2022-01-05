@@ -9,14 +9,14 @@
             This example uses <code>"getMessage()"</code> defined in the component
             and consumes <code>chatMessages</code> that were sent directly to Vuex. If you can see text appear below, it worked!<br><br>
 
-            When the event "chatMessage" is received, it dispatches the vuex action "FORMAT_MESSAGE", which formats the message and appends it to the state's "chatMessages"
+            <del>When the event "chatMessage" is received, it dispatches the vuex action "FORMAT_MESSAGE", which formats the message and appends it to the state's "chatMessages"</del> (See discussion <a href="https://github.com/nuxt/framework/discussions/571">here</a>)
           </p>
           <table class="table card-text" style="font-size: 14px;">
             <thead>
               <tr>
                 <th>Send Event "getMessage"</th>
-                <th style="width: 40%;" v-text="'Receive Intermediate Event(s)'" />
-                <th style="width: 35%;" v-text="'Receive Final Response'" />
+                <!-- <th style="width: 40%;" v-text="'Receive Intermediate Event(s)'" /> -->
+                <th xstyle="width: 35%;" v-text="'Receive Final Response'" />
               </tr>
             </thead>
             <tbody>
@@ -24,10 +24,10 @@
                 <td>
                   <button class="btn btn-primary" @click="getMessage()" v-text="'Get Message'" />
                 </td>
-                <td>
+                <!-- <td>
                   <label>chatMessages</label>
                   <p class="text-left" style="color: grey; white-space: pre-line;" v-text="chatMessages" />
-                </td>
+                </td> -->
                 <td>
                   <label>messageRxd</label>
                   <p class="text-left" style="color: grey; white-space: pre-line;" v-text="messageRxd" />
@@ -98,7 +98,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+// import { mapState } from 'vuex'
 export default {
   data () {
     return {
@@ -110,9 +110,9 @@ export default {
       socket: null
     }
   },
-  computed: mapState({
-    chatMessages: state => state.io.chatMessages
-  }),
+  // computed: mapState({
+  //   chatMessages: state => state.io.chatMessages
+  // }),
   mounted () {
     this.socket = this.$nuxtSocket({
       channel: '/index',

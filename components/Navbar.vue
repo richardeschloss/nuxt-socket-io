@@ -1,5 +1,5 @@
 <template>
-  <div style="position: fixed; top: 0px; background: white; width: 100%;">
+  <div style="background: white; width: 100%;">
     <div class="d-inline-block w-50">
       <Stats />
       <h1 class="title" v-text="'nuxt-socket-io'" />

@@ -1,16 +1,6 @@
-import { defineNuxtConfig } from '@nuxt/bridge'
+import { defineNuxtConfig } from 'nuxt3'
 
 export default defineNuxtConfig({
-  bridge: {
-    vite: true
-  },
-  vite: {
-    server: {
-      hmr: {
-        overlay: false
-      }
-    }
-  },
   server: {
     host: process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost',
     port: process.env.PORT !== undefined
@@ -18,7 +8,6 @@ export default defineNuxtConfig({
       : 3000
   },
   telemetry: false,
-  components: true,
   publicRuntimeConfig: {
     /** @type {import('lib/types').NuxtSocketIoRuntimeOptions} */
     io: {
@@ -65,7 +54,7 @@ export default defineNuxtConfig({
    ** Global CSS
    */
   css: [
-    'bootstrap/dist/css/bootstrap.min.css',
+    '~/assets/bootstrap.min.css',
     '~/assets/main.css'
   ],
   /*
@@ -136,8 +125,8 @@ export default defineNuxtConfig({
             ? 'https://nuxt-socket-io.herokuapp.com'
             : 'http://localhost:3000'
       },
-      { name: 'goodSocket', url: 'http://localhost:3000' },
-      { name: 'badSocket', url: 'http://localhost:3001' },
+      { name: 'goodSocket', url: 'http://localhost:3001' },
+      { name: 'badSocket', url: 'http://localhost:3002' },
       { name: 'work', url: 'http://somedomain1:3000' },
       { name: 'car', url: 'http://somedomain2:3000' },
       { name: 'tv', url: 'http://somedomain3:3000' },
