@@ -5,11 +5,12 @@ import ava from 'ava'
 import ioClient from 'socket.io-client'
 import { delay } from 'les-utils/utils/promise.js'
 import Module, { register } from '../lib/module.js'
-import { getModuleOptions, wrapModule } from './utils/module.js'
+import { getModuleOptions, initNuxt, useNuxt } from './utils/module.js'
 
 const { serial: test } = ava
 const srcDir = path.resolve('.')
 const { io } = getModuleOptions('io/module', 'io')
+
 const { listener: listen } = register
 
 async function send ({
@@ -67,19 +68,9 @@ function sendReceive ({
   })
 }
 
-function validatePlugin ({ pluginInfo, options, t, moduleOptions }) {
-  const { ssr, src, fileName } = pluginInfo
-  t.true(ssr)
-  t.is(src, path.resolve(srcDir, 'lib/plugin.js'))
-  t.is(fileName, 'nuxt-socket-io.js')
-  t.truthy(options.sockets)
-  t.true(options.sockets.length > 0)
-  options.sockets.forEach((s, idx) => {
-    Object.entries(s).forEach(([key, entry]) => {
-      t.is(entry, moduleOptions.sockets[idx][key])
-    })
-  })
-}
+const waitForListening = server => new Promise(
+  resolve => server.on('listening', resolve)
+)
 
 const waitForClose = server => new Promise(
   resolve => server.listening ? server.on('close', resolve) : resolve()
@@ -260,54 +251,35 @@ test('Register.nspSvc (nspDir exists, some nsp malformed)', async (t) => {
   await waitForClose(server)
 })
 
-test('Module: adds plugin, does not register IO server (simple config)', (t) => {
-  const ctx = wrapModule(Module)
-  const moduleOptions = {
+test('Module: various options', async (t) => {
+  const dirs = []
+  initNuxt()
+  await Module({
     server: false,
     sockets: [{ name: 'home', url: 'https://localhost:3000' }]
-  }
-  ctx.Module(moduleOptions)
-  const [pluginInfo] = ctx.options.plugins
-  const { nuxtSocketIO: options } = ctx.options.publicRuntimeConfig
-  validatePlugin({ pluginInfo, options, t, moduleOptions })
-})
-
-test('Module: adds plugin, registers IO server, if undef', (t) => {
-  const ctx = wrapModule(Module)
-  const moduleOptions = Object.assign({}, io)
-  ctx.Module(moduleOptions)
-  const [pluginInfo] = ctx.options.plugins
-  const { nuxtSocketIO: options } = ctx.options.publicRuntimeConfig
-  validatePlugin({ pluginInfo, options, t, moduleOptions })
-})
-
-test('Module: adds plugin, registers IO server (nuxt config)', (t) => {
-  const ctx = wrapModule(Module)
-  const serverIn = http.createServer()
-  const moduleOptions = Object.assign({}, io)
-  ctx.Module(moduleOptions)
-  const [pluginInfo] = ctx.options.plugins
-  const { nuxtSocketIO: options } = ctx.options.publicRuntimeConfig
-  validatePlugin({ pluginInfo, options, t, moduleOptions })
-  t.truthy(ctx.nuxt.hooks.listen)
-  ctx.nuxt.hooks.listen(serverIn)
-
-  return new Promise((resolve) => {
-    serverIn.on('listening', () => {
-      setTimeout(() => {
-        t.truthy(ctx.nuxt.hooks.close)
-        ctx.nuxt.hooks.close()
-      }, 100)
-    })
-    serverIn.on('close', resolve)
-  })
-})
-
-test('Module: adds components directory for this library', (t) => {
-  const dirs = []
-  const ctx = wrapModule(Module)
-  ctx.Module({})
-  ctx.nuxt.hooks['components:dirs'](dirs)
+  }, useNuxt())
+  const nuxt1 = useNuxt()
+  t.truthy(nuxt1.hooks['components:dirs'])
+  nuxt1.hooks['components:dirs'](dirs)
   t.is(dirs[0].path, path.resolve('./lib/components'))
   t.is(dirs[0].prefix, 'io')
+  const [pluginInfo] = nuxt1.options.plugins
+  t.is(pluginInfo.src, path.resolve(srcDir, 'lib/plugin.js'))
+  const { nuxtSocketIO } = nuxt1.options.publicRuntimeConfig
+  t.is(nuxtSocketIO.sockets[0].name, 'home')
+  t.is(nuxtSocketIO.sockets[0].url, 'https://localhost:3000')
+
+  const serverInst = http.createServer()
+  const p = waitForListening(serverInst)
+  const p2 = waitForClose(serverInst)
+  initNuxt()
+  await Module({
+    ...io,
+    server: { serverInst }
+  }, useNuxt())
+  await p
+  const nuxt2 = useNuxt()
+  t.truthy(nuxt2.hooks.close)
+  nuxt2.hooks.close()
+  await p2
 })
