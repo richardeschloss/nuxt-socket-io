@@ -4,11 +4,11 @@
       <Stats />
       <h1 class="title" v-text="'nuxt-socket-io'" />
     </div>
-    <div class="d-inline-block float-right text-right">
-      <nuxt-link to="/" v-text="'Demos Home'" /> |
-      <nuxt-link to="/examples" v-text="'Basic Examples'" /> |
-      <nuxt-link to="/rooms" v-text="'Chat Rooms'" /> |
-      <nuxt-link to="/ioStatus" v-text="'IO Status'" /> |
+    <div class="d-inline-block float-end text-end align-top">
+      <NuxtLink to="/">Demos Home</NuxtLink> |
+      <NuxtLink to="/examples">Basic Examples</NuxtLink> | 
+      <NuxtLink to="/rooms">Chat Rooms</NuxtLink> |
+      <NuxtLink to="/ioStatus">IO Status</NuxtLink> |
       <a href="https://nuxt-socket-io.netlify.app" target="_blank" v-text="'Docs'" /> |
       <a href="https://github.com/richardeschloss/nuxt-socket-io" target="_blank">
         <svg
