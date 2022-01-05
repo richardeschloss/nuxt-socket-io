@@ -1,6 +1,12 @@
 import { defineNuxtConfig } from 'nuxt3'
 
 export default defineNuxtConfig({
+  // vite: {
+  //   optimizeDeps: { // This was the workaround
+  //     include: ['parseuri/index.js', '@socket.io/component-emitter', 'parseqs', 'yeast', 'engine.io-client',
+  //       'backo2', 'debug', 'tiny-emitter/instance.js']
+  //   }
+  // },
   server: {
     host: process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost',
     port: process.env.PORT !== undefined
