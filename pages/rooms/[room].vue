@@ -1,15 +1,15 @@
 <template>
   <div v-if="ioApi.ready">
     <div id="notifications">
-      <toaster :msg="userJoinedMsg" @toastExpired="ioData.userJoined = ''" />
-      <toaster :msg="userLeftMsg" @toastExpired="ioData.userLeft = ''" />
+      <Toaster :msg="userJoinedMsg" @toastExpired="ioData.userJoined = ''" />
+      <Toaster :msg="userLeftMsg" @toastExpired="ioData.userLeft = ''" />
     </div>
     <div class="row">
-      <div class="col-md0">
-        <channel-select :room="room" :channels="channels" />
+      <div class="col-md-1">
+        <ChannelSelect :room="room" :channels="channels" />
       </div>
       <div class="col-md-11">
-        <nuxt-child
+        <NuxtNestedPage
           v-if="channels.includes($route.params.channel)"
           :user="user"
         />

@@ -137,7 +137,7 @@ export default defineNuxtConfig({
         url:
           process.env.NODE_ENV === 'production'
             ? 'https://nuxt-socket-io.herokuapp.com'
-            : 'http://localhost:3000'
+            : 'http://localhost:3001'
       },
       { name: 'goodSocket', url: 'http://localhost:3001' },
       { name: 'badSocket', url: 'http://localhost:3002' },

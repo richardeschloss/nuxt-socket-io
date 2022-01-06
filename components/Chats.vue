@@ -1,5 +1,5 @@
 <template>
-  <div v-show-recent="chats ? chats.length : 0" class="chats-container">
+  <div class="chats-container">
     <div v-for="(chat, idx) in chats" :key="idx">
       <hr v-show="idx > 0" class="chat-separator">
       <span class="chat-user"> {{ chat.user }} </span>
@@ -13,16 +13,13 @@
 
 <script>
 export default {
-  directives: {
-    showRecent: {
-      update (elm, binding) {
-        const { value: chatsLength, oldValue: oldChatsLength } = binding
-        if (chatsLength !== oldChatsLength) {
-          setTimeout(() => {
-            elm.scrollTop = elm.scrollHeight
-          }, 250)
-        }
-      }
+  watch: {
+    chats(n, o) {
+      if (n.length !== o.length) {
+        setTimeout(() => {
+          this.$el.scrollTop = this.$el.scrollHeight
+        }, 250)
+      }  
     }
   },
   props: {

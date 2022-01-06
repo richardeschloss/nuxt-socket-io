@@ -2,17 +2,17 @@
   <div>
     <div class="row">
       <div class="col-md-10">
-        <chats :chats="chats" />
+        <Chats :chats="chats" />
       </div>
-      <div class="col-md0 d-none d-sm-none d-md-block">
-        <channel-users :users="users" />
+      <div class="col-md-1 d-none d-sm-none d-md-block">
+        <ChannelUsers :users="users" />
       </div>
     </div>
     <div class="row">
       <div class="col-md-12">
-        <chat-input
-          v-model="inputMsg"
-          @sendMsg="inputMsg !== '' ? ioApi.sendMsg(userMsg) : null"
+        <ChatInput
+          @sendMsg="handleMsg"
+          @sendMsgx="inputMsg !== '' ? ioApi.sendMsg(userMsg) : null"
         />
       </div>
     </div>
@@ -104,6 +104,14 @@ export default {
       channel: '/channel',
       serverAPI: true
     })
+  },
+  methods: {
+    handleMsg (inputMsg) {
+      this.inputMsg = inputMsg
+      if (this.inputMsg !== '') {
+        this.ioApi.sendMsg(this.userMsg)
+      }
+    }
   }
 }
 </script>
