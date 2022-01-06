@@ -1,6 +1,7 @@
 <template>
   <div>
     <h4 v-text="'Basic Message Transfer'" />
+    IO state: {{ ioState }}
     <div class="row">
       <div class="card col-6">
         <div class="card-body">
@@ -26,7 +27,7 @@
                 </td>
                 <td>
                   <label><del>chatMessages</del></label>
-                  <p class="text-left" style="color: grey; white-space: pre-line;" xv-text="chatMessages" />
+                  <p class="text-left" style="color: grey; white-space: pre-line;" v-text="chatMessages" />
                 </td>
                 <td>
                   <label>messageRxd</label>
@@ -99,7 +100,7 @@
 
 <script>
 import { useState } from '#app'
-import { useNuxtSocket } from '@/lib/plugin.js'
+import { useNuxtSocket, ioState } from '@/lib/plugin.js'
 // import { mapState } from 'vuex'
 export default {
   data () {
@@ -109,17 +110,22 @@ export default {
       message2Rxd: '',
       message3Rxd: '',
       testMsg: { id: 'xyz' },
-      socket: null
+      socket: null,
+      ioState: ioState()
     }
   },
-  // computed: mapState({
-  //   chatMessages: state => state.io.chatMessages
-  // }),
+  computed: {
+    chatMessages() {
+      const iox = ioState().value
+      return iox.chats
+    }  // state => state.io.chatMessages
+  },
   mounted () {
     this.socket = this.$nuxtSocket({
       channel: '/index',
       reconnection: false
     })
+    // console.log(this.ioState)
   },
   methods: {
     async getMessage () {

@@ -107,7 +107,14 @@ export default defineNuxtConfig({
         url:
           process.env.NODE_ENV === 'production'
             ? 'https://nuxt-socket-io.herokuapp.com'
-            : 'http://localhost:3001', // Updated
+            : 'http://localhost:3001', // Updated,
+        // @ts-ignore
+        iox: [
+          'chatMessage --> chats/message',
+          'chatMessage2 <-- chats/message2',
+          'chatMessage3 <--> chats/message3',
+          'bidirectional'
+        ],
         vuex: {
           mutations: ['progress --> examples/SET_PROGRESS'],
           actions: ['chatMessage --> io/FORMAT_MESSAGE'],
