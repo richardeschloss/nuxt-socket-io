@@ -22,11 +22,11 @@
       </div>
       <hr>
       <div>
-        <label>Vuex Options in nuxt.config also has an entry for the progress event.
+        <label><del>Vuex Options in nuxt.config also has an entry for the progress event.
           When the progress event is received, the specified mutation "examples/SET_PROGRESS"
-          will handle it, and this component will consume it from the Vuex state:
+          will handle it, and this component will consume it from the Vuex state:</del>
         </label>
-        <div v-show="showProgress" class="progress" style="height: 30px;">
+        <!-- <div v-show="showProgress" class="progress" style="height: 30px;">
           <div
             class="progress-bar progress-bar-striped progress-bar-animated"
             role="progressbar"
@@ -34,7 +34,7 @@
           >
             {{ progressVuex }}%
           </div>
-        </div>
+        </div> -->
       </div>
       <div>
         <span
@@ -47,7 +47,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+// import { mapState } from 'vuex'
 export default {
   data () {
     return {
@@ -60,9 +60,9 @@ export default {
       socket: null
     }
   },
-  computed: mapState({
-    progressVuex: state => state.examples.progress
-  }),
+  // computed: mapState({
+  //   progressVuex: state => state.examples.progress
+  // }),
   mounted () {
     this.socket = this.$nuxtSocket({
       channel: '/examples'
@@ -73,13 +73,13 @@ export default {
       this.showProgress = false
       this.congratulate = true
       this.progress = 100
-      this.$store.commit('examples/SET_PROGRESS', this.progress)
+      // this.$store.commit('examples/SET_PROGRESS', this.progress)
     },
     reset () {
       this.showProgress = true
       this.congratulate = false
       this.progress = 0
-      this.$store.commit('examples/SET_PROGRESS', this.progress)
+      // this.$store.commit('examples/SET_PROGRESS', this.progress)
     }
   }
 }

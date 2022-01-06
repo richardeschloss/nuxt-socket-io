@@ -6,8 +6,8 @@
     </div>
     <div class="d-inline-block float-end text-end align-top">
       <NuxtLink to="/">Demos Home</NuxtLink> |
-      <!-- <NuxtLink to="/examples">Basic Examples</NuxtLink> | 
-      <NuxtLink to="/rooms">Chat Rooms</NuxtLink> | -->
+      <NuxtLink to="/examples">Basic Examples</NuxtLink> | 
+      <!-- <NuxtLink to="/rooms">Chat Rooms</NuxtLink> | -->
       <NuxtLink to="/ioStatus">IO Status</NuxtLink> |
       <a href="https://nuxt-socket-io.netlify.app" target="_blank" v-text="'Docs'" /> |
       <a href="https://github.com/richardeschloss/nuxt-socket-io" target="_blank">
