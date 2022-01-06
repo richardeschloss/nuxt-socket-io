@@ -15,7 +15,7 @@
             <thead>
               <tr>
                 <th>Send Event "getMessage"</th>
-                <!-- <th style="width: 40%;" v-text="'Receive Intermediate Event(s)'" /> -->
+                <th style="width: 40%;" v-text="'Receive Intermediate Event(s)'" />
                 <th xstyle="width: 35%;" v-text="'Receive Final Response'" />
               </tr>
             </thead>
@@ -24,10 +24,10 @@
                 <td>
                   <button class="btn btn-primary" @click="getMessage()" v-text="'Get Message'" />
                 </td>
-                <!-- <td>
-                  <label>chatMessages</label>
-                  <p class="text-left" style="color: grey; white-space: pre-line;" v-text="chatMessages" />
-                </td> -->
+                <td>
+                  <label><del>chatMessages</del></label>
+                  <p class="text-left" style="color: grey; white-space: pre-line;" xv-text="chatMessages" />
+                </td>
                 <td>
                   <label>messageRxd</label>
                   <p class="text-left" style="color: grey; white-space: pre-line;" v-text="messageRxd" />
@@ -98,6 +98,8 @@
 </template>
 
 <script>
+import { useState } from '#app'
+import { useNuxtSocket } from '@/lib/plugin.js'
 // import { mapState } from 'vuex'
 export default {
   data () {
