@@ -1,7 +1,6 @@
 <template>
   <div>
     <h4 v-text="'Basic Message Transfer'" />
-    IO state: {{ ioState }}
     <div class="row">
       <div class="card col-6">
         <div class="card-body">
@@ -10,7 +9,8 @@
             This example uses <code>"getMessage()"</code> defined in the component
             and consumes <code>chatMessages</code> that were sent directly to Vuex. If you can see text appear below, it worked!<br><br>
 
-            <del>When the event "chatMessage" is received, it dispatches the vuex action "FORMAT_MESSAGE", which formats the message and appends it to the state's "chatMessages"</del> (See discussion <a href="https://github.com/nuxt/framework/discussions/571">here</a>)
+            When the event "chatMessage" is received, it's data will be stored in "chats/message" inside of the plugin's "ioState". To access the value,
+            first import "ioState" from "nuxt-socket/lib/plugin.js" and then get the desired value (<code>ioState().value.chats.message</code>)
           </p>
           <table class="table card-text" style="font-size: 14px;">
             <thead>
@@ -26,7 +26,7 @@
                   <button class="btn btn-primary" @click="getMessage()" v-text="'Get Message'" />
                 </td>
                 <td>
-                  <label><del>chatMessages</del></label>
+                  <label>chatMessages</label>
                   <p class="text-left" style="color: grey; white-space: pre-line;" v-text="chatMessages" />
                 </td>
                 <td>
@@ -99,9 +99,7 @@
 </template>
 
 <script>
-import { useState } from '#app'
-import { useNuxtSocket, ioState } from '@/lib/plugin.js'
-// import { mapState } from 'vuex'
+import { ioState } from '@/lib/plugin.js'
 export default {
   data () {
     return {
@@ -110,22 +108,19 @@ export default {
       message2Rxd: '',
       message3Rxd: '',
       testMsg: { id: 'xyz' },
-      socket: null,
-      ioState: ioState()
+      socket: null
     }
   },
   computed: {
     chatMessages() {
-      const iox = ioState().value
-      return iox.chats
-    }  // state => state.io.chatMessages
+      return ioState().value?.chats?.message
+    }
   },
   mounted () {
     this.socket = this.$nuxtSocket({
       channel: '/index',
       reconnection: false
     })
-    // console.log(this.ioState)
   },
   methods: {
     async getMessage () {
