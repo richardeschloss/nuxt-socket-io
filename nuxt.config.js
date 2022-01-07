@@ -111,9 +111,8 @@ export default defineNuxtConfig({
         // @ts-ignore
         iox: [
           'chatMessage --> chats/message',
-          'chatMessage2 <-- chats/message2',
-          'chatMessage3 <--> chats/message3',
           'progress --> examples/progress',
+          'examples/someObj', // Bidirectional
           'bidirectional'
         ],
         vuex: {

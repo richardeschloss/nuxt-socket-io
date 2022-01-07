@@ -8,7 +8,8 @@
         Because nuxt.config has "examples/sampleObj" as an emitback, the event "examples/sampleObj"
         will be sent when the examples/sampleObj state changes in Vuex.</del>
       </label>
-      <!-- <div>
+      {{ someObj }}
+      <div>
         <input
           class="form-control"
           :value="someObj.id"
@@ -18,7 +19,7 @@
           @input="changeObj($event)"
         >
       </div>
-      <span>Msg: {{ someObj.msg }}</span> -->
+      <span>Msg: {{ someObj.msg }}</span>
     </div>
     <hr>
     <div>
@@ -54,6 +55,11 @@ export default {
       socket: null
     }
   },
+  computed: {
+    someObj() {
+      return this.$ioState().value?.examples?.someObj || {}
+    }
+  },
   // computed: {
   //   ...mapState({ someObj: state => state.examples.someObj }),
   //   sample: mapState2Way({
@@ -83,6 +89,7 @@ export default {
       const id = parseInt(evt.target.value)
       const msg = msgs[id % msgs.length]
       const newObj = { id, msg }
+      this.$ioState().value.examples.someObj = newObj
       // this.$store.commit('examples/SET_SOMEOBJ', newObj)
     }
   }
