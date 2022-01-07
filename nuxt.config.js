@@ -113,6 +113,7 @@ export default defineNuxtConfig({
           'chatMessage --> chats/message',
           'chatMessage2 <-- chats/message2',
           'chatMessage3 <--> chats/message3',
+          'progress --> examples/progress',
           'bidirectional'
         ],
         vuex: {

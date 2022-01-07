@@ -10,7 +10,7 @@
             and consumes <code>chatMessages</code> that were sent directly to Vuex. If you can see text appear below, it worked!<br><br>
 
             When the event "chatMessage" is received, it's data will be stored in "chats/message" inside of the plugin's "ioState". To access the value,
-            first import "ioState" from "nuxt-socket/lib/plugin.js" and then get the desired value (<code>ioState().value.chats.message</code>)
+            use the provided "$ioState" and then get the desired value (<code>this.$ioState().value.chats.message</code>). Alternatively, You can also <code>import { ioState } from 'nuxt-socket-io/lib/plugin.js'</code>
           </p>
           <table class="table card-text" style="font-size: 14px;">
             <thead>
@@ -99,7 +99,6 @@
 </template>
 
 <script>
-import { ioState } from '@/lib/plugin.js'
 export default {
   data () {
     return {
@@ -113,7 +112,7 @@ export default {
   },
   computed: {
     chatMessages() {
-      return ioState().value?.chats?.message
+      return this.$ioState().value?.chats?.message
     }
   },
   mounted () {
