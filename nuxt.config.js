@@ -112,6 +112,7 @@ export default defineNuxtConfig({
         iox: [
           'chatMessage --> chats/message',
           'progress --> examples/progress',
+          'examples/sample <-- examples/sample',
           'examples/someObj', // Bidirectional
           'bidirectional'
         ],
