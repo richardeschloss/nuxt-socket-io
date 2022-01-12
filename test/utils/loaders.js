@@ -1,32 +1,33 @@
 import { URL, pathToFileURL } from 'url'
-import * as compiler from 'vue-template-compiler'
-import { parse, compileTemplate } from '@vue/component-compiler-utils'
+// import * as compiler from 'vue-template-compiler'
+import { parse, compileTemplate } from '@vue/compiler-sfc' // /dist/compiler-sfc.js' // '@vue/component-compiler-utils'
 
 const baseURL = pathToFileURL(`${process.cwd()}/`).href
 const regex = /(\.ts|\.css|\.vue)$/
 
 function transformVue (source, url) {
   const filename = '/' + url.split(baseURL)[1]
-  const parsed = parse({
-    source,
+  const parsed = parse(source, {
+    // source,
     // @ts-ignore
-    compiler,
-    filename,
-    needMap: true
+    // compiler,
+    filename
+    // sourceMap: true
   })
 
   const compiledTemplate = compileTemplate({
+    id: filename,
     filename,
-    source: parsed.template.content,
+    source: parsed.descriptor.template.content
     // @ts-ignore
-    compiler
+    // compiler
   })
 
   return compiledTemplate.code +
     (parsed.script
       ? parsed.script.content
-        .replace('export default {\n', 'export default {\n  render,\n  staticRenderFns,\n')
-      : 'export default {\n  render,\n  staticRenderFns\n, _compiled: true\n }')
+        .replace('export default {\n', 'export default {\n  render,\n')
+      : 'export default {\n  render,\n _compiled: true\n }')
 }
 
 /**
