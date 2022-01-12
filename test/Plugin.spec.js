@@ -1,25 +1,11 @@
 import ava from 'ava'
 import { delay } from 'les-utils/utils/promise.js'
 import { register } from '../lib/module.js'
-import { useNuxtSocket } from '../lib/plugin.js' // It actually is used by the mock defineNuxtPlugin
-// import * as indexStore from '../store/io.js'
-// import * as examplesStore from '../store/examples.js'
+import { useNuxtSocket, emit } from '../lib/plugin.js' // It actually is used by the mock defineNuxtPlugin
 import { pluginCtx } from './utils/plugin.js'
 
 const { serial: test, before, after } = ava
 let ioServerObj
-
-const cleanStore = () => {
-  const store = {
-    state: indexStore.state(),
-    mutations: indexStore.mutations,
-    actions: indexStore.actions
-  }
-  store.state.examples = examplesStore.state()
-  store.mutations.examples = examplesStore.mutations
-  store.actions.examples = examplesStore.actions
-  return store
-}
 
 const ChatMsg = {
   date: new Date(),
@@ -517,7 +503,7 @@ test('Namespace config (emitBacks)', async (t) => {
   s.close()
 })
 
-test.only('Teardown', (t) => {
+test('Teardown', (t) => {
   const ctx = pluginCtx()
   ctx.$config.nuxtSocketIO = {}
   let componentDestroyCnt = 0
@@ -538,6 +524,7 @@ test.only('Teardown', (t) => {
   })
 
   const s = ctx.$nuxtSocket({ teardown: true })
+  ctx.$emit = ctx.$$emit
   const s2 = ctx.$nuxtSocket({ teardown: true })
   s.on('someEvt', () => {})
   s2.on('someEvt', () => {})
@@ -565,7 +552,7 @@ test('Stubs (composition api support)', async (t) => {
   // ctx.Plugin(null, ctx.inject)
 
   async function validateEventHub () {
-    const props = ['$on', '$off', '$once', '$emit']
+    const props = ['$on', '$off', '$once', '$$emit']
     props.forEach(p => t.truthy(ctx[p]))
 
     let rxCnt = 0
@@ -578,10 +565,10 @@ test('Stubs (composition api support)', async (t) => {
       rx2Cnt++
       t.is(arg, 'hello 2')
     })
-    ctx.$emit('msg', 'hello')
+    ctx.$$emit('msg', 'hello')
     ctx.$off('msg')
-    ctx.$emit('msg', 'hello again')
-    ctx.$emit('msg2', 'hello 2')
+    ctx.$$emit('msg', 'hello again')
+    ctx.$$emit('msg2', 'hello 2')
     await delay(100)
     t.is(rxCnt, 1)
     t.is(rx2Cnt, 1)
@@ -607,7 +594,7 @@ test('Stubs (composition api support)', async (t) => {
   await Promise.all(p)
 })
 
-test.skip('Dynamic API Feature (Server)', async (t) => {
+test('Dynamic API Feature (Server)', async (t) => {
   const ctx = pluginCtx()
   ctx.$config = {
     nuxtSocketIO: {
@@ -642,7 +629,8 @@ test.skip('Dynamic API Feature (Server)', async (t) => {
   s.on('itemRxd', () => {})
   await delay(500)
   t.true(ctx.ioApi.ready)
-  t.truthy(ctx.$store.state.$nuxtSocket.ioApis['main/dynamic'])
+  const state = useNuxtSocket().value
+  t.truthy(state.ioApis['main/dynamic'])
   const items = await ctx.ioApi.getItems()
   const item1 = await ctx.ioApi.getItem({ id: 'abc123' })
   Object.assign(ctx.ioData.getItem.msg, { id: 'something' })
@@ -671,7 +659,7 @@ test.skip('Dynamic API Feature (Server)', async (t) => {
     clientAPI
   })
   await delay(500)
-  t.truthy(ctx.$store.state.$nuxtSocket.ioApis['main/p2p'])
+  t.truthy(state.ioApis['main/p2p'])
   const props = ['evts', 'methods']
   props.forEach((prop) => {
     const clientProps = Object.keys(clientAPI[prop])
@@ -683,7 +671,7 @@ test.skip('Dynamic API Feature (Server)', async (t) => {
   t.true(ctx.ioApi.ready)
 })
 
-test.skip('Dynamic API Feature (Client)', async (t) => {
+test('Dynamic API Feature (Client)', async (t) => {
   const ctx = pluginCtx()
   ctx.$config = {
     nuxtSocketIO: {
@@ -707,7 +695,8 @@ test.skip('Dynamic API Feature (Client)', async (t) => {
     clientAPI: {}
   })
 
-  t.falsy(ctx.$store.state.$nuxtSocket.clientApis['main/p2p'])
+  const state = useNuxtSocket().value
+  t.falsy(state.clientApis['main/p2p'])
   s.close()
   const callCnt = { receiveMsg: 0 }
   Object.assign(ctx, {
@@ -726,8 +715,9 @@ test.skip('Dynamic API Feature (Client)', async (t) => {
     serverAPI: {},
     clientAPI
   })
-  t.truthy(ctx.$store.state.$nuxtSocket.clientApis)
-  await ctx.$store.dispatch('$nuxtSocket/emit', {
+  t.truthy(state.clientApis)
+
+  await emit({
     evt: 'sendEvts',
     msg: {},
     socket: s2
