@@ -38,8 +38,14 @@
 
 1. Add `nuxt-socket-io` dependency to your project
 
+* Nuxt 2.x:
 ```bash
-yarn add nuxt-socket-io # or npm install nuxt-socket-io
+npm i nuxt-socket-io
+```
+
+* Nuxt 3.x:
+```bash
+npm i nuxt-socket-io@next
 ```
 
 2. Add `nuxt-socket-io` to the `modules` section of `nuxt.config.js`
