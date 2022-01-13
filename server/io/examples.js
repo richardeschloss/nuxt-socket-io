@@ -42,8 +42,12 @@ export default function Svc (socket, io) {
         }
       })
     },
+    echo ({ evt, msg }) {
+      socket.emit(evt, msg)
+    },
     'examples/someObj' (data) {
       consola.log('someObj received!', data)
+      socket.emit('examples/someObjRxd', data)
       return { msg: 'ok' }
     },
     sample2 ({ data: sample }) {

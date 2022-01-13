@@ -38,6 +38,9 @@ export default function Svc (socket, io) {
         }, 500)
       })
     },
+    bidirectional () {
+      console.log('bidirectional rxd!')
+    },
     echo (msg) {
       return msg
     },

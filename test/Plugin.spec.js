@@ -1,7 +1,7 @@
 import ava from 'ava'
 import { delay } from 'les-utils/utils/promise.js'
 import { register } from '../lib/module.js'
-import { useNuxtSocket, emit } from '../lib/plugin.js' // It actually is used by the mock defineNuxtPlugin
+import { useNuxtSocket, emit } from '../lib/plugin.js' // Plugin will import defineNuxtPlugin from '#app' which during test is our mocked function
 import { pluginCtx } from './utils/plugin.js'
 
 const { serial: test, before, after } = ava
@@ -67,16 +67,6 @@ function triggerEvents (s, trigger, evts) {
     })
   )
   trigger()
-  return Promise.all(p)
-}
-
-function waitForEchoBack (s, evts) {
-  const p = evts.map(evt =>
-    new Promise((resolve) => {
-      s.on(evt, resolve)
-      s.emit('echoBack', { evt, data: 'abc123' })
-    })
-  )
   return Promise.all(p)
 }
 
@@ -549,7 +539,6 @@ test('Teardown', (t) => {
 test('Stubs (composition api support)', async (t) => {
   const ctx = pluginCtx()
   ctx.$config.nuxtSocketIO = { sockets: [{ url: 'http://localhost:3000' }] }
-  // ctx.Plugin(null, ctx.inject)
 
   async function validateEventHub () {
     const props = ['$on', '$off', '$once', '$$emit']
@@ -717,6 +706,13 @@ test('Dynamic API Feature (Client)', async (t) => {
   })
   t.truthy(state.clientApis)
 
+  // @ts-ignore
+  await emit({
+    evt: 'sendEvts'
+  }).catch((err) => {
+    t.is(err.message, 'socket instance required. Please provide a valid socket label or socket instance')
+  })
+
   await emit({
     evt: 'sendEvts',
     msg: {},
@@ -766,4 +762,127 @@ test('Promisified emit and once', async (t) => {
   t.false(s.hasListeners('chatMessage'))
   t.is(r, 'It worked! Received msg: {"id":"abc123"}')
   t.is(r2, 'Hi, this is a chat message from IO server!')
+})
+
+test('global emit()', async (t) => {
+  const ctx = pluginCtx()
+  ctx.$config = {
+    nuxtSocketIO: {
+      sockets: [
+        {
+          name: 'home',
+          url: 'http://localhost:3000'
+        }
+      ]
+    }
+  }
+  const state = useNuxtSocket().value
+  const s = ctx.$nuxtSocket({
+    channel: '/p2p',
+    clientAPI: {}
+  })
+  await emit({
+    emitTimeout: 1,
+    evt: 'deadEnd',
+    msg: {},
+    socket: s
+  }).catch((err) => {
+    t.is(err.message, 'emitTimeout')
+  })
+
+  await emit({
+    label: 'catch',
+    emitTimeout: 1,
+    evt: 'deadEnd',
+    msg: {},
+    socket: s
+  })
+  t.is(state.emitErrors.catch.deadEnd[0].message, 'emitTimeout')
+
+  const s2 = ctx.$nuxtSocket({
+    channel: '/dynamic',
+    persist: true,
+    emitTimeout: 3000
+  })
+  await emit({
+    evt: 'badRequest',
+    msg: {},
+    socket: s2
+  })
+    .catch((err) => {
+      t.is(err.message, 'badRequest...Input does not match schema')
+    })
+
+  await emit({
+    label: 'deadEnd',
+    evt: 'badRequest',
+    msg: {},
+    socket: s2
+  })
+
+  t.is(state.emitErrors.deadEnd.badRequest[0].message, 'badRequest...Input does not match schema')
+})
+
+test('iox', async (t) => {
+  const ctx = pluginCtx()
+  ctx.$config = {
+    nuxtSocketIO: {
+      sockets: [
+        {
+          name: 'home',
+          url: 'http://localhost:3000',
+          iox: [
+            'chatMessage --> chats/message',
+            'chatMessage4 --> msg4',
+            'progress --> examples/progress',
+            'examples/sample <-- examples/sample',
+            'examples/someObj', // Bidirectional
+            'bidirectional'
+          ]
+        }
+      ]
+    }
+  }
+  const s = ctx.$nuxtSocket({
+    channel: '/index'
+  })
+  await s.emitP('getMessage', { id: 'abc123' })
+  await s.emitP('getMessage2')
+  const state = ctx.$ioState().value
+  t.is(state.chats.message, 'Hi, this is another chat message from IO server!')
+  t.is(state.msg4.data, 'Hi again')
+  state.bidirectional = 'set' // See console
+
+  ctx.$config.nuxtSocketIO.sockets[0].registeredWatchers = []
+  const s2 = ctx.$nuxtSocket({
+    channel: '/examples'
+  })
+  await s2.emitP('getProgress', { refreshPeriod: 500 })
+  t.is(state.examples.progress, 100)
+
+  s2.on('sampleDataRxd', (msg) => {
+    t.is(msg.data.sample, 200)
+  })
+  state.examples.sample = 100
+  state.examples.sample = 200
+
+  await delay(100)
+
+  state.examples.someObj = {}
+  await s2.emitP('echo', { evt: 'examples/someObj', msg: { a: 111 } })
+  t.is(state.examples.someObj.a, 111)
+  const msgsRxd = []
+  s2.on('examples/someObjRxd', (msg) => {
+    msgsRxd.push(msg)
+  })
+
+  state.examples.someObj = { a: 222 }
+
+  await delay(100)
+  t.is(msgsRxd.at(-1).a, 222)
+
+  ctx.$nuxtSocket({ // Attempt to register duplicate watchers
+    channel: '/examples'
+  })
+  // coverage report will show it was hit.
 })
