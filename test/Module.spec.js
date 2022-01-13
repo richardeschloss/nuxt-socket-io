@@ -283,3 +283,16 @@ test('Module: various options', async (t) => {
   nuxt2.hooks.close()
   await p2
 })
+
+test('Module: edge cases', async (t) => {
+  initNuxt()
+  // @ts-ignore
+  process.env.PORT = 5000
+  await Module({}, useNuxt())
+  await delay(100)
+  /* console shows listening at 5001 */
+  await Module({}, useNuxt())
+  await delay(100)
+  /* attempt to register server twice... error handler catches it (in coverage report) */
+  t.pass()
+})
