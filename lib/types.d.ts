@@ -1,5 +1,5 @@
 import { Module } from '@nuxt/types';
-import * as SocketIOClient from 'socket.io-client'; // TBD: unused type
+import * as SocketIOClient from 'socket.io-client';
 import Vue from 'vue';
 
 /**
