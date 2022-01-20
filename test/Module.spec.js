@@ -260,7 +260,9 @@ test('Module: various options', async (t) => {
   }, useNuxt())
   const nuxt1 = useNuxt()
   t.truthy(nuxt1.hooks['components:dirs'])
+  t.truthy(nuxt1.hooks.listen)
   nuxt1.hooks['components:dirs'](dirs)
+  nuxt1.hooks.listen(http.createServer())
   t.is(dirs[0].path, path.resolve('./lib/components'))
   t.is(dirs[0].prefix, 'io')
   const [pluginInfo] = nuxt1.options.plugins
@@ -272,6 +274,7 @@ test('Module: various options', async (t) => {
   const serverInst = http.createServer()
   const p = waitForListening(serverInst)
   const p2 = waitForClose(serverInst)
+  serverInst.listen()
   initNuxt()
   await Module({
     ...io,
@@ -279,6 +282,8 @@ test('Module: various options', async (t) => {
   }, useNuxt())
   await p
   const nuxt2 = useNuxt()
+  nuxt2.hooks.listen(http.createServer())
+
   t.truthy(nuxt2.hooks.close)
   nuxt2.hooks.close()
   await p2
@@ -289,10 +294,14 @@ test('Module: edge cases', async (t) => {
   // @ts-ignore
   process.env.PORT = 5000
   await Module({}, useNuxt())
+  useNuxt().hooks.listen(http.createServer())
   await delay(100)
+
   /* console shows listening at 5001 */
   await Module({}, useNuxt())
+  useNuxt().hooks.listen(http.createServer())
   await delay(100)
+  useNuxt().hooks.close()
   /* attempt to register server twice... error handler catches it (in coverage report) */
   t.pass()
 })

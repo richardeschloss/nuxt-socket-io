@@ -91,23 +91,23 @@ export default defineNuxtConfig({
   ],
   /** @type {import('lib/types').NuxtSocketIoOptions} */
   io: {
-    server: {
-      // @ts-ignore
-      cors: {
-        credentials: true,
-        origin: [
-          'https://nuxt-socket-io.netlify.app',
-          'http://localhost:3000' // TBD: added
-        ]
-      }
-    },
+    // server: {
+    //   // @ts-ignore
+    //   cors: {
+    //     credentials: true,
+    //     origin: [
+    //       'https://nuxt-socket-io.netlify.app',
+    //       'http://localhost:3000' // TBD: added
+    //     ]
+    //   }
+    // },
     sockets: [
       {
         name: 'home',
         url:
           process.env.NODE_ENV === 'production'
             ? 'https://nuxt-socket-io.herokuapp.com'
-            : 'http://localhost:3001', // Updated,
+            : 'http://localhost:3000', // Updated, //'http://localhost:3001', // Updated,
         // @ts-ignore
         iox: [
           'chatMessage --> chats/message',
