@@ -138,7 +138,7 @@ export interface NuxtSocketOpts extends Partial<SocketIOClient.ManagerOptions> {
    * (see [vuexModule](https://nuxt-socket-io.netlify.app/vuexModule)).
    * @default false
    */
-  persist?: boolean;
+  persist?: boolean | string;
   /** Specifies the property in [this] component that will be used
    *  to contain the socket status (referring to an object).
    * @default 'socketStatus'
