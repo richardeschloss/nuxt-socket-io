@@ -23,7 +23,6 @@ export default defineNuxtConfig({
   },
   telemetry: false,
   publicRuntimeConfig: {
-    /** @type {import('lib/types').NuxtSocketIoRuntimeOptions} */
     io: {
       sockets: [
         {
@@ -34,7 +33,6 @@ export default defineNuxtConfig({
     }
   },
   privateRuntimeConfig: {
-    /** @type {import('lib/types').NuxtSocketIoRuntimeOptions} */
     io: {
       sockets: [
         {
@@ -89,7 +87,6 @@ export default defineNuxtConfig({
     // 'bootstrap-vue/nuxt',
     '~/lib/module.js'
   ],
-  /** @type {import('lib/types').NuxtSocketIoOptions} */
   io: {
     // server: {
     //   // @ts-ignore
