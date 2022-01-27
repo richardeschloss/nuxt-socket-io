@@ -321,6 +321,17 @@ declare module '@nuxt/schema' {
   }
 }
 
-/* */
+declare module '#app' {
+  interface NuxtApp {
+    $nuxtSocket: Factory;
+  }  
+}
+
+declare module '@vue/runtime-core' {
+  interface ComponentCustomProperties {
+    $nuxtSocket: Factory;
+  }
+}
+/* --- */
 
 export { NuxtSocket, NuxtSocketIoOptions, NuxtSocketIoRuntimeOptions }
