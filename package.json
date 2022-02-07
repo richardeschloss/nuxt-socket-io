@@ -26,8 +26,9 @@
   "repository": "https://github.com/richardeschloss/nuxt-socket-io",
   "scripts": {
     "dev": "nuxi dev",
-    "build": "nuxi build",
+    "build": "nuxi build && echo 'export { server }' >> .output/server/chunks/nitro/server.mjs",
     "start": "nuxi preview",
+    "standalone": "node  --experimental-loader=./test/utils/loaders.js lib/standalone.js",
     "generate:local": "nuxi generate",
     "generate:gh-pages": "cross-env nuxt generate",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore .",
