@@ -119,6 +119,10 @@ interface NuxtSocketIoServerOpts {
    * @default 3000
    */
   port?: number;
+  /**
+   * Auto close socket.io server (default: true)
+   */
+  teardown?: boolean;
 }
 
 export interface NuxtSocketOpts extends Partial<SocketIOClient.ManagerOptions> {
