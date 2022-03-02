@@ -88,8 +88,9 @@ export default defineNuxtConfig({
     '~/lib/module.js'
   ],
   io: {
-    // server: {
-    //   // @ts-ignore
+    server: {
+      // @ts-ignore
+      redis: true
     //   cors: {
     //     credentials: true,
     //     origin: [
@@ -97,7 +98,7 @@ export default defineNuxtConfig({
     //       'http://localhost:3000' // TBD: added
     //     ]
     //   }
-    // },
+    },
     sockets: [
       {
         name: 'home',
