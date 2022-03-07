@@ -90,7 +90,7 @@ export default defineNuxtConfig({
   io: {
     server: {
       // @ts-ignore
-      redis: true
+      // redisClient: true // uncomment to start redisClient
     //   cors: {
     //     credentials: true,
     //     origin: [
