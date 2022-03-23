@@ -275,7 +275,9 @@ interface NuxtSocketIoRuntimeOptions {
   info?: boolean;
 }
 
-interface NuxtSocket extends SocketIOClient.Socket {};
+interface NuxtSocket extends SocketIOClient.Socket {
+  emitP: (evt: String, msg?: any) => Promise<any>;
+};
 
 type Factory = (ioOpts: NuxtSocketOpts) => NuxtSocket;
 
