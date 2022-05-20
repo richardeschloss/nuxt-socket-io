@@ -1,4 +1,4 @@
-import { defineNuxtConfig } from 'nuxt3'
+import { defineNuxtConfig } from 'nuxt'
 
 export default defineNuxtConfig({
   vite: {
@@ -22,17 +22,7 @@ export default defineNuxtConfig({
       : 3000
   },
   telemetry: false,
-  publicRuntimeConfig: {
-    io: {
-      sockets: [
-        {
-          name: 'publicSocket',
-          url: 'url1'
-        }
-      ]
-    }
-  },
-  privateRuntimeConfig: {
+  runtimeConfig: {
     io: {
       sockets: [
         {
@@ -40,6 +30,16 @@ export default defineNuxtConfig({
           url: 'url2'
         }
       ]
+    },
+    public: {
+      io: {
+        sockets: [
+          {
+            name: 'publicSocket',
+            url: 'url1'
+          }
+        ]
+      }
     }
   },
   /*
