@@ -267,7 +267,7 @@ test('Module: various options', async (t) => {
   t.is(dirs[0].prefix, 'io')
   const [pluginInfo] = nuxt1.options.plugins
   t.is(pluginInfo.src, path.resolve(srcDir, 'lib/plugin.js'))
-  const { nuxtSocketIO } = nuxt1.options.publicRuntimeConfig
+  const { nuxtSocketIO } = nuxt1.options.runtimeConfig.public
   t.is(nuxtSocketIO.sockets[0].name, 'home')
   t.is(nuxtSocketIO.sockets[0].url, 'https://localhost:3000')
 
