@@ -4,7 +4,9 @@ const ctx = {
   provide (label, fn) {
     ctx['$' + label] = fn
   },
-  $config: {}
+  $config: {
+    public: {}
+  }
 }
 
 // lib/plugin.js will call this...

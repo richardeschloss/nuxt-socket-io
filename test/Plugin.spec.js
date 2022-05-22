@@ -40,7 +40,7 @@ const clientAPI = {
 }
 
 const ctx = pluginCtx()
-ctx.$config.nuxtSocketIO = {}
+ctx.$config.public = { nuxtSocketIO: {} }
 
 /**
  * @param {import('socket.io-client').Socket} s
@@ -147,7 +147,7 @@ test('Socket plugin (runtime IO $config defined, merges safely with modOptions)'
       }
     ]
   }
-  ctx.$config.nuxtSocketIO = {
+  ctx.$config.public.nuxtSocketIO = {
     sockets: [
       {
         name: 'main',
@@ -164,7 +164,7 @@ test('Socket plugin (runtime IO $config defined, merges safely with modOptions)'
 })
 
 test('Socket.url not defined', (t) => {
-  ctx.$config.nuxtSocketIO = {
+  ctx.$config.public.nuxtSocketIO = {
     sockets: [
       {
         name: 'main'
@@ -178,13 +178,15 @@ test('Socket.url not defined', (t) => {
 
 test('Socket Persistence (persist = true)', async (t) => {
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'main',
-          url: 'http://localhost:3000'
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'main',
+            url: 'http://localhost:3000'
+          }
+        ]
+      }
     }
   }
   const s1 = ctx.$nuxtSocket({ persist: true, teardown: false })
@@ -198,13 +200,15 @@ test('Socket Persistence (persist = true)', async (t) => {
 
 test('Socket Persistence (persist = label)', async (t) => {
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'main',
-          url: 'http://localhost:3000'
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'main',
+            url: 'http://localhost:3000'
+          }
+        ]
+      }
     }
   }
   const s1 = ctx.$nuxtSocket({ persist: 'mySocket', teardown: false })
@@ -218,13 +222,15 @@ test('Socket Persistence (persist = label)', async (t) => {
 
 test('Socket Persistence (persist = true, persisted socket disconnected)', async (t) => {
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'main',
-          url: 'http://localhost:3000'
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'main',
+            url: 'http://localhost:3000'
+          }
+        ]
+      }
     }
   }
   const s1 = ctx.$nuxtSocket({ persist: true, teardown: false })
@@ -237,19 +243,21 @@ test('Socket Persistence (persist = true, persisted socket disconnected)', async
 
 test('Namespace config (registration)', async (t) => {
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'main',
-          url: 'http://localhost:3000',
-          namespacesx: {
-            '/': {
-              emitters: ['echo2 --> respx'],
-              listeners: ['xyz']
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'main',
+            url: 'http://localhost:3000',
+            namespacesx: {
+              '/': {
+                emitters: ['echo2 --> respx'],
+                listeners: ['xyz']
+              }
             }
           }
-        }
-      ]
+        ]
+      }
     }
   }
   ctx.resp = ''
@@ -279,13 +287,15 @@ test('Namespace config (registration)', async (t) => {
 test('Namespace config (emitters)', async (t) => {
   let preEmit, handleAck
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'main',
-          url: 'http://localhost:3000'
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'main',
+            url: 'http://localhost:3000'
+          }
+        ]
+      }
     }
   }
   Object.assign(ctx, {
@@ -374,13 +384,15 @@ test('Namespace config (emitters)', async (t) => {
 
 test('Namespace config (listeners)', async (t) => {
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'main',
-          url: 'http://localhost:3000'
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'main',
+            url: 'http://localhost:3000'
+          }
+        ]
+      }
     }
   }
   let preEmit, handleAck
@@ -428,13 +440,15 @@ test('Namespace config (listeners)', async (t) => {
 test('Namespace config (emitBacks)', async (t) => {
   let preEmit, postEmit
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'main',
-          url: 'http://localhost:3000'
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'main',
+            url: 'http://localhost:3000'
+          }
+        ]
+      }
     }
   }
   Object.assign(ctx, {
@@ -495,16 +509,18 @@ test('Namespace config (emitBacks)', async (t) => {
 
 test('Teardown', (t) => {
   const ctx = pluginCtx()
-  ctx.$config.nuxtSocketIO = {}
+  ctx.$config.public.nuxtSocketIO = {}
   let componentDestroyCnt = 0
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'main',
-          url: 'http://localhost:3000'
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'main',
+            url: 'http://localhost:3000'
+          }
+        ]
+      }
     }
   }
   Object.assign(ctx, {
@@ -538,7 +554,7 @@ test('Teardown', (t) => {
 
 test('Stubs (composition api support)', async (t) => {
   const ctx = pluginCtx()
-  ctx.$config.nuxtSocketIO = { sockets: [{ url: 'http://localhost:3000' }] }
+  ctx.$config.public.nuxtSocketIO = { sockets: [{ url: 'http://localhost:3000' }] }
 
   async function validateEventHub () {
     const props = ['$on', '$off', '$once', '$$emit']
@@ -586,13 +602,15 @@ test('Stubs (composition api support)', async (t) => {
 test('Dynamic API Feature (Server)', async (t) => {
   const ctx = pluginCtx()
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'main',
-          url: 'http://localhost:3000'
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'main',
+            url: 'http://localhost:3000'
+          }
+        ]
+      }
     }
   }
   const apiIgnoreEvts = ['ignoreMe']
@@ -663,13 +681,15 @@ test('Dynamic API Feature (Server)', async (t) => {
 test('Dynamic API Feature (Client)', async (t) => {
   const ctx = pluginCtx()
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'main',
-          url: 'http://localhost:3000'
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'main',
+            url: 'http://localhost:3000'
+          }
+        ]
+      }
     }
   }
   Object.assign(ctx, {
@@ -751,7 +771,7 @@ test('Dynamic API Feature (Client)', async (t) => {
 
 test('Promisified emit and once', async (t) => {
   const ctx = pluginCtx()
-  ctx.$config.nuxtSocketIO = { sockets: [{ url: 'http://localhost:3000' }] }
+  ctx.$config.public.nuxtSocketIO = { sockets: [{ url: 'http://localhost:3000' }] }
   const s = ctx.$nuxtSocket({ channel: '/index', teardown: false, reconnection: true })
   t.truthy(s.emitP)
   t.truthy(s.onceP)
@@ -767,13 +787,15 @@ test('Promisified emit and once', async (t) => {
 test('global emit()', async (t) => {
   const ctx = pluginCtx()
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'home',
-          url: 'http://localhost:3000'
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'home',
+            url: 'http://localhost:3000'
+          }
+        ]
+      }
     }
   }
   const state = useNuxtSocket().value
@@ -826,21 +848,23 @@ test('global emit()', async (t) => {
 test('iox', async (t) => {
   const ctx = pluginCtx()
   ctx.$config = {
-    nuxtSocketIO: {
-      sockets: [
-        {
-          name: 'home',
-          url: 'http://localhost:3000',
-          iox: [
-            'chatMessage --> chats/message',
-            'chatMessage4 --> msg4',
-            'progress --> examples/progress',
-            'examples/sample <-- examples/sample',
-            'examples/someObj', // Bidirectional
-            'bidirectional'
-          ]
-        }
-      ]
+    public: {
+      nuxtSocketIO: {
+        sockets: [
+          {
+            name: 'home',
+            url: 'http://localhost:3000',
+            iox: [
+              'chatMessage --> chats/message',
+              'chatMessage4 --> msg4',
+              'progress --> examples/progress',
+              'examples/sample <-- examples/sample',
+              'examples/someObj', // Bidirectional
+              'bidirectional'
+            ]
+          }
+        ]
+      }
     }
   }
   const s = ctx.$nuxtSocket({
@@ -853,7 +877,7 @@ test('iox', async (t) => {
   t.is(state.msg4.data, 'Hi again')
   state.bidirectional = 'set' // See console
 
-  ctx.$config.nuxtSocketIO.sockets[0].registeredWatchers = []
+  ctx.$config.public.nuxtSocketIO.sockets[0].registeredWatchers = []
   const s2 = ctx.$nuxtSocket({
     channel: '/examples'
   })
