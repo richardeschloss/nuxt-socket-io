@@ -1,5 +1,4 @@
 import { Module } from '@nuxt/types';
-import { PublicRuntimeConfig, PrivateRuntimeConfig  } from '@nuxt/schema';
 import * as SocketIOClient from 'socket.io-client'; // TBD: unused type
 import Vue from 'vue';
 
@@ -313,16 +312,13 @@ declare module '@nuxt/types' {
 
 /* Nuxt 3 */
 declare module '@nuxt/schema' {
-  interface PublicConfig extends PublicRuntimeConfig {
-    io?: NuxtSocketIoRuntimeOptions;
-  }
-  interface PrivateConfig extends PublicRuntimeConfig {
-    io?: NuxtSocketIoRuntimeOptions;
-  }
-
   interface NuxtConfig {
-    publicRuntimeConfig: PublicConfig,
-    privateRuntimeConfig: PrivateConfig,
+    runtimeConfig?: {
+      io?: NuxtSocketIoRuntimeOptions,
+      public?: {
+        io: NuxtSocketIoRuntimeOptions
+      }
+    },
     io?: NuxtSocketIoOptions
   }
 }
