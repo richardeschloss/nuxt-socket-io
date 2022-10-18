@@ -46,8 +46,8 @@
   "dependencies": {
     "@nuxt/types": "^2.15.5",
     "glob": "^7.1.7",
-    "socket.io": "^4.1.1",
-    "socket.io-client": "^4.1.1",
+    "socket.io": "^4.5.3",
+    "socket.io-client": "^4.5.3",
     "tiny-emitter": "^2.1.0"
   },
   "devDependencies": {
