@@ -28,6 +28,7 @@
     "dev": "nuxi dev",
     "build": "nuxi build && echo 'export { server }' >> .output/server/chunks/nitro/server.mjs",
     "start": "nuxi preview",
+    "cleanup": "nuxi cleanup",
     "standalone": "node  --experimental-loader=./test/utils/loaders.js lib/standalone.js",
     "generate:local": "nuxi generate",
     "generate:gh-pages": "cross-env nuxt generate",
@@ -46,8 +47,8 @@
   "dependencies": {
     "@nuxt/types": "^2.15.5",
     "glob": "^7.1.7",
-    "socket.io": "^4.5.3",
-    "socket.io-client": "^4.5.3",
+    "socket.io": "^4.1.1",
+    "socket.io-client": "^4.1.1",
     "tiny-emitter": "^2.1.0"
   },
   "devDependencies": {
@@ -59,6 +60,6 @@
     "jsdom": "^16.7.0",
     "jsdom-global": "^3.0.2",
     "les-utils": "^2.0.4",
-    "nuxt": "npm:nuxt3@latest"
+    "nuxt": "3.0.0-rc.11"
   }
 }
