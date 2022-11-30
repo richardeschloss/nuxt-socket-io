@@ -1,7 +1,7 @@
 <template>
   <div>
     <Navbar id="navbar" class="px-4 py-2" style="z-index:1;" />
-    <nuxt style="margin-top: 92px;" />
+    <slot />
   </div>
 </template>
 

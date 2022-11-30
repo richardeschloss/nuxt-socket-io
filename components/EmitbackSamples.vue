@@ -4,10 +4,11 @@
       <h5 class="card-title" v-text="'Emitbacks'" />
       <label>
         This control updates <code>someObj.id</code> defined in this component.
-        When it changes, it commits a Vuex mutation which updates examples/sampleObj in Vuex.
+        When it changes, it updates examples/sampleObj in ioState.
         Because nuxt.config has "examples/sampleObj" as an emitback, the event "examples/sampleObj"
-        will be sent when the examples/sampleObj state changes in Vuex.
+        will be sent when the examples/sampleObj state changes in ioState.
       </label>
+      {{ someObj }}
       <div>
         <input
           class="form-control"
@@ -22,12 +23,10 @@
     </div>
     <hr>
     <div>
-      <label><code>sample</code> tied to "examples/sample" in Vuex will send "examples/sample" event back on change</label>
-      <input v-model="sample" class="form-control" type="number">
+      <label><code>sample</code> tied to "examples/sample" in ioState will send "examples/sample" event back on change</label>
+      <input v-model="sample" class="form-control" type="number" />
     </div>
     <div>
-      <label><code>sample2</code> tied to "examples/sample2" will send mapped "sample2" event back on change</label>
-      <input v-model="sample2" class="form-control" type="number">
       <label><code>sample3</code> tied to this component will send mapped "sample3" event back on change</label>
       <input v-model="sample3" class="form-control" type="number">
       <label><code>myObj.sample4</code> tied to this component will send mapped "sample4" event back on change</label>
@@ -39,9 +38,6 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
-import { mapState2Way } from '@/utils/state.js'
-
 export default {
   data () {
     return {
@@ -55,17 +51,15 @@ export default {
     }
   },
   computed: {
-    ...mapState({ someObj: state => state.examples.someObj }),
-    sample: mapState2Way({
-      // [prop]: [mutation]
-      'examples/sample': 'examples/SET_SAMPLE'
-    }),
-    sample2: { // Long-hand form of mapState2Way
-      get () {
-        return this.$store.state.examples.sample2
+    someObj() {
+      return this.$ioState().value?.examples?.someObj || {}
+    },
+    sample: {
+      get() {
+        return this.$ioState().value?.examples?.sample  
       },
       set (newVal) {
-        this.$store.commit('examples/SET_SAMPLE2', newVal)
+        this.$ioState().value.examples.sample = newVal
       }
     }
   },
@@ -83,7 +77,7 @@ export default {
       const id = parseInt(evt.target.value)
       const msg = msgs[id % msgs.length]
       const newObj = { id, msg }
-      this.$store.commit('examples/SET_SOMEOBJ', newObj)
+      this.$ioState().value.examples.someObj = newObj
     }
   }
 }

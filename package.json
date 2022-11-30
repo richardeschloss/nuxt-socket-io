@@ -1,6 +1,6 @@
 {
   "name": "nuxt-socket-io",
-  "version": "2.0.1",
+  "version": "3.0.9",
   "description": "Socket.io client and server module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "type": "module",
@@ -25,10 +25,12 @@
   },
   "repository": "https://github.com/richardeschloss/nuxt-socket-io",
   "scripts": {
-    "dev": "nuxt",
-    "build": "nuxt build",
-    "start": "nuxt start",
-    "generate:local": "nuxt generate",
+    "dev": "nuxi dev",
+    "build": "nuxi build && echo 'export { server }' >> .output/server/chunks/nitro/server.mjs",
+    "start": "nuxi preview",
+    "cleanup": "nuxi cleanup",
+    "standalone": "node  --experimental-loader=./test/utils/loaders.js lib/standalone.js",
+    "generate:local": "nuxi generate",
     "generate:gh-pages": "cross-env nuxt generate",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore .",
     "test": "ava --colors --watch --timeout=10m",
@@ -39,7 +41,8 @@
     "utils"
   ],
   "imports": {
-    "#root/*": "./*"
+    "#root/*": "./*",
+    "#app": "./test/utils/plugin.js"
   },
   "dependencies": {
     "@nuxt/types": "^2.15.5",
@@ -49,19 +52,14 @@
     "tiny-emitter": "^2.1.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.15.8",
     "@nuxtjs/eslint-config": "^6.0.1",
     "ava": "^3.15.0",
-    "bootstrap": "^4.6.1",
     "browser-env": "^3.3.0",
     "c8": "^7.10.0",
     "eslint": "^7.32.0",
-    "eslint-plugin-jest": "^25.2.2",
-    "eslint-plugin-nuxt": "^3.0.0",
-    "eslint-plugin-unicorn": "^37.0.1",
     "jsdom": "^16.7.0",
     "jsdom-global": "^3.0.2",
     "les-utils": "^2.0.4",
-    "nuxt": "^2.15.8"
+    "nuxt": "^3.0.0"
   }
 }

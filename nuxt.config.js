@@ -1,23 +1,24 @@
-export default {
+import { defineNuxtConfig } from 'nuxt/config'
+
+export default defineNuxtConfig({
+  // vite: {
+  //   optimizeDeps: {
+  //     include: [
+  //       '@socket.io/component-emitter',
+  //       // 'engine.io-client',
+  //       'debug',
+  //       'tiny-emitter/instance.js'
+  //     ]
+  //   }
+  // },
   server: {
     host: process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost',
-    port: process.env.PORT || 3000
+    port: process.env.PORT !== undefined
+      ? parseInt(process.env.PORT)
+      : 3000
   },
   telemetry: false,
-  components: true,
-  publicRuntimeConfig: {
-    /** @type {import('lib/types').NuxtSocketIoRuntimeOptions} */
-    io: {
-      sockets: [
-        {
-          name: 'publicSocket',
-          url: 'url1'
-        }
-      ]
-    }
-  },
-  privateRuntimeConfig: {
-    /** @type {import('lib/types').NuxtSocketIoRuntimeOptions} */
+  runtimeConfig: {
     io: {
       sockets: [
         {
@@ -25,33 +26,23 @@ export default {
           url: 'url2'
         }
       ]
+    },
+    public: {
+      io: {
+        sockets: [
+          {
+            name: 'publicSocket',
+            url: 'url1'
+          }
+        ]
+      }
     }
   },
-  /*
-   ** Headers of the page
-   */
-  head: {
-    title: process.env.npm_package_name || '',
-    meta: [
-      { charset: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      {
-        hid: 'description',
-        name: 'description',
-        content: process.env.npm_package_description || ''
-      }
-    ],
-    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }]
-  },
-  /*
-   ** Customize the progress-bar color
-   */
-  loading: { color: '#fff' },
   /*
    ** Global CSS
    */
   css: [
-    'bootstrap/dist/css/bootstrap.min.css',
+    '~/assets/bootstrap.min.css',
     '~/assets/main.css'
   ],
   /*
@@ -72,14 +63,17 @@ export default {
     // 'bootstrap-vue/nuxt',
     '~/lib/module.js'
   ],
-  /** @type {import('lib/types').NuxtSocketIoOptions} */
   io: {
     server: {
       // @ts-ignore
-      cors: {
-        credentials: true,
-        origin: ['https://nuxt-socket-io.netlify.app']
-      }
+      // redisClient: true // uncomment to start redisClient
+    //   cors: {
+    //     credentials: true,
+    //     origin: [
+    //       'https://nuxt-socket-io.netlify.app',
+    //       'http://localhost:3000' // TBD: added
+    //     ]
+    //   }
     },
     sockets: [
       {
@@ -87,15 +81,23 @@ export default {
         url:
           process.env.NODE_ENV === 'production'
             ? 'https://nuxt-socket-io.herokuapp.com'
-            : 'http://localhost:3000',
+            : 'http://localhost:3000', // Updated, //'http://localhost:3001', // Updated,
+        // @ts-ignore
+        iox: [
+          'chatMessage --> chats/message',
+          'progress --> examples/progress',
+          'examples/sample <-- examples/sample',
+          'examples/someObj', // Bidirectional
+          'bidirectional'
+        ],
         vuex: {
           mutations: ['progress --> examples/SET_PROGRESS'],
-          actions: ['chatMessage --> FORMAT_MESSAGE'],
+          actions: ['chatMessage --> io/FORMAT_MESSAGE'],
           emitBacks: [
             'examples/someObj',
             'examples/sample',
             'sample2 <-- examples/sample2',
-            'titleFromUser'
+            'io/titleFromUser' // TBD: update tests
           ]
         },
         namespaces: {
@@ -113,14 +115,14 @@ export default {
         }
       },
       {
-        name: 'chatSvc',
+        name: 'chatSvc', // TBD: redundant?
         url:
           process.env.NODE_ENV === 'production'
             ? 'https://nuxt-socket-io.herokuapp.com'
-            : 'http://localhost:3000'
+            : 'http://localhost:3001'
       },
-      { name: 'goodSocket', url: 'http://localhost:3000' },
-      { name: 'badSocket', url: 'http://localhost:3001' },
+      { name: 'goodSocket', url: 'http://localhost:3001' },
+      { name: 'badSocket', url: 'http://localhost:3002' },
       { name: 'work', url: 'http://somedomain1:3000' },
       { name: 'car', url: 'http://somedomain2:3000' },
       { name: 'tv', url: 'http://somedomain3:3000' },
@@ -134,24 +136,5 @@ export default {
         }
       }
     ]
-  },
-  /*
-   ** Build configuration
-   */
-  build: {
-    /*
-     ** You can extend webpack config here
-     */
-    extend (config, ctx) {},
-    parallel: false,
-    cache: false,
-    hardSource: false
-  },
-  globals: {
-    loadingTimeout: 5000
   }
-  // ,
-  // generate: {
-  //   dir: '/tmp/netlify/nuxt-socket-io-standalone'
-  // }
-}
+})

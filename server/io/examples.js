@@ -33,7 +33,8 @@ export default function Svc (socket, io) {
     echoError () {
       throw new Error('ExampleError')
     },
-    'examples/sample' ({ data: sample }) {
+    'examples/sample' (sample) {
+      console.log('examples/sample rxd', sample)
       socket.emit('sampleDataRxd', {
         data: {
           msg: 'Sample data rxd on state change',
@@ -41,8 +42,12 @@ export default function Svc (socket, io) {
         }
       })
     },
+    echo ({ evt, msg }) {
+      socket.emit(evt, msg)
+    },
     'examples/someObj' (data) {
       consola.log('someObj received!', data)
+      socket.emit('examples/someObjRxd', data)
       return { msg: 'ok' }
     },
     sample2 ({ data: sample }) {
@@ -62,13 +67,14 @@ export default function Svc (socket, io) {
       })
     },
     sample3 (msg) {
+      console.log('sample3', msg)
       const { data: sample } = msg || {}
       return {
         msg: 'rxd sample ' + (sample || 'undef')
       }
     },
     sample4 ({ data: sample }) {
-      // console.log('sample4 rxd', sample)
+      console.log('sample4 rxd', sample)
       return {
         msg: 'rxd sample ' + sample
       }

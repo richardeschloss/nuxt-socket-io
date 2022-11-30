@@ -9,14 +9,15 @@
             This example uses <code>"getMessage()"</code> defined in the component
             and consumes <code>chatMessages</code> that were sent directly to Vuex. If you can see text appear below, it worked!<br><br>
 
-            When the event "chatMessage" is received, it dispatches the vuex action "FORMAT_MESSAGE", which formats the message and appends it to the state's "chatMessages"
+            When the event "chatMessage" is received, it's data will be stored in "chats/message" inside of the plugin's "ioState". To access the value,
+            use the provided "$ioState" and then get the desired value (<code>this.$ioState().value.chats.message</code>). Alternatively, You can also <code>import { ioState } from 'nuxt-socket-io/lib/plugin.js'</code>
           </p>
           <table class="table card-text" style="font-size: 14px;">
             <thead>
               <tr>
                 <th>Send Event "getMessage"</th>
                 <th style="width: 40%;" v-text="'Receive Intermediate Event(s)'" />
-                <th style="width: 35%;" v-text="'Receive Final Response'" />
+                <th xstyle="width: 35%;" v-text="'Receive Final Response'" />
               </tr>
             </thead>
             <tbody>
@@ -98,7 +99,6 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
 export default {
   data () {
     return {
@@ -110,7 +110,11 @@ export default {
       socket: null
     }
   },
-  computed: mapState(['chatMessages']),
+  computed: {
+    chatMessages() {
+      return this.$ioState().value?.chats?.message
+    }
+  },
   mounted () {
     this.socket = this.$nuxtSocket({
       channel: '/index',

@@ -93,3 +93,5 @@ io/plugin.compiled.js
 
 # Ignore docs here, separate repo
 docs
+
+.output

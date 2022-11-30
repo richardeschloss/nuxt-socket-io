@@ -1,7 +1,5 @@
 import { Module } from '@nuxt/types';
-import * as SocketIOClient from 'socket.io-client';
-import { ManagerOptions } from 'socket.io-client/build/manager';
-import { Socket } from 'socket.io-client/build/socket';
+import * as SocketIOClient from 'socket.io-client'; // TBD: unused type
 import Vue from 'vue';
 
 /**
@@ -120,9 +118,13 @@ interface NuxtSocketIoServerOpts {
    * @default 3000
    */
   port?: number;
+  /**
+   * Auto close socket.io server (default: true)
+   */
+  teardown?: boolean;
 }
 
-export interface NuxtSocketOpts extends Partial<ManagerOptions> {
+export interface NuxtSocketOpts extends Partial<SocketIOClient.ManagerOptions> {
   /** Name of the socket. If omitted, the default socket will be used. */
   name?: string;
   /**
@@ -272,7 +274,9 @@ interface NuxtSocketIoRuntimeOptions {
   info?: boolean;
 }
 
-interface NuxtSocket extends Socket {};
+interface NuxtSocket extends SocketIOClient.Socket {
+  emitP: (evt: String, msg?: any) => Promise<any>;
+};
 
 type Factory = (ioOpts: NuxtSocketOpts) => NuxtSocket;
 
@@ -305,5 +309,31 @@ declare module '@nuxt/types' {
     $nuxtSocket: Factory;
   }
 }
+
+/* Nuxt 3 */
+declare module '@nuxt/schema' {
+  interface NuxtConfig {
+    runtimeConfig?: {
+      io?: NuxtSocketIoRuntimeOptions,
+      public?: {
+        io: NuxtSocketIoRuntimeOptions
+      }
+    },
+    io?: NuxtSocketIoOptions
+  }
+}
+
+declare module '#app' {
+  interface NuxtApp {
+    $nuxtSocket: Factory;
+  }  
+}
+
+declare module '@vue/runtime-core' {
+  interface ComponentCustomProperties {
+    $nuxtSocket: Factory;
+  }
+}
+/* --- */
 
 export { NuxtSocket, NuxtSocketIoOptions, NuxtSocketIoRuntimeOptions }

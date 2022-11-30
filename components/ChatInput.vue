@@ -5,11 +5,11 @@
         v-model="inputMsg"
         class="form-control"
         type="text"
-        @keyup.enter="$emit('sendMsg')"
+        @keyup.enter="sendMsg"
       >
     </div>
     <div class="col-md0 col-1">
-      <button type="button" class="btn btn-default" @click="$emit('sendMsg')">
+      <button type="button" class="btn btn-secondary" @click="sendMsg">
         Submit
       </button>
     </div>
@@ -24,14 +24,16 @@ export default {
       default: () => ''
     }
   },
-  computed: {
-    inputMsg: {
-      get () {
-        return this.value
-      },
-      set (val) {
-        this.$emit('input', val)
-      }
+  emits: ['sendMsg'],
+  data() {
+    return {
+      inputMsg: ''
+    }
+  },
+  methods: {
+    sendMsg() {
+      this.$emit('sendMsg', this.inputMsg)
+      this.inputMsg = ''
     }
   }
 }

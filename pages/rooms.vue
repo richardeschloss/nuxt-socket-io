@@ -1,11 +1,7 @@
 <template>
   <div class="container">
-    <room-select :rooms="rooms" :user="user" class="room-select" />
-    <nuxt-child
-      v-if="rooms.includes($route.params.room)"
-      :user="user"
-      class="room"
-    />
+    <RoomSelect :rooms="rooms" :user="user" class="room-select" />
+    <NuxtNestedPage v-if="rooms.includes($route.params.room)" class="room" :user="user" />
   </div>
 </template>
 
@@ -16,9 +12,7 @@ export default {
       ioApi: {},
       ioData: {},
       rooms: [],
-      user: `user_${Date.now()
-        .toString()
-        .slice(7)}`
+      user: ''
     }
   },
   watch: {
@@ -27,6 +21,9 @@ export default {
     }
   },
   mounted () {
+    this.user = `user_${Date.now()
+      .toString()
+      .slice(7)}`
     this.socket = this.$nuxtSocket({
       name: 'chatSvc',
       channel: '/rooms',
