@@ -1,5 +1,5 @@
 import { Module } from '@nuxt/types';
-import * as SocketIOClient from 'socket.io-client'; // TBD: unused type
+import * as SocketIOClient from 'socket.io-client';
 import Vue from 'vue';
 
 /**
@@ -142,7 +142,7 @@ export interface NuxtSocketOpts extends Partial<SocketIOClient.ManagerOptions> {
    * (see [vuexModule](https://nuxt-socket-io.netlify.app/vuexModule)).
    * @default false
    */
-  persist?: boolean;
+  persist?: boolean | string;
   /** Specifies the property in [this] component that will be used
    *  to contain the socket status (referring to an object).
    * @default 'socketStatus'
