@@ -23,9 +23,11 @@
 - Support for the IO config in the new Nuxt runtime config (for Nuxt versions >= 2.13)
 - Automatic middleware registration
 - ES module
+- Experimental support for ioRedis
 
 # Important updates
 
+* v3.x has been tested against Nuxt3 stable and socket.io@4.1.1. If you absolutely require socket.io@4.5.3 it's recommended to install it and follow the [workaround](https://github.com/richardeschloss/nuxt-socket-io/issues/278#issuecomment-1287133733). 
 * v2.x may contain breaking changes in it's attempt to get Nuxt3 reaady. `npm i nuxt-socket@1` should help revert any breaking changes in your code.
   * VuexOpts types and Namespace configuration types changed. Entries with the `Record<string, string>` have been deprecated in favor of string-only entries, which are easier to work with.
   * Package type is now "module". Entirely ESM.
