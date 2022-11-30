@@ -2,6 +2,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 3.0.10 - 2021-11-30
+### Added
+- Support for Nuxt3 and socket.io@4.x
+- Experimental feature for using the redis adapter.
+
 ## 2.0.0 - 2021-11-13
 ### Changed (major)
 - VuexOpts types and Namespace configuration types changed. Entries with the `Record<string, string>` have been deprecated in favor of string-only entries, which are easier to work with.

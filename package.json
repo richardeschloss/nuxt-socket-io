@@ -1,6 +1,6 @@
 {
   "name": "nuxt-socket-io",
-  "version": "3.0.9",
+  "version": "3.0.10",
   "description": "Socket.io client and server module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "type": "module",
