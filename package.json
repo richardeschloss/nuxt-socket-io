@@ -1,6 +1,6 @@
 {
   "name": "nuxt-socket-io",
-  "version": "3.0.10",
+  "version": "3.0.11",
   "description": "Socket.io client and server module for Nuxt. Just plug it in and GO",
   "author": "Richard Schloss",
   "type": "module",
@@ -47,8 +47,8 @@
   "dependencies": {
     "@nuxt/types": "^2.15.5",
     "glob": "^7.1.7",
-    "socket.io": "^4.1.1",
-    "socket.io-client": "^4.1.1",
+    "socket.io": "4.1.1",
+    "socket.io-client": "4.1.1",
     "tiny-emitter": "^2.1.0"
   },
   "devDependencies": {

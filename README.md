@@ -42,12 +42,12 @@
 
 * Nuxt 2.x:
 ```bash
-npm i nuxt-socket-io
+npm i nuxt-socket-io@2
 ```
 
 * Nuxt 3.x:
 ```bash
-npm i nuxt-socket-io@next
+npm i nuxt-socket-io
 ```
 
 2. Add `nuxt-socket-io` to the `modules` section of `nuxt.config.js`
