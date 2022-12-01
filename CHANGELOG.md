@@ -2,7 +2,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## 3.0.10 - 2021-11-30
+## 3.0.11 - 2022-12-01
+### Changed
+- Updated install instructions
+- Clamped socket.io deps to 4.1.1 for now
+
+## 3.0.10 - 2022-11-30
 ### Added
 - Support for Nuxt3 and socket.io@4.x
 - Experimental feature for using the redis adapter.
