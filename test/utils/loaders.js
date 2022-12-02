@@ -39,6 +39,7 @@ export function resolve (specifier, context, defaultResolve) {
   const { parentURL = baseURL } = context
   if (regex.test(specifier)) {
     return {
+      shortCircuit: true,
       url: new URL(specifier, parentURL).href
     }
   }
@@ -51,23 +52,27 @@ export async function load (url, context, defaultLoad) {
   if (url.endsWith('vue.runtime.esm.js')) {
     const { source } = await defaultLoad(url, { format: 'module' })
     return {
+      shortCircuit: true,
       format: 'module',
       source: source.toString()
     }
   } else if (url.endsWith('.vue')) {
     const { source } = await defaultLoad(url, { format: 'module' })
     return {
+      shortCircuit: true,
       format: 'module',
       source: transformVue(source.toString(), url)
     }
   } else if (url.endsWith('.ts')) {
     const { source } = await defaultLoad(url, { format: 'module' })
     return {
+      shortCircuit: true,
       format: 'module',
       source: source.toString()
     }
   } else if (url.endsWith('.css')) {
     return {
+      shortCircuit: true,
       format: 'module',
       source: 'export default {}'
     }
