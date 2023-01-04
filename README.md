@@ -40,14 +40,14 @@
 
 1. Add `nuxt-socket-io` dependency to your project
 
-* Nuxt 2.x:
-```bash
-npm i nuxt-socket-io@2
-```
-
 * Nuxt 3.x:
 ```bash
 npm i nuxt-socket-io
+```
+
+* Nuxt 2.x:
+```bash
+npm i nuxt-socket-io@2
 ```
 
 2. Add `nuxt-socket-io` to the `modules` section of `nuxt.config.js`
@@ -101,8 +101,6 @@ But WAIT! There's so much more you can do!! Check out the documentation:
 
 There you will see:
 - More details about the features, configuration and usage
-- Demos and examples, and link to a codesandbox so you can try things out as you follow along!
-- All the old docs that you originally saw here were *moved* there and better organized. Things should be much easier to follow now!
 
 ### Resources
 
