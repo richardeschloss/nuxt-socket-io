@@ -4,11 +4,7 @@ Want to contribute? I think that's fantastic! This project is used all over the 
 
 ## Have a question or an issue?
 
-1. I highly recommend reading this article first: [Writing the Perfect Question by Jon Skeet](https://codeblog.jonskeet.uk/2010/08/29/writing-the-perfect-question/). 
-2. It helps both of us when you have a done a decent amount of homework already and have reached a point where you can ask a very specific question. It helps when the specific question is accompanied by tiny code snippets. 
-3. It is possible that the tested codebase can still not meet people's expectations, so, when opening an issue, please try to keep the issue focused and bite-sized. This makes issues easier for me to address, and also makes it easier for readers to follow. This will also make the git history easier to follow to, such as "development <-- feat/chatRooms". 
-4. Please try to avoid opening issues when it is instead a slew of general questions you intend to ask. There has been a considerable amount of work poured into the documentation and a lot of general questions can be answered there. If you require more help, you can usually ping me in the Nuxt discord chat rooms. Ideally, if the general issues can be organized into *real* issues with the actual plugin, that makes the issues easier to address. The problem with opening non-real issues is that 1) it causes the issue count to go up on the project repo and potentially alarm new visitors to the project page (when the issue may not be real) and 2) causes me to step away from whatever real progress I am making so that I can answer the question. 
-5. If you do open an issue, this can also be *your* chance to shine! Most of the code is in `io/plugin.js`. If you do have an issue, maybe you can solve your issue before I even read it! If so, you can have a chance to get your feature or bugfix merged in!
+Since the nuxt-socket-io has reached a stable state, I'm currently disabling the "issues" feature, since it encourages more whining than actual problem solving. Instead, if you have an issue, you can describe it in specific detail in a pull request, where the pull request clearly explains the problem it's solving. The pull request requires accompanying tests. I will ignore and close PRs that are not fully tested. 
 
 ## Want to merge in your awesome code?
 
