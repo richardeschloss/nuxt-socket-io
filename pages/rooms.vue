@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <RoomSelect :rooms="rooms" :user="user" class="room-select" />
-    <NuxtNestedPage v-if="rooms.includes($route.params.room)" class="room" :user="user" />
+    <NuxtPage v-if="rooms.includes($route.params.room)" class="room" :user="user" />
   </div>
 </template>
 
@@ -25,7 +25,7 @@ export default {
       .toString()
       .slice(7)}`
     this.socket = this.$nuxtSocket({
-      name: 'chatSvc',
+      // name: 'chatSvc',
       channel: '/rooms',
       serverAPI: true
     })

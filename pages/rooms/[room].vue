@@ -9,7 +9,7 @@
         <ChannelSelect :room="room" :channels="channels" />
       </div>
       <div class="col-md-11">
-        <NuxtNestedPage
+        <NuxtPage
           v-if="channels.includes($route.params.channel)"
           :user="user"
         />
@@ -66,7 +66,7 @@ export default {
   },
   mounted () {
     this.socket = this.$nuxtSocket({
-      name: 'chatSvc',
+      // name: 'chatSvc',
       channel: '/room',
       serverAPI: true
     })

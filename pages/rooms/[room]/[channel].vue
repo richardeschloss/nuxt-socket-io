@@ -68,7 +68,7 @@ export default {
       this.chats = []
       this.socket.close()
       this.socket = this.$nuxtSocket({
-        name: 'chatSvc',
+        // name: 'chatSvc',
         channel: '/channel',
         serverAPI: true
       })
@@ -100,7 +100,7 @@ export default {
   },
   mounted () {
     this.socket = this.$nuxtSocket({
-      name: 'chatSvc',
+      // name: 'chatSvc',
       channel: '/channel',
       serverAPI: true
     })
