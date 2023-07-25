@@ -2,6 +2,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 3.0.13 - 2023-07-24
+### Added
+- Native support for namespaces on Windows platforms which require a "file://" to be prefixed to the full path for us to be able to import those files. Powershell and Git-Bash seem to run much faster than WSL2 on Windows.
+
 ## 3.0.11 - 2022-12-01
 ### Changed
 - Updated install instructions
